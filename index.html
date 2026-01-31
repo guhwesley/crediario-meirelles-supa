@@ -826,15 +826,41 @@
 
 <div id="modalSenha" class="modal">
   <div class="form-box">
-    <h3><i class="fa-solid fa-lock"></i> Alterar Minha Senha</h3>
-    <input type="password" id="senhaAtual" placeholder="Senha Atual">
-    <input type="password" id="novaSenha" placeholder="Nova Senha">
-    <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
+    <h3><i class="fa-solid fa-user-gear"></i> Gerenciar Acessos</h3>
     
-    <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()">Salvar Nova Senha</button>
-    <button class="btn-cancelar" onclick="fecharModal('modalSenha')">Cancelar</button>
+    <div id="secaoTrocaSenha">
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Alterar minha senha atual</p>
+      <input type="password" id="senhaAtual" placeholder="Senha Atual">
+      <input type="password" id="novaSenha" placeholder="Nova Senha">
+      <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
+      <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()" style="width: 100%; margin-bottom: 10px;">Salvar Nova Senha</button>
+    </div>
+
+    <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
+
+    <div id="secaoNovoUser">
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Cadastrar novo vendedor/usuário</p>
+      <button class="btn-novo-user" onclick="abrirModalNovoUsuario()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        <i class="fa-solid fa-user-plus"></i> CRIAR NOVO ACESSO
+      </button>
+    </div>
+    
+    <button class="btn-cancelar" onclick="fecharModal('modalSenha')" style="width: 100%; margin-top: 15px; background: #999;">Fechar</button>
   </div>
 </div>
+
+<div id="modalNovoUsuario" class="modal" style="display:none;">
+    <div class="form-box">
+        <h3><i class="fa-solid fa-user-plus"></i> Novo Cadastro</h3>
+        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)">
+        <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso">
+        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)">
+        
+        <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" class="btn-gravar" style="width: 100%; background: #10b981;">Finalizar Cadastro</button>
+        <button onclick="fecharModal('modalNovoUsuario')" class="btn-cancelar" style="width: 100%; margin-top: 10px;">Voltar</button>
+    </div>
+</div>
+
 
 <div id="modalEsqueci" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
   <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155;">
@@ -1524,7 +1550,7 @@ async function atualizarCards() {
   }
   
   // --- ATUALIZAÇÃO DO CARD DE PRODUTOS (VIA SUPABASE) ---
-  // Em vez de google.script.run, fazemos um fetch rápido apenas para contar
+  
   try {
     const response = await fetch(`${SB_URL}/produtos?select=id`, {
       method: 'GET',
@@ -2657,6 +2683,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500); // 500ms é o tempo para o navegador respirar
     }
 });
+
+async function cadastrarNovoUsuario() {
+    const loginNovo = document.getElementById('novoLoginUsuario').value.trim();
+    const senhaNova = document.getElementById('novaSenhaUsuario').value.trim();
+    const telNovo = document.getElementById('novoTelUsuario').value.trim().replace(/\D/g, '');
+    const btn = document.getElementById('btnConfirmarNovoUsuario');
+
+    if (!loginNovo || !senhaNova) {
+        return mostrarAviso('erro', 'Campos Vazios', 'Informe pelo menos o nome de usuário e a senha!');
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cadastrando...';
+
+    try {
+        const response = await fetch(`${SB_URL}/usuarios`, {
+            method: 'POST',
+            headers: {
+                'apikey': SB_KEY,
+                'Authorization': 'Bearer ' + SB_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify([{
+                login: loginNovo.toLowerCase(),
+                senha: senhaNova,
+                telefone: telNovo
+            }])
+        });
+
+        if (response.ok) {
+            mostrarAviso('sucesso', 'Sucesso!', 'Novo usuário cadastrado com sucesso.');
+            fecharModal('modalNovoUsuario');
+            
+            // Limpa os campos
+            document.getElementById('novoLoginUsuario').value = '';
+            document.getElementById('novaSenhaUsuario').value = '';
+            document.getElementById('novoTelUsuario').value = '';
+        } else {
+            throw new Error("Erro ao inserir no banco de dados.");
+        }
+    } catch (err) {
+        console.error(err);
+        mostrarAviso('erro', 'Falha', 'Não foi possível cadastrar o usuário.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Cadastrar Usuário';
+    }
+}
+
+function abrirModalNovoUsuario() {
+    fecharModal('modalSenha'); // Fecha o de troca de senha
+    document.getElementById('modalNovoUsuario').style.display = 'flex'; // Abre o de novo cadastro
+}
 
 
 // 3. CENTRAL DE ATALHOS (ENTER E ESC)

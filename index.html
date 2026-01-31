@@ -2339,35 +2339,33 @@ const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-
 let enviandoVendaAgora = false;
 
 async function finalizarVenda() {
+  // Apenas os campos que REALMENTE existem no seu HTML
   const obrigatorios = ['nomeCliente', 'telCliente', 'cpfCliente', 'dataVencimento', 'clienteEmail'];
 
-  // 1. Validação de campos obrigatórios
   for (let id of obrigatorios) {
     const el = document.getElementById(id);
     if (!el || !el.value.trim()) {
-      mostrarAviso('erro', 'Campos Vazios', 'Por favor, preencha todos os campos do cliente!');
+      mostrarAviso('erro', 'Campos Vazios', 'Preencha os dados do cliente!');
       if (el) el.focus();
       return;
     }
   }
 
-  // 2. Validação do carrinho
   if (itensNoCarrinho.length === 0) {
-    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione pelo menos um produto antes de finalizar!');
+    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione produtos!');
     return;
   }
 
-  // Previna cliques duplos
   if (enviandoVendaAgora) return;
   enviandoVendaAgora = true;
 
   const btn = document.getElementById('btnFinalizar');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando no Banco...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GRAVANDO...';
   }
 
-  // --- CÁLCULOS DA VENDA ---
+  // --- CÁLCULOS ---
   const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
   const tipo = document.getElementById('tipoPagamento').value;
   const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
@@ -2381,7 +2379,6 @@ async function finalizarVenda() {
   const idVendaUnico = 'V' + Date.now();
   const parcelasParaBanco = [];
 
-  // Montagem do array de parcelas para a tabela 'vendas'
   for (let i = 0; i < parcelasQtd; i++) {
     let d = new Date(document.getElementById('dataVencimento').value + 'T00:00:00');
     d.setMonth(d.getMonth() + i);
@@ -2405,21 +2402,16 @@ async function finalizarVenda() {
   }
 
   try {
-    // 3. ENVIAR PARCELAS PARA A TABELA 'VENDAS'
+    // 1. SALVAR VENDAS
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': 'Bearer ' + SB_KEY, 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) throw new Error('Falha ao registrar parcelas da venda.');
+    if (!resVenda.ok) throw new Error('Erro ao salvar no banco (Vendas)');
 
-    // 4. SALVAR OU ATUALIZAR O CLIENTE NA TABELA 'CLIENTES' (UPSERT)
-    // O header resolution=merge-duplicates garante que se o CPF existir, ele atualiza os dados.
+    // 2. SALVAR CLIENTE (CORRIGIDO: Removido campos de rua/cep que não existem no HTML)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: { 
@@ -2433,44 +2425,22 @@ async function finalizarVenda() {
         cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
         email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
         telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
-        cep: document.getElementById('cepCliente')?.value || '',
-        rua: document.getElementById('ruaCliente')?.value || '',
         bairro: document.getElementById('bairroCliente')?.value || '',
-        cidade: document.getElementById('cidadeCliente')?.value || '',
-        data_cadastro: new Date().toISOString()
+        cidade: document.getElementById('cidadeCliente')?.value || ''
       }])
     });
 
-    // --- SUCESSO FINAL ---
-    mostrarAviso('sucesso', 'Venda Realizada!', 'Venda gravada e cliente atualizado no sistema.');
-
-    // Libera o botão de comprovante para impressão
-    const btnComprovante = document.getElementById('btnComprovante');
-    if (btnComprovante) {
-      btnComprovante.disabled = false;
-      btnComprovante.style.opacity = "1";
-    }
-
-    // Altera o estado do botão de finalizar
-    if (btn) {
-      btn.innerHTML = '<i class="fas fa-check"></i> VENDA SALVA';
-      btn.style.background = "#64748b";
-      btn.disabled = true;
-    }
-
-    // Atualiza a lista de vendas na tela automaticamente
+    mostrarAviso('sucesso', 'Sucesso!', 'Venda concluída.');
     await mostrarLista('cadastro-vendas');
 
   } catch (err) {
-    console.error("Erro no processo de finalização:", err);
-    mostrarAviso('erro', 'Erro no Banco', err.message);
-    
-    // Devolve o botão ao estado original em caso de erro
+    console.error(err);
+    mostrarAviso('erro', 'Falha Crítica', err.message);
+  } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
+      btn.innerHTML = 'FINALIZAR VENDA';
     }
-  } finally {
     enviandoVendaAgora = false;
   }
 }
@@ -2923,4 +2893,5 @@ window.onload = async () => {
  </script>
 </body>
 </html>
+
 

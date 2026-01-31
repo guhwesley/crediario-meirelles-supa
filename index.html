@@ -2401,19 +2401,24 @@ async function finalizarVenda() {
   }
 
   try {
+    // 1. SALVAR AS PARCELAS NA TABELA VENDAS
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
+    if (!resVenda.ok) throw new Error('Erro ao salvar parcelas da venda');
+
+    // 2. SALVAR OU ATUALIZAR O CLIENTE (UPSERT)
+    // O segredo está no cabeçalho 'on-conflict' para usar o CPF como base
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: { 
         'apikey': SB_KEY, 
         'Authorization': 'Bearer ' + SB_KEY, 
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-first, return=minimal' 
+        'Prefer': 'resolution=merge-duplicates' // Tenta mesclar se houver duplicata
       },
       body: JSON.stringify([{
         nome: document.getElementById('nomeCliente').value,
@@ -2427,38 +2432,29 @@ async function finalizarVenda() {
       }])
     });
 
-    if (resVenda.ok) {
-      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos. O recibo está liberado.');
+    // Se chegou aqui, ambos salvaram
+    mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos e cliente registrado.');
 
-      // 1. Libera o botão de comprovante
-      const btnComprovante = document.getElementById('btnComprovante');
-      if (btnComprovante) {
-        btnComprovante.disabled = false;
-        btnComprovante.style.opacity = "1";
-      }
-
-      // 2. Muda estado do botão salvar
-      if (btn) {
-        btn.innerHTML = '<i class="fas fa-check"></i> GRAVADO';
-        btn.style.background = "#64748b";
-        btn.disabled = true;
-      }
-
-      // IMPORTANTE: NÃO limpamos o 'itensNoCarrinho' aqui imediatamente!
-      // Isso garante que a função imprimirComprovante() ainda tenha os dados.
-      
-      await mostrarLista('cadastro-vendas');
-
-    } else {
-      throw new Error('Erro ao salvar parcelas');
+    const btnComprovante = document.getElementById('btnComprovante');
+    if (btnComprovante) {
+      btnComprovante.disabled = false;
+      btnComprovante.style.opacity = "1";
     }
+
+    if (btn) {
+      btn.innerHTML = '<i class="fas fa-check"></i> GRAVADO';
+      btn.style.background = "#64748b";
+      btn.disabled = true;
+    }
+
+    await mostrarLista('cadastro-vendas');
 
   } catch (err) {
     console.error(err);
-    mostrarAviso('erro', 'Erro no Banco', 'Falha ao salvar.');
+    mostrarAviso('erro', 'Erro no Banco', err.message);
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = 'SALVAR';
+      btn.innerHTML = 'FINALIZAR VENDA';
     }
   } finally {
     enviandoVendaAgora = false;

@@ -1091,11 +1091,19 @@ async function buscarNoSupabase(endpoint) {
     }
 
     function togglePass() {
-      const senha = document.getElementById('senha');
-      const icon = document.getElementById('toggleSenha');
-      if (senha.type === 'password') { senha.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
-      else { senha.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
-    }
+  const senha = document.getElementById('pass'); // ID corrigido para 'pass'
+  const icon = document.getElementById('toggleSenha');
+  
+  if (!senha) return; // Segurança caso o campo não exista
+
+  if (senha.type === 'password') { 
+    senha.type = 'text'; 
+    icon.classList.replace('fa-eye', 'fa-eye-slash'); 
+  } else { 
+    senha.type = 'password'; 
+    icon.classList.replace('fa-eye-slash', 'fa-eye'); 
+  }
+}
 
 async function login() {
   const userEl = document.getElementById('user'); // ID correto do seu HTML
@@ -1346,24 +1354,25 @@ function desenharTabela() {
 async function salvarProduto(event) {
   if (event) event.preventDefault();
   
-  // O event.currentTarget às vezes falha em funções async, 
-  // por isso buscamos o botão pelo ID se possível, ou usamos o event.submitter
-  const btn = event.submitter || document.querySelector('#modalNovoProduto button[type="submit"]');
+  // Busca o botão de forma mais segura
+  const btn = event?.submitter || document.querySelector('#modalNovoProduto button[onclick*="salvarProduto"]') || document.querySelector('#modalNovoProduto .btn-save');
   const ids = ['p_cat', 'p_nome', 'p_val', 'p_url', 'p_cor', 'p_qtd'];
   
-  // Validação rápida
-  if (!document.getElementById('p_nome').value) {
+  const nomeCampo = document.getElementById('p_nome');
+  if (!nomeCampo || !nomeCampo.value.trim()) {
     alert("O nome do produto é obrigatório!");
     return;
   }
 
-  // 1. Ativa a proteção e o spinner
-  const textoOriginal = btn.innerHTML;
-  btn.disabled = true;
-  btn.classList.add('btn-loading');
-  btn.innerHTML = '<span class="spinner"></span> SALVANDO...';
+  // 1. Ativa a proteção e o spinner (com verificação para não dar erro de null)
+  let textoOriginal = "GRAVAR";
+  if (btn) {
+    textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+  }
 
-  // 2. Monta o objeto exatamente com os nomes das colunas do seu Supabase
+  // 2. Monta o objeto (Verifique se os nomes das colunas no banco são esses mesmos!)
   const dadosProduto = {
     categoria: document.getElementById('p_cat').value,
     nome: document.getElementById('p_nome').value,
@@ -1374,7 +1383,7 @@ async function salvarProduto(event) {
   };
 
   try {
-    // 3. Chamada para o Supabase
+    // 3. Chamada para o Supabase - IMPORTANTE: JSON.stringify([dadosProduto])
     const response = await fetch(`${SB_URL}/produtos`, {
       method: 'POST',
       headers: {
@@ -1383,7 +1392,7 @@ async function salvarProduto(event) {
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       },
-      body: JSON.stringify(dadosProduto)
+      body: JSON.stringify([dadosProduto]) // <--- O ARRAY [] É O QUE ESTAVA FALTANDO!
     });
 
     if (response.ok) {
@@ -1395,20 +1404,29 @@ async function salvarProduto(event) {
 
       // 5. Sucesso: Fecha modal e atualiza a lista
       fecharModal('modalNovoProduto');
-      navegarLimpo('cadastro-produtos'); 
-      console.log("Produto salvo no Supabase com sucesso!");
+      
+      // Tenta atualizar a lista (verifique se sua função é mostrarLista ou navegarLimpo)
+      if (typeof mostrarLista === 'function') {
+          await mostrarLista('cadastro-produtos');
+      } else if (typeof navegarLimpo === 'function') {
+          navegarLimpo('cadastro-produtos');
+      }
+      
+      alert("Produto salvo com sucesso!");
     } else {
-      throw new Error("Falha ao salvar no banco de dados.");
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Falha ao salvar no banco de dados.");
     }
 
   } catch (err) {
-    console.error(err);
+    console.error("Erro detalhado:", err);
     alert("Erro ao salvar: " + err.message);
   } finally {
     // 6. Restaura o botão
-    btn.disabled = false;
-    btn.classList.remove('btn-loading');
-    btn.innerHTML = textoOriginal;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+    }
   }
 }
 
@@ -1887,31 +1905,29 @@ let listaProdutosSelecionados = [];
 
 // --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA) ---
 function abrirNovaVenda() {
-  // 1. Destava a lógica de envio
-  enviandoAgora = false; 
-  enviadoSistema = false;
+  // 1. Destrava a lógica de envio (Sincronizado com os nomes das suas variáveis)
+  enviandoVendaAgora = false; // Ajustado para bater com o nome usado na finalizarVenda
 
-  // 2. Reset do Botão Finalizar (FORÇANDO A COR)
+  // 2. Reset do Botão Finalizar
   const btn = document.getElementById('btnFinalizar');
   if (btn) {
     btn.disabled = false;
-    // O 'important' garante que o verde apareça mesmo se o CSS tentar impedir
     btn.style.setProperty('background', '#10b981', 'important'); 
     btn.style.opacity = "1";
     btn.style.cursor = "pointer";
     btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
   }
 
-  // 3. Reset do Botão Comprovante
+  // 3. Reset do Botão Comprovante (Fica desativado até a próxima venda ser salva)
   const btnComp = document.getElementById('btnComprovante');
   if (btnComp) {
     btnComp.disabled = true;
     btnComp.style.opacity = "0.5";
   }
 
-  // 4. Limpeza de TODOS os campos (Adicionei Telefone e Endereço)
+  // 4. Limpeza de TODOS os campos (Incluindo o E-mail que agora é obrigatório)
   const camposParaLimpar = [
-    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente',
+    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente', 'clienteEmail',
     'ruaCliente', 'numComplemento', 'bairroCliente', 'cidadeCliente',
     'valorEntrada', 'descontoVendedor', 'dataVencimento', 'qtdProduto', 'cepCliente'
   ];
@@ -1921,22 +1937,35 @@ function abrirNovaVenda() {
     if (el) el.value = '';
   });
 
-  // 5. Reset de Produtos e Limpeza Física da Tabela
+  // 5. Reset de Produtos (Limpamos a variável e a interface)
   itensNoCarrinho = []; 
-  const corpo = document.getElementById('corpoCarrinho');
-  if (corpo) corpo.innerHTML = ""; // Limpa a tabela na hora
-  renderizarTabela(); 
   
-  // 6. Reset dos Totais e Selects
-  if (document.getElementById('valorTotal')) document.getElementById('valorTotal').innerText = 'R$ 0,00';
+  // Atualiza a visualização do carrinho e os totais
+  if (typeof atualizarTabelaCarrinho === 'function') {
+      atualizarTabelaCarrinho();
+  } else {
+      const corpo = document.getElementById('corpoCarrinho');
+      if (corpo) corpo.innerHTML = "";
+      if (document.getElementById('valorTotal')) document.getElementById('valorTotal').innerText = 'R$ 0,00';
+  }
+  
+  // 6. Reset de Resumos e Selects
   const resumoArea = document.getElementById('resumoParcelas');
   if (resumoArea) resumoArea.innerHTML = '';
   
-  if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
-  if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
-  if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
+  const tipoPagto = document.getElementById('tipoPagamento');
+  if (tipoPagto) tipoPagto.value = 'parcelado';
+  
+  const numParc = document.getElementById('numeroParcelas');
+  if (numParc) numParc.value = '1';
 
-  console.log("Sistema resetado para nova venda.");
+  const selProd = document.getElementById('selectProduto');
+  if (selProd) selProd.selectedIndex = 0;
+
+  // 7. Focar no primeiro campo para agilizar o trabalho
+  document.getElementById('nomeCliente')?.focus();
+
+  console.log("Sistema pronto para uma nova venda.");
 }
 
 
@@ -2143,18 +2172,17 @@ let enviandoVendaAgora = false;
 async function finalizarVenda() {
   const obrigatorios = ['nomeCliente', 'telCliente', 'cpfCliente', 'dataVencimento', 'clienteEmail'];
 
-  // 1. Verificação de campos obrigatórios
   for (let id of obrigatorios) {
     const el = document.getElementById(id);
     if (!el || !el.value.trim()) {
-      mostrarAviso('erro', 'Campos Vazios', 'Preencha tudo, incluindo o E-mail!');
+      mostrarAviso('erro', 'Campos Vazios', 'Preencha tudo!');
       if (el) el.focus();
       return;
     }
   }
 
   if (itensNoCarrinho.length === 0) {
-    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione produtos antes de finalizar!');
+    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione produtos!');
     return;
   }
 
@@ -2167,7 +2195,7 @@ async function finalizarVenda() {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
   }
 
-  // --- 2. CÁLCULOS ---
+  // --- CÁLCULOS ---
   const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
   const tipo = document.getElementById('tipoPagamento').value;
   const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
@@ -2181,7 +2209,6 @@ async function finalizarVenda() {
   const idVendaUnico = 'V' + Date.now();
   const parcelasParaBanco = [];
 
-  // --- 3. GERAÇÃO DAS PARCELAS ---
   for (let i = 0; i < parcelasQtd; i++) {
     let d = new Date(document.getElementById('dataVencimento').value + 'T00:00:00');
     d.setMonth(d.getMonth() + i);
@@ -2205,14 +2232,12 @@ async function finalizarVenda() {
   }
 
   try {
-    // 4. SALVAMENTO NO SUPABASE (Vendas)
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    // 5. UPSERT NO CLIENTE (Ajustado: corpo como Array [] e Preferências corrigidas)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: { 
@@ -2221,7 +2246,7 @@ async function finalizarVenda() {
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-first, return=minimal' 
       },
-      body: JSON.stringify([{ // <--- PRECISA SER UM ARRAY
+      body: JSON.stringify([{
         nome: document.getElementById('nomeCliente').value,
         cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
         email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
@@ -2234,23 +2259,25 @@ async function finalizarVenda() {
     });
 
     if (resVenda.ok) {
-      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos. Você já pode emitir o recibo.');
+      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos. O recibo está liberado.');
 
-      // --- AJUSTE: Não fechar o modal, apenas liberar o recibo ---
+      // 1. Libera o botão de comprovante
       const btnComprovante = document.getElementById('btnComprovante');
       if (btnComprovante) {
         btnComprovante.disabled = false;
         btnComprovante.style.opacity = "1";
       }
 
+      // 2. Muda estado do botão salvar
       if (btn) {
         btn.innerHTML = '<i class="fas fa-check"></i> GRAVADO';
         btn.style.background = "#64748b";
         btn.disabled = true;
       }
 
-      itensNoCarrinho = [];
-      if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
+      // IMPORTANTE: NÃO limpamos o 'itensNoCarrinho' aqui imediatamente!
+      // Isso garante que a função imprimirComprovante() ainda tenha os dados.
+      
       await mostrarLista('cadastro-vendas');
 
     } else {
@@ -2259,7 +2286,7 @@ async function finalizarVenda() {
 
   } catch (err) {
     console.error(err);
-    mostrarAviso('erro', 'Erro no Banco', 'Não foi possível salvar a venda.');
+    mostrarAviso('erro', 'Erro no Banco', 'Falha ao salvar.');
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = 'SALVAR';
@@ -2452,20 +2479,34 @@ function abrirEdicaoProduto(index) {
   const produto = dadosPlanilha[index]; 
   if (!produto) return;
 
-  document.getElementById('editProdIndex').value = index;
-  document.getElementById('editProdCategoria').value = produto[0] || ""; // Coluna A
-  document.getElementById('editProdNome').value = produto[1] || "";      // Coluna B
-  document.getElementById('editProdPreco').value = produto[2] || 0;       // Coluna C
-  document.getElementById('editProdUrl').value = produto[3] || "";        // Coluna D
-  document.getElementById('editProdEstoque').value = produto[5] || 0;     // Coluna F
+  // CORREÇÃO AQUI: 
+  // Em vez de 'index', guardamos o produto[0] que é o ID real do banco (UUID)
+  document.getElementById('editProdIndex').value = produto[0]; 
   
+  // O restante dos campos seguindo o novo deslocamento (+1):
+  document.getElementById('editProdCategoria').value = produto[1] || ""; 
+  document.getElementById('editProdNome').value      = produto[2] || ""; 
+  document.getElementById('editProdPreco').value     = produto[3] || 0;  
+  document.getElementById('editProdUrl').value       = produto[4] || ""; 
+  
+  // Se a Cor for a coluna 5 (índice 5), o Estoque será a 6 (índice 6)
+  // Verifique a ordem exata no seu Supabase Data Editor
+  document.getElementById('editProdEstoque').value   = produto[6] || 0; 
+  
+  // Se houver campo de cor no seu modal, preencha-o também:
+  if(document.getElementById('editProdCor')) {
+     document.getElementById('editProdCor').value = produto[5] || "";
+  }
+
+  // Fecha qualquer estado anterior e abre o modal
   cancelarEdicaoProduto(); 
   document.getElementById('modalEdicaoProduto').style.display = 'flex';
 }
 
 function habilitarCamposProduto() {
-  // Incluímos a Categoria na lista de campos para destravar
-  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl'];
+  // Adicionei 'editProdCor' (verifique se o ID do campo de cor na edição é este)
+  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl', 'editProdCor'];
+  
   campos.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -2475,17 +2516,21 @@ function habilitarCamposProduto() {
     }
   });
 
+  // Troquei o texto para "GRAVAR ALTERAÇÕES" para ficar padrão
   document.getElementById('containerBotoesProd').innerHTML = `
-    <button onclick="confirmarSalvarProduto()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:5px; cursor:pointer; width:100%;">
-      <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+    <button onclick="confirmarSalvarProduto()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
+      <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
     </button>
-    <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:5px;">CANCELAR</button>
+    <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:8px; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+      CANCELAR
+    </button>
   `;
 }
 
 function cancelarEdicaoProduto() {
-  // AJUSTADO: Adicionado 'editProdCategoria' para travar corretamente
-  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl'];
+  // Adicionei 'editProdCor' à lista para garantir que ele também seja travado
+  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl', 'editProdCor'];
+  
   campos.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -2495,40 +2540,47 @@ function cancelarEdicaoProduto() {
     }
   });
 
+  // Atualiza os botões para o estado inicial (Apenas visualização)
   document.getElementById('containerBotoesProd').innerHTML = `
-    <button onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width:100%;">
+    <button onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width:100%; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; font-weight:600;">
       <i class="fas fa-pencil-alt"></i> EDITAR CAMPOS
     </button>
-    <button class="btn-cancelar" onclick="fecharModal('modalEdicaoProduto')" style="width:100%; margin-top:5px;">VOLTAR</button>
+    <button class="btn-cancelar" onclick="fecharModal('modalEdicaoProduto')" style="width:100%; margin-top:8px; background:#1e293b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+      VOLTAR
+    </button>
   `;
 }
 
 async function confirmarSalvarProduto() {
-  // 1. Captura os valores do modal de edição
-  // Certifique-se de que o campo 'editProdIndex' agora guarde o ID real do produto no Supabase
-  const idProduto = document.getElementById('editProdIndex').value;
+  const idProduto = document.getElementById('editProdIndex').value; // Aqui deve estar o UUID
   const categoria = document.getElementById('editProdCategoria').value;
   const nome = document.getElementById('editProdNome').value;
-  const preco = parseFloat(document.getElementById('editProdPreco').value.replace(',', '.')) || 0;
+  
+  // Tratamento de preço: aceita tanto 10,50 quanto 10.50
+  const precoBruto = document.getElementById('editProdPreco').value.toString();
+  const preco = parseFloat(precoBruto.replace(',', '.')) || 0;
+  
   const url = document.getElementById('editProdUrl').value;
   const estoque = parseInt(document.getElementById('editProdEstoque').value) || 0;
+  
+  // Opcional: Se tiver o campo cor
+  const cor = document.getElementById('editProdCor')?.value || "";
 
-  // 2. Feedback visual
   const containerBotoes = document.getElementById('containerBotoesProd');
   const htmlOriginal = containerBotoes.innerHTML;
-  containerBotoes.innerHTML = '<div style="color:#38bdf8; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Gravando...</div>';
+  containerBotoes.innerHTML = '<div style="color:#38bdf8; text-align:center; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO BANCO...</div>';
 
-  // 3. Objeto com os dados atualizados (nomes das colunas do seu banco)
   const dadosAtualizados = {
     categoria: categoria,
     nome: nome,
     preco: preco,
     imagem_url: url,
-    estoque: estoque
+    estoque: estoque,
+    cor: cor // Remova esta linha se não houver coluna 'cor' no Supabase
   };
 
   try {
-    // 4. Chamada PATCH para o Supabase
+    // PATCH: Atualiza apenas o produto onde o id for igual ao UUID
     const response = await fetch(`${SB_URL}/produtos?id=eq.${idProduto}`, {
       method: 'PATCH',
       headers: {
@@ -2541,20 +2593,21 @@ async function confirmarSalvarProduto() {
     });
 
     if (response.ok) {
-      mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado no banco de dados.');
+      mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado com sucesso.');
       fecharModal('modalEdicaoProduto');
       
-      // 5. Recarrega a lista do Supabase para atualizar a tabela na tela
-      await mostrarLista('cadastro-produtos'); 
+      // Atualiza a tabela na tela chamando os dados novos do Supabase
+      if (typeof mostrarLista === 'function') {
+          await mostrarLista('cadastro-produtos'); 
+      }
     } else {
-      throw new Error("Erro ao salvar no Supabase");
+      const errorMsg = await response.text();
+      throw new Error("Resposta do banco: " + errorMsg);
     }
 
   } catch (erro) {
-    console.error(erro);
-    alert("ERRO: " + erro.message);
-    
-    // 6. Restaura os botões se houver erro
+    console.error("Erro na atualização:", erro);
+    alert("ERRO AO SALVAR: " + erro.message);
     containerBotoes.innerHTML = htmlOriginal; 
   }
 }
@@ -2620,8 +2673,19 @@ function configurarAtalhos() {
   });
 }
 
-// Inicializa quando a página carregar
-window.onload = configurarAtalhos;
+window.onload = async () => {
+  // 1. Configura os atalhos (que você já tinha)
+  configurarAtalhos();
+
+  // 2. Tenta carregar as vendas automaticamente ao abrir
+  console.log("Carregando dados iniciais...");
+  try {
+    // Chama a função que busca os dados no Supabase e monta a tabela
+    await mostrarLista('cadastro-vendas');
+  } catch (error) {
+    console.error("Erro ao carregar vendas na inicialização:", error);
+  }
+};
 
  </script>
 </body>

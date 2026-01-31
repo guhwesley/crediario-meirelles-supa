@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base target="_top">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+   /* --- TELA DE LOGIN DARK (ESTILO COMPLETO) --- */
+
+    #loginScreen {
+
+      display: flex;
+
+      justify-content: center;
+
+      align-items: center;
+
+      min-height: 100vh;
+
+      background: #0f172a url('https://i.postimg.cc/gcZnR1Jn/mascotecred.png') no-repeat center center;
+
+      background-size: cover;
+
+      font-family: 'Segoe UI', sans-serif;
+
+    }
+
+
+
+   #loginBox {
+  background: rgba(30, 41, 59, 0.85) !important; /* Cor fixa original */
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+#loginBox .fa-eye, #loginBox .fa-eye-slash {
+  color: white !important;
+}
+
+
+
+    #loginBox input {
+
+      width: 100%;
+
+      padding: 14px;
+
+      margin-bottom: 20px;
+
+      background: rgba(15, 23, 42, 0.7);
+
+      border: 1px solid #334155;
+
+      border-radius: 8px;
+
+      box-sizing: border-box;
+
+      display: block;
+
+      font-size: 16px;
+
+      color: white;
+
+    }
+
+
+
+    #loginBox input::placeholder {
+
+      color: #94a3b8;
+
+    }
+
+
+
+    #loginBox .login-title {
+
+      color: #ffffff;
+
+      margin-bottom: 20px;
+
+    }
+
+
+
+    /* O SEU NOVO BOTÃO COM GLOW */
+
+    .btn-login-glow {
+
+      width: 100%;
+
+      padding: 15px;
+
+      margin-top: 10px;
+
+      border: none;
+
+      border-radius: 12px;
+
+      background: linear-gradient(135deg, #0056b3 0%, #00a8ff 100%);
+
+      color: white;
+
+      font-size: 16px;
+
+      font-weight: 800;
+
+      letter-spacing: 1px;
+
+      cursor: pointer;
+
+      transition: all 0.3s ease;
+
+      box-shadow: 0 4px 15px rgba(0, 168, 255, 0.3);
+
+      text-transform: uppercase;
+
+    }
+
+
+
+    .btn-login-glow:hover {
+
+      transform: translateY(-2px);
+
+      box-shadow: 0 6px 20px rgba(0, 168, 255, 0.5);
+
+      filter: brightness(1.1);
+
+    }
+
+
+
+    .btn-login-glow:active {
+
+      transform: translateY(0);
+
+    }
+
+
+
+    .header-central { text-align: center; margin-bottom: 25px; position: relative; }
+
+    .login-title { font-size: 32px; font-weight: 800; color: #334155; display: inline-block; font-family: 'Segoe UI', sans-serif; }
+
+    .login-title span { color: #10b981; }
+
+    .btn-sair { position: absolute; right: 0; top: 5px; background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+
+
+    /* TABELA E CARDS - CORRIGIDO PARA ROLAGEM LATERAL */
+
+    .table-container {
+
+      background: white;
+
+      border-radius: 10px;
+
+      overflow-x: auto;
+
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+      width: 100%;
+
+      -webkit-overflow-scrolling: touch;
+
+    }
+
+    table {
+
+      width: 100%;
+
+      border-collapse: collapse;
+
+      white-space: nowrap;
+
+      font-family: 'Segoe UI', sans-serif;
+
+      min-width: 1000px; /* Mantém estrutura de PC no celular */
+
+    }
+
+    th, td { padding: 15px; border-bottom: 1px solid #f1f5f9; text-align: left; font-size: 13px; }
+
+    th { background: #0056b3; color: white; }
+
+    .col-resumo { min-width: 50px !important; width: 50px; text-align: center; padding: 5px; }
+
+
+
+    tbody tr:nth-child(even) { background-color: #f1f5f9; }
+
+    tbody tr:nth-child(odd) { background-color: #ffffff; }
+
+
+
+    /* CORES DE CONDICAO ATUALIZADAS */
+
+    .cond-paga { color: #10b981 !important; font-weight: bold; }
+
+    .cond-atenção, .cond-atencao { color: #ffbf00 !important; font-weight: 800; }
+
+    .cond-vencida { color: #ef4444 !important; font-weight: bold; }
+
+   
+
+    .pagination-container { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 15px; padding: 10px; }
+
+    .btn-pag { padding: 8px 16px; background: #0056b3; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+    .btn-pag:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; }
+
+    .confirm-box, .form-box { background: white; border-radius: 20px; width: 90%; max-width: 480px; padding: 25px; text-align: left; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+
+   
+
+    .form-box h3 { color: #0056b3; font-size: 20px; margin-bottom: 20px; font-family: 'serif'; font-weight: bold; }
+
+    .form-box input {
+
+      width: 100%;
+
+      padding: 12px 15px;
+
+      margin-bottom: 15px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 8px;
+
+      box-sizing: border-box;
+
+      font-size: 15px;
+
+      color: #555;
+
+    }
+
+
+
+    .btn-gravar { background: #1e8449; color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 5px; }
+
+    .btn-cancelar { background: #707b7c; color: white; width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 10px; }
+
+    .btn-modal { flex: 1; padding: 15px; border-radius: 15px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin: 5px; }
+
+    .card { padding: 18px; border-radius: 10px; color: white; font-weight: bold; text-align: center; cursor: pointer; }
+
+    .nav-bar { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .btn-nav { padding: 10px 20px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; }
+
+    .btn-disabled { background: #cbd5e1 !important; cursor: not-allowed !important; opacity: 0.6; }
+
+
+
+    /* --- TEMA DARK --- */
+
+    body.dark-theme { background-color: #0f172a !important; color: #f1f5f9; }
+
+    .dark-theme .confirm-box, .dark-theme .form-box { 
+  background: #1e293b; 
+  color: white; 
+  border: 1px solid #334155; 
+}
+
+    .dark-theme .table-container { background: #1e293b; border: 1px solid #334155; }
+
+    .dark-theme table { color: #cbd5e1; }
+
+    .dark-theme th { background: #0f172a !important; color: #38bdf8 !important; border-bottom: 1px solid #334155; }
+
+    .dark-theme tbody tr:nth-child(even) { background-color: #1e293b !important; }
+
+    .dark-theme tbody tr:nth-child(odd) { background-color: #0f172a !important; }
+
+    .dark-theme td { border-bottom: 1px solid #334155; }
+
+    .dark-theme input, .dark-theme select { background: #0f172a; color: white; border: 1px solid #334155; }
+
+    .dark-theme .header-central .login-title { color: #f1f5f9 !important; }
+
+
+
+    /* FIX VIZUALIZAÇÃO RESUMO */
+
+    #printArea { background-color: white !important; color: black !important; padding: 15px; border-radius: 8px; }
+
+    #printArea h3 { color: #0056b3 !important; border-bottom: 2px solid #0056b3; padding-bottom: 5px; margin-top: 0; }
+
+   
+
+    #resumoConteudo div {
+
+      display: flex;
+
+      justify-content: space-between;
+
+      border-bottom: 1px solid #eee;
+
+      padding: 8px 0;
+
+      color: black !important;
+
+    }
+
+
+
+    /* Proteção Dark Mode no Resumo */
+
+    .dark-theme #resumoConteudo div,
+
+    .dark-theme #resumoConteudo b,
+
+    .dark-theme #resumoConteudo span {
+
+      color: black !important;
+
+    }
+
+
+
+    .texto-verde-negrito {
+
+  color: #10b981 !important;
+
+  font-weight: bold;
+
+  text-align: right;
+ }
+
+.texto-verde-negrito {
+  color: #10b981 !important;
+  font-weight: bold;
+  text-align: right; /* Alinha números à direita como em bancos */
+  white-space: nowrap;
+}
+
+/* ÁREA DO PERFIL */
+.user-profile-area {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: 0.3s;
+    padding: 5px 10px;
+    border-radius: 50px;
+}
+.user-profile-area:hover {
+    background: rgba(16, 185, 129, 0.1);
+}
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    background: #0056b3;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    border: 2px solid #10b981;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+.user-info {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+.user-info span {
+    font-weight: bold;
+    font-size: 14px;
+    color: #334155;
+    text-transform: uppercase;
+}
+.dark-theme .user-info span { color: #f1f5f9; }
+.user-info small {
+    font-size: 10px;
+    color: #10b981;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+@media (max-width: 800px) {
+    .user-profile-area { position: relative; left: 0; transform: none; margin-bottom: 15px; justify-content: center; }
+}
+
+/* CSS para o Spinner de carregamento */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.dark-theme #loaderFiltro { color: #38bdf8 !important; }
+
+/* Layout Full Screen */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0f172a; /* Azul escuro de fundo */
+  overflow-y: auto; /* Permite rolagem */
+}
+
+.form-box-fullscreen {
+  background: #1e293b; 
+  margin: 0;           /* Remove a margem para encostar nos cantos */
+  padding: 30px;
+  width: 100%;         /* Ocupa toda a largura */
+  min-height: 100vh;   /* Ocupa toda a altura da tela */
+  max-width: none;     /* Remove o limite de 1100px para cobrir tudo */
+  box-sizing: border-box; /* Impede que o padding "estoure" a largura */
+  box-shadow: none;    /* Remove a sombra para parecer uma página única */
+}
+
+.box-venda {
+  background: #ffffff;
+  color: #333;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+/* Tabela estilizada */
+.tabela-vendas {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tabela-vendas th {
+  background: #1e90ff; /* Azul da logo [cite: 7] */
+  color: white;
+  padding: 12px;
+}
+
+.tabela-vendas td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  text-align: center;
+}
+
+/* Ajuste para campos de cadastro */
+.grid-cadastro {
+    display: grid; 
+    grid-template-columns: 2fr 1fr 1fr 1fr; /* Nome ocupa o dobro do espaço dos outros */
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .grid-cadastro {
+        grid-template-columns: 1fr; /* Em telas pequenas, empilha tudo */
+    }
+}
+
+/* Fixa o container da tabela como escuro */
+#corpoCarrinhoContainer {
+    background: #0f172a !important; /* Fundo azul marinho profundo */
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #334155;
+}
+
+/* Fixa as cores das linhas da tabela */
+.tabela-vendas-fixa {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff !important; /* Texto sempre branco */
+    background: #0f172a !important;
+}
+
+.tabela-vendas-fixa thead tr {
+    background: #38bdf8 !important; /* Cabeçalho azul claro */
+    color: #0f172a !important;      /* Texto do cabeçalho escuro para contraste */
+}
+
+.tabela-vendas-fixa td {
+    padding: 12px;
+    border-bottom: 1px solid #1e293b;
+    color: #ffffff !important; /* Garante visibilidade das letras */
+}
+
+.subtotal-destaque {
+    color: #38bdf8 !important; /* Azul brilhante para o subtotal */
+    font-weight: bold;
+}
+
+.grid-pagamento {
+  display: flex;
+  flex-wrap: wrap; /* Permite quebrar linha no celular */
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.5); /* Fundo leve para destacar a área */
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.grid-pagamento label {
+  display: block;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #cbd5e1;
+}
+
+/* Tamanhos no Desktop */
+.col-pgto { flex: 2; min-width: 180px; }     /* Forma pgto é maior */
+.col-entrada { flex: 1; min-width: 100px; }   /* Entrada menor */
+.col-desconto { flex: 1; min-width: 100px; }  /* Desconto menor */
+.col-parcelas { flex: 0.8; min-width: 80px; } /* Parcelas é o menor de todos */
+
+
+/* Ajuste Total para Celular */
+@media (max-width: 768px) {
+  .col-pgto, .col-entrada, .col-desconto, .col-parcelas {
+    flex: 1 1 100% !important; /* Cada um ocupa uma linha inteira no celular */
+  }
+
+  /* Isso impede que os campos estourem a tela no mobile */
+  input, select, textarea {
+    box-sizing: border-box !important; 
+    width: 100% !important;
+    font-size: 16px !important; /* Evita zoom indesejado no iPhone */
+  }
+
+  .form-box-fullscreen {
+    padding: 15px; /* Reduz o recuo no celular para ganhar espaço */
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+  }
+} 
+
+.input-travado {
+    background: rgba(15, 23, 42, 0.5) !important;
+    border: 1px solid #334155 !important;
+    color: #94a3b8 !important;
+    cursor: default;
+  }
+  .input-editavel {
+    background: #0f172a !important;
+    border: 2px solid #10b981 !important;
+    color: white !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Spinner e Proteção do Botão */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-loading {
+  pointer-events: none; /* Impede novos cliques */
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+
+</style>
+</head>
+<body>
+
+ <div id="loginScreen">
+  <div id="loginBox">
+    <div class="login-title" style="margin-bottom: 30px; color: white;">CREDIÁRIO <span style="color: #10b981;">MEIRELLES</span></div>
+    
+    <input type="text" id="usuario" placeholder="Seu usuário, meu lindo">
+    
+    <div class="senha-container">
+      <input type="password" id="senha" placeholder="Sua senha secreta">
+      <i class="fa-solid fa-eye" id="toggleSenha" onclick="togglePass()" style="transform: translateY(-90%);"></i>
+    </div>
+    
+    <button onclick="login()" class="btn-login-glow">ENTRAR</button>
+
+   <div style="text-align: center; margin-top: 20px;">
+  <a href="javascript:void(0)" 
+     onclick="event.preventDefault(); document.getElementById('modalEsqueci').style.display='flex'" 
+     style="color: #94a3b8; font-size: 0.85em; text-decoration: none; transition: 0.3s; cursor: pointer;"
+     onmouseover="this.style.color='#10b981'" 
+     onmouseout="this.style.color='#94a3b8'">
+    <i class="fa-solid fa-unlock-keyhole"></i> Esqueci minha senha
+  </a>
+</div>
+  </div>
+</div>
+
+  <div id="dashboard" style="display:none; padding:20px;">
+      <div class="header-central">
+    <div class="user-profile-area" id="userAvatarBtn" onclick="document.getElementById('modalSenha').style.display='flex'">
+        <div class="avatar-circle">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="user-info">
+            <span id="nomeDisplay">CARREGANDO...</span>
+            <small>Painel Administrativo</small>
+        </div>
+    </div>
+
+    <div class="login-title">CREDIÁRIO <span style="color:#10b981">MEIRELLES</span></div>
+    
+    <button onclick="logout()" class="btn-sair">Sair</button>
+</div>
+
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+      <div class="card" style="background:#0056b3" onclick="navegarLimpo('cadastro-vendas')">Total Vendas: <span id="cardVendas">0</span></div>
+      <div class="card" style="background:#f59e0b" onclick="filtrarRapido('status','Pendente')">Pendentes: <span id="cardPendentes">0</span></div>
+      <div class="card" style="background:#10b981" onclick="filtrarRapido('condicao','paga')">Concluídas: <span id="cardConcluidas">0</span></div>
+      <div class="card" style="background:#ffbf00; color: #000;" onclick="filtrarRapido('condicao','atenção')">Atenção: <span id="cardAtencao">0</span></div>
+      <div class="card" style="background:#ef4444" onclick="filtrarRapido('condicao','vencida')">Vencidas: <span id="cardVencidas">0</span></div>
+      <div class="card" style="background:#7c3aed" onclick="navegarLimpo('cadastro-produtos')">Total Produtos: <span id="cardProdutos">0</span></div>
+    </div>
+
+
+    <div id="loaderFiltro" style="display: none; text-align: center; margin-bottom: 15px; color: #0056b3; font-weight: bold; font-family: sans-serif;">
+  <div class="spinner" style="border-top-color: #0056b3; display: inline-block; width: 15px; height: 15px;"></div> 
+  Atualizando dados, aguarde...
+</div>  
+
+    <div class="nav-bar">
+    <button onclick="navegarLimpo('cadastro-vendas')" class="btn-nav" style="background:#0056b3; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-list-check"></i> Vendas
+    </button>
+
+    <button onclick="navegarLimpo('cadastro-produtos')" class="btn-nav" style="background:#0056b3; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-box-open"></i> Produtos
+    </button>
+
+    <button onclick="abrirModalVenda()" class="btn-nav" style="background:#15803d; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <i class="fa-solid fa-cart-plus"></i> Nova Venda
+</button>
+
+    <button onclick="abrirNovoProduto()" class="btn-nav" style="background:#15803d; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-circle-plus"></i> Novo Produto
+    </button>
+
+    <button onclick="window.open('https://catalogo-meirelles.netlify.app/', '_blank')" 
+        class="btn-nav" 
+        style="background: #10b981; margin-right: 10px;" 
+        title="Abrir Catálogo Externo">
+  <i class="fa-solid fa-shop"></i> Catálogo
+</button>
+
+    <button onclick="limparFiltros()" class="btn-nav" style="background:#f59e0b; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-trash-can"></i> Limpar filtros
+    </button>
+
+    <button onclick="alternarTema()" id="btnTema" class="btn-nav" style="background:#334155; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <i class="fa-solid fa-moon"></i> Dark Mode
+    </button>
+</div>
+
+    <div class="table-container">
+      <table>
+        <thead><tr id="cabecalho"></tr><tr id="filtros"></tr></thead>
+        <tbody id="corpo"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination-container">
+      <button id="btnAnt" class="btn-pag" onclick="mudarPagina(-1)">Anterior</button>
+      <span id="infoPag" style="font-weight: bold; color: #334155;">Página 1</span>
+      <button id="btnProx" class="btn-pag" onclick="mudarPagina(1)">Próximo</button>
+    </div>
+  </div>
+
+  <div id="modalNovoProduto" class="modal">
+    <div class="form-box">
+      <h3>Cadastrar Novo Produto</h3>
+      <input type="text" id="p_cat" placeholder="Categoria">
+      <input type="text" id="p_nome" placeholder="Nome do Produto">
+      <input type="text" id="p_val" placeholder="Valor (ex: 50.00)">
+      <input type="text" id="p_url" placeholder="URL da Imagem">
+      <input type="text" id="p_cor" placeholder="Cor">
+      <input type="number" id="p_qtd" placeholder="Quantidade">
+      <button class="btn-gravar" onclick="salvarProduto(event)">Gravar Produto</button>
+      <button class="btn-cancelar" onclick="fecharModal('modalNovoProduto')">Cancelar</button>
+    </div>
+  </div>
+
+ <div id="modalPagar" class="modal">
+    <div class="confirm-box">
+      <div class="confirm-title" style="text-align:center; font-weight:bold; color:#334155; margin-bottom: 15px;">Confirmar Recebimento</div>
+      
+      <div style="background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+        <span style="color: #64748b; font-size: 14px;">Valor Total da Parcela</span><br>
+        <b id="valParcelaExibir" style="font-size: 20px; color: #0f172a;">R$ 0,00</b>
+      </div>
+
+      <p style="margin-bottom: 5px; font-weight: bold;">Digite o valor pago:</p>
+      
+      <div style="position: relative; display: flex; align-items: center;">
+        <span style="position: absolute; left: 12px; font-weight: bold; color: #64748b; pointer-events: none;">R$</span>
+        <input type="number" id="inputValorPago" step="0.01" 
+          style="width: 100%; padding: 12px 12px 12px 38px; font-size: 1.3rem; border: 2px solid #10b981; border-radius: 8px; box-sizing: border-box; font-weight: bold;">
+      </div>
+      
+      <div style="display:flex; margin-top:20px; gap:10px;">
+        <button onclick="fecharModal('modalPagar')" class="btn-modal" style="background:#64748b; color:white; flex:1;">Cancelar</button>
+        <button id="btnConfirmPagar" class="btn-modal" style="background:#10b981; color:white; flex:1;">Confirmar</button>
+      </div>
+    </div>
+</div>
+
+  <div id="modalExcluir" class="modal">
+  <div class="confirm-box">
+    <div class="confirm-title" style="color:#ef4444; text-align:center; font-weight:bold; margin-bottom:15px;">Opções de Exclusão</div>
+    <p style="font-size:16px; margin-bottom:20px; text-align:center;">Como deseja proceder com a exclusão?</p>
+    
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button id="btnExcluirUnica" class="btn-modal" style="background:#f59e0b; color:white;">Excluir APENAS esta parcela</button>
+      <button id="btnExcluirTudo" class="btn-modal" style="background:#ef4444; color:white;">Excluir VENDA COMPLETA</button>
+      <button class="btn-modal" onclick="fecharModal('modalExcluir')" style="background:#64748b; color:white;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalExcluirProduto" class="modal">
+  <div class="confirm-box">
+    <div class="confirm-title" style="color:#ef4444; text-align:center; font-weight:bold; margin-bottom:15px;">Excluir Produto</div>
+    <p style="font-size:16px; margin-bottom:20px; text-align:center;">Tem certeza que deseja remover este produto do catálogo?</p>
+    
+    <div style="display:flex; gap:10px;">
+      <button id="btnConfirmarExcluirProd" class="btn-modal" style="background:#ef4444; color:white; flex:1;">Sim, Excluir</button>
+      <button class="btn-modal" onclick="fecharModal('modalExcluirProduto')" style="background:#64748b; color:white; flex:1;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+  <div id="modalResumo" class="modal">
+    <div class="form-box">
+      <div id="printArea">
+        <h3>Resumo Meirelles</h3>
+        <div id="resumoConteudo"></div>
+      </div>
+      <button class="btn-nav" style="background:#10b981; width:100%; margin-top:15px;" onclick="baixarResumo()">Baixar Imagem</button>
+      <button class="btn-nav" style="background:#6b7280; width:100%; margin-top:8px;" onclick="fecharModal('modalResumo')">Fechar</button>
+    </div>
+  </div>
+
+<div id="modalEdicaoProduto" class="modal">
+  <div class="form-box">
+    <div style="display: flex; align-items: center; gap: 10px; color: #38bdf8; margin-bottom: 20px;">
+      <i class="fas fa-pencil-alt"></i>
+      <h3 style="margin: 0; color: #38bdf8;">Detalhes / Edição</h3>
+    </div>
+    
+    <input type="hidden" id="editProdIndex"> 
+
+    <label style="color: #94a3b8; font-size: 12px;">CATEGORIA</label>
+    <input type="text" id="editProdCategoria" class="input-travado" readonly>
+
+    <label style="color: #94a3b8; font-size: 12px;">NOME DO PRODUTO</label>
+    <input type="text" id="editProdNome" class="input-travado" readonly>
+    
+    <label style="color: #94a3b8; font-size: 12px;">PREÇO (R$)</label>
+    <input type="number" id="editProdPreco" class="input-travado" readonly step="0.01">
+    
+    <label style="color: #94a3b8; font-size: 12px;">ESTOQUE ATUAL</label>
+    <input type="number" id="editProdEstoque" class="input-travado" readonly>
+
+    <label style="color: #94a3b8; font-size: 12px;">URL DA IMAGEM</label>
+    <input type="text" id="editProdUrl" class="input-travado" readonly placeholder="http://link-da-imagem.jpg">
+
+    <div id="containerBotoesProd" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+      <button onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width: 100%;">
+        <i class="fas fa-pencil-alt"></i> EDITAR CAMPOS
+      </button>
+      <button class="btn-cancelar" onclick="fecharModal('modalEdicaoProduto')" style="width: 100%; margin: 0;">VOLTAR</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="modalSenha" class="modal">
+  <div class="form-box">
+    <h3><i class="fa-solid fa-lock"></i> Alterar Minha Senha</h3>
+    <input type="password" id="senhaAtual" placeholder="Senha Atual">
+    <input type="password" id="novaSenha" placeholder="Nova Senha">
+    <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
+    
+    <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()">Salvar Nova Senha</button>
+    <button class="btn-cancelar" onclick="fecharModal('modalSenha')">Cancelar</button>
+  </div>
+</div>
+
+<div id="modalEsqueci" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155;">
+    <h3 style="color:white; margin-bottom:10px;">Recuperar Acesso</h3>
+    <p style="color:#94a3b8; font-size:0.9em; margin-bottom:20px;">Digite seu <b>WhatsApp (com DDD)</b> para receber seus dados de acesso.</p>
+    
+    <input type="text" id="recuperarTel" placeholder="Ex: DDD+numero" 
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+       style="width:100%; padding:12px; border-radius:8px; background:#0f172a; border:1px solid #334155; color:white; margin-bottom:20px; outline:none;">
+    
+    <div style="display:flex; gap:10px;">
+      <button onclick="document.getElementById('modalEsqueci').style.display='none'" style="flex:1; padding:10px; border-radius:8px; background:#334155; color:white; border:none; cursor:pointer;">Cancelar</button>
+      <button id="btnEnviarRecuperacao" onclick="solicitarRecuperacao()" style="flex:1; padding:10px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold;">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalAviso" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; align-items:center; justify-content:center; backdrop-filter: blur(4px); animation: fadeIn 0.3s ease;">
+  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:320px; text-align:center; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+    <div id="avisoIcone" style="font-size: 3.5rem; margin-bottom: 15px;"></div>
+    
+    <h3 id="avisoTitulo" style="color:white; margin-bottom:10px; font-family: sans-serif; letter-spacing: 0.5px;"></h3>
+    <p id="avisoTexto" style="color:#94a3b8; font-size:0.95em; margin-bottom:25px; line-height:1.5;"></p>
+    
+    <button id="btnModalAviso" onclick="document.getElementById('modalAviso').style.display='none'" 
+            style="width:100%; padding:14px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold; font-size: 1rem; transition: 0.2s;">
+      Entendido
+    </button>
+  </div>
+</div>
+
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+</style>
+
+<div id="modalConfirmar" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:30000; align-items:center; justify-content:center; backdrop-filter: blur(4px); animation: fadeIn 0.3s ease;">
+  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+    <div style="font-size: 3.5rem; color: #f59e0b; margin-bottom: 15px;">
+        <i class="fas fa-question-circle"></i>
+    </div>
+    <h3 style="color:white; margin-bottom:10px; font-family: sans-serif;">Nova Venda?</h3>
+    <p style="color:#94a3b8; font-size:0.95em; margin-bottom:25px; line-height:1.5;">
+        Atenção: Isso apagará todos os dados digitados. Deseja continuar?
+    </p>
+    
+    <div style="display:flex; gap:10px;">
+      <button onclick="document.getElementById('modalConfirmar').style.display='none'" 
+              style="flex:1; padding:12px; border-radius:8px; background:#475569; color:white; border:none; cursor:pointer; font-weight:bold; transition: 0.2s;">
+        Cancelar
+      </button>
+      <button onclick="executarLimpezaTotal()" 
+              style="flex:1; padding:12px; border-radius:8px; background:#ef4444; color:white; border:none; cursor:pointer; font-weight:bold; transition: 0.2s;">
+        Sim, Limpar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="modalVenda" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; overflow-y: auto; z-index: 1000; padding: 20px 0;">
+    
+    <div style="max-width: 1100px; margin: 0 auto; background: #1e293b; border-radius: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); padding: 30px; border: 1px solid #334155;">
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://i.postimg.cc/N0D8vD8T/crediariomeirelles.jpg" alt="Logo" style="max-height: 100px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <h1 style="color: #38bdf8; margin: 0; font-size: 2rem;">CADASTRO DE VENDAS</h1>
+            <p style="color: #94a3b8;">Crediário Meirelles - Sistema de Gestão</p>
+        </div>
+
+        <form id="formNovaVenda">
+            
+            <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155;">
+    <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-user-circle"></i> Dados do Cliente
+    </h3>
+    
+    <div class="grid-cadastro">
+        <input type="text" id="nomeCliente" placeholder="Nome Completo do Cliente" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="text" id="cpfCliente" placeholder="CPF" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="tel" id="telCliente" placeholder="Telefone" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+
+        <input type="email" id="clienteEmail" placeholder="E-mail do Cliente (Para Recibo)" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+
+        <input type="text" id="trabalhoCliente" placeholder="Local de Trabalho" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; margin-top: 15px;">
+        <input type="text" id="cepCliente" placeholder="CEP" onblur="buscaCep()" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="text" id="ruaCliente" placeholder="RUA" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="text" id="bairroCliente" placeholder="Bairro" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+    <input type="text" id="cidadeCliente" placeholder="Cidade" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="text" id="numComplemento" placeholder="Nº / Complemento" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+    </div>
+</div>
+            <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155;">
+                <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-shopping-cart"></i> Itens da Venda
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: 3fr 1fr auto; gap: 15px; margin-bottom: 20px; align-items: end;">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; display: block;">Escolha o Produto:</label>
+                        <select id="selectProduto" style="width: 100%; background: #0f172a; color: white; border: 1px solid #38bdf8; padding: 12px; border-radius: 8px;">
+                            <option value="">Carregando produtos...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; display: block;">Qtd:</label>
+                        <input type="number" id="qtdProduto" value="1" min="1" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+                    </div>
+                    <button type="button" onclick="adicionarAoCarrinho()" style="background: #38bdf8; color: #0f172a; border: none; padding: 0 30px; border-radius: 8px; cursor: pointer; font-weight: bold; height: 48px; transition: 0.3s;" onmouseover="this.style.background='#7dd3fc'">
+                        <i class="fas fa-plus"></i> ADICIONAR
+                    </button>
+                </div>
+
+                <div style="background: #0f172a !important; border-radius: 10px; overflow: hidden; border: 1px solid #334155; margin-bottom: 20px;">
+    <table style="width: 100%; border-collapse: collapse; color: white !important; background: #0f172a !important;">
+        <thead>
+            <tr style="background: #38bdf8 !important; color: #0f172a !important;">
+                <th style="padding: 12px; text-align: left;">Produto</th>
+                <th style="padding: 12px; text-align: center;">Qtd</th>
+                <th style="padding: 12px; text-align: center;">Unitário</th>
+                <th style="padding: 12px; text-align: center;">Subtotal</th>
+                <th style="padding: 12px; text-align: center;">Ação</th>
+            </tr>
+        </thead>
+        <tbody id="corpoCarrinho">
+            </tbody>
+    </table>
+<div style="display: flex; flex-wrap: nowrap; gap: 30px; justify-content: center; align-items: flex-end; margin-top: 25px; padding: 0 20px 15px 20px;">
+    
+    <div style="flex: 1; min-width: 180px; max-width: 250px;">
+    <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Forma de Pagamento</label>
+    <select id="tipoPagamento" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+        <option value="parcelado">Parcelado (Carnê/Cartão)</option>
+        <option value="vista">À Vista (10% Desc.)</option>
+    </select>
+    
+    <div id="labelDesconto" style="display: none; background: #fbbf24; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-top: 8px; width: fit-content;"></div>
+</div>
+
+
+    <div style="flex: 1; max-width: 150px;">
+        <label style="color: #38bdf8; font-size: 0.75rem; display: block; margin-bottom: 8px; font-weight: bold;">Desconto Vendedor</label>
+        <input type="number" id="descontoVendedor" value="0" step="0.01" oninput="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+    </div>
+
+    <div style="flex: 1; max-width: 90px;">
+        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Parc.</label>
+        <select id="numeroParcelas" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+            <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
+            <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
+            <option value="7">7x</option><option value="8">8x</option><option value="9">9x</option>
+            <option value="10">10x</option><option value="11">11x</option><option value="12">12x</option>
+        </select>
+    </div>
+
+    <div style="flex: 1; max-width: 120px;">
+        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Entrada</label>
+        <input type="number" id="valorEntrada" value="0" oninput="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+    </div>
+
+    <div style="flex: 1; max-width: 170px;">
+        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">1º Vencimento</label>
+        <input type="date" id="dataVencimento" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem; color-scheme: dark;">
+    </div>
+</div>
+
+<div style="margin-top: 25px; border-top: 1px dashed #334155; padding-top: 20px; text-align: right; padding-right: 35px;">
+    <h2 style="color: white; margin: 0; font-size: 1.8rem; font-weight: bold;">
+        Total Líquido: <span id="valorTotal" style="color: #10b981;">R$ 0,00</span>
+    </h2>
+    <div id="resumoParcelas" style="color: #94a3b8; margin-top: 5px; font-size: 1rem;">1x de R$ 0,00</div>
+</div>
+          <div style="display: flex; gap: 8px; padding: 15px 0; align-items: center; justify-content: center; flex-wrap: wrap;">
+    
+    <div style="display: flex; gap: 10px; margin-top: 15px; width: 100%;">
+    <button type="button" id="btnFinalizarInformal" onclick="finalizarVenda('informal')" 
+        style="flex: 1; background: #64748b; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <i class="fas fa-file-alt"></i> SÓ SISTEMA
+    </button>
+
+   
+</div>
+
+    <button type="button" id="btnComprovante" onclick="imprimirComprovante()" disabled style="width: 120px; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; opacity: 0.5; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <i class="fas fa-file-invoice"></i> RECIBO
+    </button>
+
+    <button type="button" onclick="prepararNovaVenda()" style="width: 120px; background: #475569; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <i class="fas fa-plus"></i> NOVA
+    </button>
+
+    <button type="button" onclick="fecharModal('modalVenda')" style="width: 90px; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s;">
+        SAIR
+    </button>
+</div>
+
+<div id="modalSucesso" class="aviso-sucesso" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.9);">
+  <div style="text-align: center; background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); max-width: 380px; width: 90%; border-top: 8px solid #10b981;">
+    
+    <div style="background: #ecfdf5; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+      <i class="fa-solid fa-check" style="font-size: 40px; color: #10b981;"></i>
+    </div>
+
+    <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 10px;">Tudo pronto!</h3>
+    <p style="color: #64748b; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+      O produto foi registado e o formulário limpo.
+    </p>
+
+    <button onclick="document.getElementById('modalSucesso').style.display='none'" 
+            style="background: #10b981; color: white; border: none; padding: 14px 30px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
+      OK, ENTENDIDO
+    </button>
+  </div>
+</div>
+  
+  <script>
+
+  // --- CONFIGURAÇÃO SUPABASE ---
+const SB_URL = "https://ixtjoplzakqwfzxpmzwc.supabase.co/rest/v1";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dGpvcGx6YWtxd2Z6eHBtendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MjEzOTEsImV4cCI6MjA4NTM5NzM5MX0.TIlZg-JSqaMuIirnuN58h3mQTNmHrO-4kShYo94bTqc";
+
+// Função padrão para buscar dados no Supabase
+async function buscarNoSupabase(endpoint) {
+  try {
+    const response = await fetch(`${SB_URL}/${endpoint}`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (erro) {
+    console.error("Erro na requisição:", erro);
+    return [];
+  }
+}
+
+    let dadosPlanilha = [], filtros = {}, abaAtual = '', timerFiltro;
+    let paginaAtual = 1;
+    const itensPorPagina = 20;
+    const colunasSelect = ['id_venda', 'cliente', 'status', 'categoria', 'condicao', 'forma_pagamento', 'parcela'];
+
+    function alternarTema() {
+      const isDark = document.body.classList.toggle('dark-theme');
+      const btn = document.getElementById('btnTema');
+      btn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i> Light Mode' : '<i class="fa-solid fa-moon"></i> Dark Mode';
+      btn.style.background = isDark ? '#f59e0b' : '#334155';
+    }
+
+    function togglePass() {
+      const senha = document.getElementById('senha');
+      const icon = document.getElementById('toggleSenha');
+      if (senha.type === 'password') { senha.type = 'text'; icon.classList.replace('fa-eye', 'fa-eye-slash'); }
+      else { senha.type = 'password'; icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+    }
+
+async function login() {
+  const userEl = document.getElementById('user'); // ID correto do seu HTML
+  const passEl = document.getElementById('pass'); // ID correto do seu HTML
+  const btn = document.querySelector('#loginBox button');
+
+  const usuario = userEl.value.trim();
+  const senha = passEl.value.trim();
+
+  if (!usuario || !senha) {
+    mostrarAviso('erro', 'Campos Vazios', 'Preencha utilizador e senha!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
+
+  try {
+    const response = await fetch(`${SB_URL}/usuarios?login=eq.${usuario}&senha=eq.${senha}&select=*`, {
+      method: 'GET',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+    });
+    const dados = await response.json();
+
+    if (dados && dados.length > 0) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('nomeDisplay').textContent = usuario.toUpperCase();
+      
+      // IMPORTANTE: Carregar dados do Supabase após logar
+      await carregarProdutosSupabase(); 
+      await mostrarLista('cadastro-vendas');
+    } else {
+      mostrarAviso('erro', 'Acesso Negado', 'Utilizador ou senha incorretos!');
+    }
+  } catch (err) {
+    mostrarAviso('erro', 'Erro de Conexão', 'Falha ao conectar ao Supabase.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Entrar';
+  }
+}
+    
+    function logout() { 
+  // Esconde o sistema e mostra o login
+  document.getElementById('dashboard').style.display = 'none'; 
+  document.getElementById('loginScreen').style.display = 'flex'; 
+
+  // RESET DO BOTÃO DE LOGIN
+  const btn = document.querySelector('.btn-login-glow');
+  btn.disabled = false;
+  btn.innerHTML = 'ENTRAR'; // Remove a animação e volta o texto original
+
+  // Opcional: Limpar os campos de usuário e senha para o próximo login
+  document.getElementById('senha').value = '';
+}
+
+   function navegarLimpo(aba) {
+  // 1. Liga o carregando antes de começar a troca
+  document.getElementById('loaderFiltro').style.display = 'block';
+  filtros = {}; 
+  paginaAtual = 1; 
+  mostrarLista(aba);
+}
+
+async function mostrarLista(aba) {
+  abaAtual = aba;
+  // 1. Liga o carregando
+  document.getElementById('loaderFiltro').style.display = 'block';
+
+  // Define qual tabela ler no Supabase
+  const tabela = (aba === 'cadastro-produtos') ? 'produtos' : 'vendas';
+
+  try {
+    // 2. Busca os dados no Supabase
+    const response = await fetch(`${SB_URL}/${tabela}?select=*`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const resSupabase = await response.json();
+
+    if (!resSupabase || resSupabase.length === 0) {
+      // Caso o banco esteja vazio, cria um cabeçalho genérico para não dar erro
+      dadosPlanilha = [["Nenhum dado encontrado"], []];
+    } else {
+      // 3. CONVERSÃO: Transforma os objetos do Supabase no formato de matriz [ [cabecalho], [linha1], [linha2] ]
+      const cabecalhos = Object.keys(resSupabase[0]);
+      const linhas = resSupabase.map(obj => cabecalhos.map(col => obj[col]));
+      
+      // Define a variável global que o seu sistema já usa
+      dadosPlanilha = [cabecalhos, ...linhas];
+    }
+
+    // 4. Atualiza a interface (as funções que você já tem)
+    atualizarCards();
+    desenharTabela();
+
+  } catch (error) {
+    console.error("Erro ao carregar dados do Supabase:", error);
+    mostrarAviso('erro', 'Erro de Conexão', 'Não foi possível carregar os dados.');
+  } finally {
+    // 5. Desliga o carregando
+    document.getElementById('loaderFiltro').style.display = 'none';
+  }
+}
+
+    function aplicarFiltroDelay(i, v) {
+  // 1. Liga o aviso de carregando na tela
+  document.getElementById('loaderFiltro').style.display = 'block';
+
+  clearTimeout(timerFiltro);
+  
+  timerFiltro = setTimeout(() => { 
+    filtros[i] = v; 
+    paginaAtual = 1; 
+    desenharTabela(); 
+    
+    // 2. Desliga o aviso após os 4 segundos e a tabela atualizar
+    document.getElementById('loaderFiltro').style.display = 'none';
+  }, 4000);
+}
+
+    function mudarPagina(valor) {
+      paginaAtual += valor; desenharTabela();
+    }
+
+function desenharTabela() {
+  const h = dadosPlanilha[0], 
+        corpo = document.getElementById('corpo'), 
+        cab = document.getElementById('cabecalho'), 
+        fil = document.getElementById('filtros');
+
+  // Limpeza inicial
+  cab.innerHTML = '<th class="col-resumo">🔎</th>'; 
+  fil.innerHTML = '<th class="col-resumo"></th>'; 
+  corpo.innerHTML = '';
+
+  // 1. Cabeçalho e Filtros
+  h.forEach((title, i) => {
+    cab.innerHTML += `<th>${title}</th>`;
+    let thF = document.createElement('th');
+    let titleNormalize = title.toString().toLowerCase().trim();
+
+    if (colunasSelect.includes(titleNormalize)) {
+      let u = [...new Set(dadosPlanilha.slice(1).map(d => d[i]))].filter(x => x).sort();
+      thF.innerHTML = `<select onchange="filtros[${i}]=this.value; paginaAtual=1; desenharTabela();">
+                        <option value="">Todos</option>
+                        ${u.map(v => `<option value="${v}">${v}</option>`).join('')}
+                      </select>`;
+    } else {
+      thF.innerHTML = `<input oninput="aplicarFiltroDelay(${i}, this.value)" placeholder="Filtrar...">`;
+    }
+    fil.appendChild(thF);
+  });
+  cab.innerHTML += '<th>Ações</th>';
+
+  // 2. Filtro e Paginação
+  let filtrados = dadosPlanilha.slice(1)
+    .map((l, i) => ({ dados: l, indexOriginal: i + 1 })) 
+    .filter(item => 
+      Object.keys(filtros).every(k => !filtros[k] || String(item.dados[k]).toLowerCase().includes(String(filtros[k]).toLowerCase()))
+    );
+
+  const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
+  const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
+
+  document.getElementById('infoPag').textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+  document.getElementById('btnAnt').disabled = paginaAtual === 1;
+  document.getElementById('btnProx').disabled = paginaAtual >= totalPaginas;
+
+  // --- 3. RENDERIZAÇÃO DAS LINHAS ---
+  itensPagina.forEach((item) => { 
+    // O idxReal agora vem do mapeamento que fizemos acima, nunca muda!
+    const idxReal = item.indexOriginal; 
+    const linha = item.dados;
+    
+    const tr = document.createElement('tr');
+    let condicaoValor = "";
+
+    // Botão do Lápis: agora ele sabe a linha real mesmo se estiver filtrado
+    if (abaAtual === 'cadastro-produtos') {
+      tr.innerHTML = `<td class="col-resumo"><button onclick="abrirEdicaoProduto(${idxReal})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-pencil-alt" style="color:#f59e0b"></i></button></td>`;
+    } else {
+      tr.innerHTML = `<td class="col-resumo"><button onclick="abrirResumo(${idxReal})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i></button></td>`;
+    }
+
+    // Processamento das colunas (usamos 'linha' que definimos acima)
+    linha.forEach((cel, indexCel) => {
+      let valorExibido = cel;
+      let cl = "";
+      let tituloColuna = h[indexCel] ? h[indexCel].toLowerCase().trim() : "";
+
+      // MÁSCARA DINHEIRO
+      if (tituloColuna.includes('valor') || tituloColuna.includes('preço')) {
+        if (cel !== "" && cel !== null && cel !== undefined) {
+          let num = (typeof cel === 'number') ? cel : parseFloat(String(cel).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.'));
+          if (!isNaN(num)) valorExibido = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          cl = (tituloColuna === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
+        }
+      }
+
+      // AJUSTE DE DATA
+      if (tituloColuna.includes('data') && cel) {
+        let d = new Date(cel);
+        if (!isNaN(d.getTime())) {
+          d = new Date(d.getTime() + d.getTimezoneOffset() * 60000);
+          valorExibido = d.toLocaleDateString('pt-BR');
+        }
+      }
+
+      // CORES E CONDIÇÃO
+      if (tituloColuna === 'condicao') {
+        condicaoValor = String(cel).toLowerCase();
+        cl = 'cond-' + condicaoValor.replace(/\s/g, '');
+      }
+
+      const td = document.createElement('td');
+      td.className = cl;
+      td.innerHTML = valorExibido;
+      tr.appendChild(td);
+    });
+
+    // 4. COLUNA DE BOTÕES DE AÇÃO
+    let botoes = `<button onclick="abrirExcluir(${idxReal})" class="btn-nav" style="background:#ef4444;">✘</button>`;
+    if(abaAtual === 'cadastro-vendas') {
+        let btnPagar = (condicaoValor === 'paga' || condicaoValor === 'concluído') ? 
+            `<button class="btn-nav btn-disabled" style="margin-right:5px;">✔</button>` : 
+            `<button onclick="abrirPagar(${idxReal})" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`;
+        botoes = btnPagar + botoes;
+    }
+    const tdAcoes = document.createElement('td');
+    tdAcoes.innerHTML = botoes;
+    tr.appendChild(tdAcoes);
+
+    corpo.appendChild(tr);
+  });
+   }
+
+async function salvarProduto(event) {
+  if (event) event.preventDefault();
+  
+  // O event.currentTarget às vezes falha em funções async, 
+  // por isso buscamos o botão pelo ID se possível, ou usamos o event.submitter
+  const btn = event.submitter || document.querySelector('#modalNovoProduto button[type="submit"]');
+  const ids = ['p_cat', 'p_nome', 'p_val', 'p_url', 'p_cor', 'p_qtd'];
+  
+  // Validação rápida
+  if (!document.getElementById('p_nome').value) {
+    alert("O nome do produto é obrigatório!");
+    return;
+  }
+
+  // 1. Ativa a proteção e o spinner
+  const textoOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.classList.add('btn-loading');
+  btn.innerHTML = '<span class="spinner"></span> SALVANDO...';
+
+  // 2. Monta o objeto exatamente com os nomes das colunas do seu Supabase
+  const dadosProduto = {
+    categoria: document.getElementById('p_cat').value,
+    nome: document.getElementById('p_nome').value,
+    preco: parseFloat(document.getElementById('p_val').value.replace(',', '.')) || 0,
+    imagem_url: document.getElementById('p_url').value,
+    cor: document.getElementById('p_cor').value,
+    estoque: parseInt(document.getElementById('p_qtd').value) || 0
+  };
+
+  try {
+    // 3. Chamada para o Supabase
+    const response = await fetch(`${SB_URL}/produtos`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(dadosProduto)
+    });
+
+    if (response.ok) {
+      // 4. Limpa os campos
+      ids.forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = ""; 
+      });
+
+      // 5. Sucesso: Fecha modal e atualiza a lista
+      fecharModal('modalNovoProduto');
+      navegarLimpo('cadastro-produtos'); 
+      console.log("Produto salvo no Supabase com sucesso!");
+    } else {
+      throw new Error("Falha ao salvar no banco de dados.");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao salvar: " + err.message);
+  } finally {
+    // 6. Restaura o botão
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btn.innerHTML = textoOriginal;
+  }
+}
+
+    function abrirNovoProduto() { document.getElementById('modalNovoProduto').style.display='flex'; }
+    function fecharModal(id) { document.getElementById(id).style.display='none'; }
+    function limparFiltros() { 
+  filtros = {}; 
+  paginaAtual = 1; 
+  desenharTabela(); 
+  // Garante que o aviso de carregando suma imediatamente ao limpar
+  document.getElementById('loaderFiltro').style.display = 'none';
+}
+    
+async function filtrarRapido(c, v) { 
+    // 1. Mostra a mensagem de carregando
+    document.getElementById('loaderFiltro').style.display = 'block';
+
+    if (abaAtual !== 'cadastro-vendas') {
+        // Se não estiver na aba de vendas, carrega os dados do Supabase primeiro
+        abaAtual = 'cadastro-vendas';
+        
+        // Usamos o await para esperar carregar os dados das vendas
+        await mostrarLista('cadastro-vendas'); 
+        
+        // Após carregar, aplicamos o filtro
+        const h = dadosPlanilha[0];
+        filtros = {}; 
+        filtros[h.indexOf(c)] = v;
+        paginaAtual = 1; 
+        
+        desenharTabela();
+        document.getElementById('loaderFiltro').style.display = 'none';
+        
+    } else {
+        // Se já estiver na aba certa, o filtro é instantâneo nos dados que já estão na memória
+        const h = dadosPlanilha[0];
+        filtros = {}; 
+        filtros[h.indexOf(c)] = v; 
+        paginaAtual = 1; 
+        desenharTabela(); 
+        
+        document.getElementById('loaderFiltro').style.display = 'none';
+    }
+}
+    
+async function atualizarCards() {
+  const h = dadosPlanilha[0];
+  
+  // Localiza os índices das colunas no Supabase (garanta que os nomes batam com o banco)
+  const iC = h.indexOf('condicao');
+  const iS = h.indexOf('status');
+  const iId = h.indexOf('id_venda'); 
+
+  if (abaAtual === 'cadastro-vendas') {
+    // --- LÓGICA DE VENDAS ÚNICAS ---
+    const idsUnicos = [...new Set(dadosPlanilha.slice(1).map(x => x[iId]))].filter(id => id);
+    document.getElementById('cardVendas').textContent = idsUnicos.length;
+
+    // --- LÓGICA DE PARCELAS (DEMAIS CARDS) ---
+    const linhasDados = dadosPlanilha.slice(1);
+    
+    document.getElementById('cardPendentes').textContent = linhasDados.filter(x => String(x[iS]).toLowerCase().includes('pendente')).length;
+    document.getElementById('cardConcluidas').textContent = linhasDados.filter(x => String(x[iC]).toLowerCase() === 'paga').length;
+    document.getElementById('cardVencidas').textContent = linhasDados.filter(x => String(x[iC]).toLowerCase() === 'vencida').length;
+    document.getElementById('cardAtencao').textContent = linhasDados.filter(x => String(x[iC]).toLowerCase() === 'atenção').length;
+  }
+  
+  // --- ATUALIZAÇÃO DO CARD DE PRODUTOS (VIA SUPABASE) ---
+  // Em vez de google.script.run, fazemos um fetch rápido apenas para contar
+  try {
+    const response = await fetch(`${SB_URL}/produtos?select=id`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    const produtos = await response.json();
+    if (produtos) {
+      document.getElementById('cardProdutos').textContent = produtos.length;
+    }
+  } catch (err) {
+    console.error("Erro ao contar produtos:", err);
+  }
+}
+
+function abrirPagar(idx) {
+  const h = dadosPlanilha[0];
+  const linha = dadosPlanilha[idx];
+  
+  const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
+  const colValIdx = localizar('valor_parcela');
+  const colIdIdx = localizar('id'); // No Supabase, geralmente usamos o 'id' único da linha
+
+  // Captura o ID da linha no Supabase para saber qual atualizar
+  const idLinha = linha[colIdIdx];
+  
+  let vBruto = String(linha[colValIdx] || "0").replace(/[R$\s]/g, '');
+  if (vBruto.includes(',') && vBruto.includes('.')) { vBruto = vBruto.replace(/\./g, ''); }
+  vBruto = vBruto.replace(',', '.');
+  const valorOriginal = Math.round(parseFloat(vBruto) * 100) / 100;
+
+  const input = document.getElementById('inputValorPago');
+  const btnConfirm = document.getElementById('btnConfirmPagar');
+
+  btnConfirm.disabled = false;
+  btnConfirm.innerHTML = "Confirmar";
+  document.getElementById('valParcelaExibir').textContent = valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  
+  input.value = valorOriginal.toFixed(2);
+  document.getElementById('modalPagar').style.display = 'flex';
+
+  setTimeout(() => { input.focus(); input.select(); }, 300); 
+
+  // --- AÇÃO DE CONFIRMAR PAGAMENTO ---
+  btnConfirm.onclick = async () => {
+    const vDigitado = parseFloat(input.value.replace(',', '.'));
+    
+    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Por favor, digite um valor válido!");
+    
+    btnConfirm.disabled = true; 
+    btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+
+    try {
+      // 1. ATUALIZAÇÃO NO SUPABASE (Método PATCH)
+      // Aqui dizemos: "Na tabela vendas, onde o ID for igual a idLinha, mude a condicao para 'paga'"
+      const response = await fetch(`${SB_URL}/vendas?id=eq.${idLinha}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          condicao: vDigitado < valorOriginal ? 'pago_parcial' : 'paga',
+          valor_pago: vDigitado,
+          data_pagamento: new Date().toISOString()
+        })
+      });
+
+      if (response.ok) {
+        // 2. Envia para o n8n (sua função já existente)
+        enviarConfirmacaoParaN8N(linha, vDigitado, valorOriginal);
+
+        fecharModal('modalPagar');
+        mostrarLista(abaAtual); // Recarrega a tabela do Supabase
+        console.log("Pagamento processado com sucesso.");
+      } else {
+        throw new Error("Erro ao atualizar no banco de dados.");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao processar pagamento: " + err.message);
+    } finally {
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = "Confirmar";
+    }
+  };
+}
+
+
+function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
+  const h = dadosPlanilha[0]; // Cabeçalho da planilha
+  const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
+
+  // Lógica: Se o valor recebido for menor que o original (com margem de erro de 0.01), é PARCIAL
+  const tipoPagamento = (parseFloat(valorRecebido) < parseFloat(valorOriginal) - 0.01) ? "PARCIAL" : "TOTAL";
+
+  const dados = {
+    cliente: linha[h.indexOf('cliente')],
+    telefone: linha[h.indexOf('telefone')],
+    produto: linha[h.indexOf('produto')],
+    parcela: linha[h.indexOf('parcela')],
+    valor_pago: valorRecebido,
+    valor_original: valorOriginal,
+    tipo: tipoPagamento, 
+    data_pagamento: new Date().toLocaleDateString('pt-BR'),
+    status: 'paga'
+  };
+
+  fetch(webhookURL, { 
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados) 
+  })
+  .then(() => console.log("n8n enviado com sucesso: " + tipoPagamento))
+  .catch(err => console.error("Erro ao disparar n8n:", err));
+}
+
+async function abrirExcluir(idx) {
+  const h = dadosPlanilha[0];
+  const linha = dadosPlanilha[idx];
+  
+  // Captura o ID único da linha no Supabase (coluna 'id')
+  const idLinhaBanco = linha[h.indexOf('id')];
+
+  // --- SE ESTIVER NA ABA DE PRODUTOS ---
+  if (abaAtual === 'cadastro-produtos') {
+    const btn = document.getElementById('btnConfirmarExcluirProd');
+    document.getElementById('modalExcluirProduto').style.display = 'flex';
+    
+    btn.innerHTML = "Sim, Excluir";
+    btn.disabled = false;
+
+    // Ação de clique para excluir o produto no Supabase
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+      
+      try {
+        const response = await fetch(`${SB_URL}/produtos?id=eq.${idLinhaBanco}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': 'Bearer ' + SB_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if(response.ok) {
+          fecharModal('modalExcluirProduto');
+          await mostrarLista('cadastro-produtos'); // Recarrega a lista do banco
+        } else {
+          throw new Error("Erro ao deletar");
+        }
+      } catch (err) {
+        alert("Erro ao excluir produto.");
+        btn.disabled = false;
+        btn.innerHTML = "Sim, Excluir";
+      }
+    };
+  } 
+  // --- SE ESTIVER NA ABA DE VENDAS ---
+  else {
+    // Busca o identificador de agrupamento da venda (id_venda)
+    const idVendaAgrupador = linha[h.indexOf('id_venda')];
+    document.getElementById('modalExcluir').style.display = 'flex';
+
+    // Aqui chamamos a função processarExclusao que você já migrou para o Supabase
+    document.getElementById('btnExcluirUnica').onclick = () => processarExclusao(idx, idVendaAgrupador, 'unica');
+    document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idx, idVendaAgrupador, 'total');
+  }
+}
+
+async function processarExclusao(idx, idVenda, modo) {
+  const btnUnica = document.getElementById('btnExcluirUnica');
+  const btnTudo = document.getElementById('btnExcluirTudo');
+
+  // 1. Captura o ID real da linha no banco (geralmente a coluna 'id')
+  const h = dadosPlanilha[0];
+  const linha = dadosPlanilha[idx];
+  const idLinhaBanco = linha[h.indexOf('id')]; // ID único da parcela/produto
+  const idVendaRef = idVenda; // O agrupador da venda completa
+
+  // Trava os botões
+  btnUnica.disabled = true;
+  btnTudo.disabled = true;
+  
+  const textoOriginal = modo === 'unica' ? "Excluindo parcela..." : "Excluindo venda...";
+  const btnAlvo = (modo === 'unica' ? btnUnica : btnTudo);
+  btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${textoOriginal}`;
+
+  try {
+    let url = `${SB_URL}/${abaAtual === 'cadastro-produtos' ? 'produtos' : 'vendas'}`;
+    
+    // 2. Define o filtro da exclusão
+    // Se for 'unica', apaga só pelo ID da linha. 
+    // Se for 'tudo', apaga todas as linhas que tiverem o mesmo id_venda.
+    if (modo === 'unica') {
+      url += `?id=eq.${idLinhaBanco}`;
+    } else {
+      url += `?id_venda=eq.${idVendaRef}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      fecharModal('modalExcluir');
+      // 3. Atualiza a lista na tela buscando do Supabase
+      await mostrarLista(abaAtual);
+      console.log("Exclusão realizada com sucesso!");
+    } else {
+      throw new Error("Erro ao deletar no Supabase");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao excluir: " + err.message);
+  } finally {
+    // Destrava os botões e volta o texto original
+    btnUnica.disabled = false;
+    btnTudo.disabled = false;
+    btnUnica.innerHTML = "Excluir APENAS esta parcela";
+    btnTudo.innerHTML = "Excluir VENDA COMPLETA";
+  }
+}
+
+function baixarResumo() { 
+  html2canvas(document.getElementById('printArea')).then(c => { 
+    let a = document.createElement('a'); 
+    a.download='resumo.png'; 
+    a.href=c.toDataURL(); 
+    a.click(); 
+  }); 
+}
+
+async function executarTrocaSenha() {
+  const atual = document.getElementById('senhaAtual').value;
+  const nova = document.getElementById('novaSenha').value;
+  const confirma = document.getElementById('confirmarNovaSenha').value;
+  const btn = document.getElementById('btnSalvarSenha');
+  const user = document.getElementById('usuario').value;
+
+  if (!atual || !nova || !confirma) return alert("Preencha todos os campos!");
+  if (nova !== confirma) return alert("As novas senhas não coincidem!");
+
+  // Inicia animação SALVANDO
+  btn.disabled = true;
+  btn.classList.add('btn-loading'); 
+  btn.innerHTML = '<div class="spinner"></div> SALVANDO...';
+
+  try {
+    // 1. VERIFICA SE A SENHA ATUAL ESTÁ CORRETA
+    const checkRes = await fetch(`${SB_URL}/usuarios?login=eq.${user}&senha=eq.${atual}&select=*`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const usuarioValido = await checkRes.json();
+
+    if (!usuarioValido || usuarioValido.length === 0) {
+      throw new Error("Senha atual incorreta!");
+    }
+
+    const idUsuario = usuarioValido[0].id;
+
+    // 2. ATUALIZA PARA A NOVA SENHA
+    const updateRes = await fetch(`${SB_URL}/usuarios?id=eq.${idUsuario}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ senha: nova })
+    });
+
+    if (updateRes.ok) {
+      alert("Senha alterada com sucesso!");
+      fecharModal('modalSenha');
+      // Limpa os campos
+      document.getElementById('senhaAtual').value = '';
+      document.getElementById('novaSenha').value = '';
+      document.getElementById('confirmarNovaSenha').value = '';
+    } else {
+      throw new Error("Falha ao atualizar a senha no banco de dados.");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    btn.innerHTML = "Salvar Nova Senha";
+  }
+}
+
+async function solicitarRecuperacao() {
+  const campo = document.getElementById('recuperarTel');
+  const telInput = campo.value.trim().replace(/\D/g, ''); // Remove parênteses e traços
+  const btn = document.getElementById('btnEnviarRecuperacao');
+
+  // 1. Validação básica
+  if (!telInput || telInput.length < 10) {
+    return mostrarAviso('erro', 'Atenção', 'Por favor, digite um número de telefone válido com DDD!');
+  }
+
+  // Feedback visual
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
+
+  try {
+    // 2. CONSULTA NO SUPABASE
+    // Procuramos na tabela 'usuarios' onde a coluna 'telefone' seja igual ao digitado
+    const response = await fetch(`${SB_URL}/usuarios?telefone=eq.${telInput}&select=*`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const dadosUsuarios = await response.json();
+
+    // 3. VERIFICA SE O USUÁRIO EXISTE
+    if (dadosUsuarios && dadosUsuarios.length > 0) {
+      const usuarioEncontrado = dadosUsuarios[0];
+      const webhookN8N = "https://n8n.vps6993.panel.icontainer.net/webhook/recupsenha";
+      
+      // 4. ENVIO PARA O N8N
+      // Como você está usando mode: 'no-cors', não conseguimos ler a resposta do n8n, 
+      // então seguimos o fluxo de sucesso após o envio.
+      await fetch(webhookN8N, {
+        method: 'POST',
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          usuario: usuarioEncontrado.login, // Ajuste para o nome da sua coluna (ex: login ou usuario)
+          senha: usuarioEncontrado.senha,
+          telefone: usuarioEncontrado.telefone 
+        })
+      });
+
+      mostrarAviso('sucesso', 'Enviado!', 'Seus dados de acesso foram enviados para o seu WhatsApp.');
+      document.getElementById('modalEsqueci').style.display = 'none';
+      campo.value = "";
+
+    } else {
+      // Caso não encontre o telefone no banco
+      mostrarAviso('erro', 'Não Encontrado', 'Este telefone não está cadastrado no sistema.');
+    }
+
+  } catch (err) {
+    console.error("Erro na recuperação:", err);
+    mostrarAviso('erro', 'Erro', 'Ocorreu uma falha na conexão com o banco de dados.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Enviar";
+  }
+}
+
+  function mostrarAviso(tipo, titulo, mensagem) {
+  const modal = document.getElementById('modalAviso');
+  const icone = document.getElementById('avisoIcone');
+  const tituloEl = document.getElementById('avisoTitulo');
+  const textoEl = document.getElementById('avisoTexto');
+
+  if (tipo === 'sucesso') {
+    icone.innerHTML = '<i class="fas fa-check-circle"></i>'; // Usando FontAwesome se tiver
+    icone.style.color = '#10b981';
+  } else if (tipo === 'erro') {
+    icone.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+    icone.style.color = '#ef4444';
+  } else {
+    icone.innerHTML = '<i class="fas fa-info-circle"></i>';
+    icone.style.color = '#3b82f6'; // Azul para avisos informativos
+  }
+
+  tituloEl.innerText = titulo;
+  textoEl.innerText = mensagem;
+  modal.style.display = 'flex';
+}
+
+// --- LÓGICA DE NOVA VENDA ---
+
+// --- 1. VARIÁVEIS GLOBAIS (Deixe sempre no topo deste bloco) ---
+let itensNoCarrinho = []; 
+let listaProdutosSelecionados = []; 
+
+// --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA) ---
+function abrirNovaVenda() {
+  // 1. Destava a lógica de envio
+  enviandoAgora = false; 
+  enviadoSistema = false;
+
+  // 2. Reset do Botão Finalizar (FORÇANDO A COR)
+  const btn = document.getElementById('btnFinalizar');
+  if (btn) {
+    btn.disabled = false;
+    // O 'important' garante que o verde apareça mesmo se o CSS tentar impedir
+    btn.style.setProperty('background', '#10b981', 'important'); 
+    btn.style.opacity = "1";
+    btn.style.cursor = "pointer";
+    btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
+  }
+
+  // 3. Reset do Botão Comprovante
+  const btnComp = document.getElementById('btnComprovante');
+  if (btnComp) {
+    btnComp.disabled = true;
+    btnComp.style.opacity = "0.5";
+  }
+
+  // 4. Limpeza de TODOS os campos (Adicionei Telefone e Endereço)
+  const camposParaLimpar = [
+    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente',
+    'ruaCliente', 'numComplemento', 'bairroCliente', 'cidadeCliente',
+    'valorEntrada', 'descontoVendedor', 'dataVencimento', 'qtdProduto', 'cepCliente'
+  ];
+  
+  camposParaLimpar.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // 5. Reset de Produtos e Limpeza Física da Tabela
+  itensNoCarrinho = []; 
+  const corpo = document.getElementById('corpoCarrinho');
+  if (corpo) corpo.innerHTML = ""; // Limpa a tabela na hora
+  renderizarTabela(); 
+  
+  // 6. Reset dos Totais e Selects
+  if (document.getElementById('valorTotal')) document.getElementById('valorTotal').innerText = 'R$ 0,00';
+  const resumoArea = document.getElementById('resumoParcelas');
+  if (resumoArea) resumoArea.innerHTML = '';
+  
+  if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
+  if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
+  if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
+
+  console.log("Sistema resetado para nova venda.");
+}
+
+
+function abrirModalVenda() {
+  const modal = document.getElementById('modalVenda');
+  if (modal) {
+    modal.style.display = 'flex'; // Apenas abre o modal
+  }
+  // Se quiser que ele sempre atualize a lista de produtos ao abrir, mantenha a linha abaixo:
+  if (typeof carregarProdutos === 'function') carregarProdutos();
+}
+
+function fecharModal(id) {
+  const target = id || 'modalVenda';
+  document.getElementById(target).style.display = 'none';
+}
+
+// --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
+async function carregarProdutos() {
+  const select = document.getElementById('selectProduto');
+  select.innerHTML = '<option value="">Carregando produtos...</option>';
+
+  try {
+    // Faz a chamada direta para o Supabase
+    const response = await fetch(`${SB_URL}/produtos?select=*&order=nome.asc`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const produtos = await response.json();
+
+    if (!produtos || produtos.length === 0) {
+      select.innerHTML = '<option value="">Nenhum produto encontrado</option>';
+      return;
+    }
+
+    select.innerHTML = '<option value="">Selecione um produto...</option>';
+    produtos.forEach(p => {
+      let opt = document.createElement('option');
+      opt.value = p.nome;
+      // Ajuste o nome das colunas 'nome' e 'preco' caso no seu Supabase estejam diferentes
+      opt.text = p.nome + " - R$ " + parseFloat(p.preco).toFixed(2);
+      opt.setAttribute('data-preco', p.preco);
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error("Erro Supabase:", err);
+    select.innerHTML = '<option value="">Erro ao carregar</option>';
+  }
+}
+
+// --- 4. ADICIONAR AO CARRINHO ---
+function adicionarAoCarrinho() {
+  const select = document.getElementById('selectProduto');
+  const option = select.options[select.selectedIndex];
+  
+  if (!option || option.value === "") {
+    alert("Por favor, selecione um produto!");
+    return;
+  }
+
+  const nome = option.text;
+  const preco = parseFloat(option.getAttribute('data-preco'));
+  const qtd = parseInt(document.getElementById('qtdProduto').value) || 1;
+
+  const itemExistente = itensNoCarrinho.find(item => item.nome === nome);
+
+  if (itemExistente) {
+    itemExistente.qtd += qtd;
+    itemExistente.subtotal = itemExistente.preco * itemExistente.qtd;
+  } else {
+    itensNoCarrinho.push({
+      nome: nome,
+      preco: preco,
+      qtd: qtd,
+      subtotal: preco * qtd
+    });
+  }
+
+  renderizarTabela();
+  if (typeof calcularVendaFinal === "function") calcularVendaFinal();
+  
+  select.selectedIndex = 0;
+  document.getElementById('qtdProduto').value = 1;
+}
+
+// --- 5. REMOVER ITEM ---
+function removerItem(index) {
+  itensNoCarrinho.splice(index, 1);
+  renderizarTabela();
+  if (typeof calcularVendaFinal === "function") calcularVendaFinal();
+}
+
+// --- 6. RENDERIZAR TABELA (AQUI ELA LIMPA O HTML) ---
+function renderizarTabela() {
+  const corpo = document.getElementById('corpoCarrinho');
+  if (!corpo) return;
+  
+  corpo.innerHTML = ""; // Limpa a tabela visualmente
+
+  itensNoCarrinho.forEach((item, index) => {
+    corpo.innerHTML += `
+      <tr style="border-bottom: 1px solid #334155; background: #0f172a;">
+        <td style="padding: 12px; text-align: left; color: white !important;">${item.nome}</td>
+        <td style="padding: 12px; text-align: center; color: white !important;">${item.qtd}</td>
+        <td style="padding: 12px; text-align: center; color: white !important;">R$ ${item.preco.toFixed(2)}</td>
+        <td style="padding: 12px; text-align: center; font-weight: bold; color: #38bdf8 !important;">R$ ${item.subtotal.toFixed(2)}</td>
+        <td style="padding: 12px; text-align: center;">
+          <button type="button" onclick="removerItem(${index})" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// 1. CÁLCULO DINÂMICO (CONSIDERANDO ENTRADA NO TOTAL LÍQUIDO)
+function calcularVendaFinal() {
+  // 1. Soma bruta dos itens no carrinho
+  let bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
+  
+  const tipo = document.getElementById('tipoPagamento').value;
+  const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
+  const descontoExtra = parseFloat(document.getElementById('descontoVendedor').value) || 0;
+  const parcelasInput = document.getElementById('numeroParcelas'); 
+  const labelDesconto = document.getElementById('labelDesconto');
+
+  let descontoSistema = 0;
+  
+  // 2. Lógica de Desconto à Vista (Tag Amarela)
+  if (tipo === 'vista') {
+      descontoSistema = bruto * 0.10;
+      if (labelDesconto) {
+          labelDesconto.style.display = 'inline-block';
+          labelDesconto.style.background = '#fbbf24';
+          labelDesconto.style.color = '#000';
+          labelDesconto.innerHTML = `<i class="fas fa-tag"></i> DESCONTO 10% APLICADO`;
+      }
+      parcelasInput.value = 1;
+      parcelasInput.disabled = true;
+  } else {
+      if (labelDesconto) labelDesconto.style.display = 'none';
+      parcelasInput.disabled = false;
+  }
+
+  // 3. Cálculos de Saldo
+  // Valor da Venda = Bruto - Desconto Sistema - Desconto Vendedor
+  const valorVendaFinal = bruto - descontoSistema - descontoExtra;
+  
+  // Saldo Devedor = Valor da Venda - Entrada (O que falta pagar)
+  const saldoDevedor = valorVendaFinal - entrada;
+  
+  const numParcelas = parseInt(parcelasInput.value) || 1;
+  const valorParcela = saldoDevedor > 0 ? (saldoDevedor / numParcelas) : 0;
+
+  const f = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // 4. Atualiza o Total Líquido na tela (O valor grande agora subtrai a entrada)
+  // Se você quer que o total grande mostre quanto falta pagar:
+  document.getElementById('valorTotal').innerText = f(saldoDevedor > 0 ? saldoDevedor : 0);
+
+  // 5. RESUMO VISUAL: A "Conta Armada"
+  const resumoArea = document.getElementById('resumoParcelas');
+  let linhasResumo = [];
+
+  // Linha do Subtotal
+  linhasResumo.push(`<span style="font-size: 0.85rem; color: #94a3b8;">Subtotal: ${f(bruto)}</span>`);
+
+  // Descontos em Amarelo
+  if (descontoSistema > 0) {
+      linhasResumo.push(`<span style="font-size: 0.85rem; color: #fbbf24;">- ${f(descontoSistema)} (10% à vista)</span>`);
+  }
+  if (descontoExtra > 0) {
+      linhasResumo.push(`<span style="font-size: 0.85rem; color: #fbbf24;">- ${f(descontoExtra)} vendedor</span>`);
+  }
+
+  // Entrada em Vermelho (Subtraindo da conta)
+  if (entrada > 0) {
+      linhasResumo.push(`<span style="font-size: 0.85rem; color: #f87171; font-weight: bold;">- ${f(entrada)} ENTRADA</span>`);
+  }
+
+  // Linha separadora
+  let htmlFinal = linhasResumo.join('<br>');
+  htmlFinal += `<div style="border-top: 1px solid #475569; margin: 5px 0; width: 60%; margin-left: auto;"></div>`;
+  
+  // Valor final das parcelas em Azul
+  htmlFinal += `<strong style="color: #60a5fa; font-size: 1.1rem;">${numParcelas}x de ${f(valorParcela)}</strong>`;
+  
+  resumoArea.innerHTML = `<div style="text-align: right; line-height: 1.4;">${htmlFinal}</div>`;
+}
+
+// URL do seu Webhook n8n
+const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-CADASTRO";
+
+// Variável global para evitar envios duplicados
+let enviandoVendaAgora = false;
+
+async function finalizarVenda() {
+  const obrigatorios = ['nomeCliente', 'telCliente', 'cpfCliente', 'dataVencimento', 'clienteEmail'];
+
+  // 1. Verificação de campos obrigatórios
+  for (let id of obrigatorios) {
+    const el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      mostrarAviso('erro', 'Campos Vazios', 'Preencha tudo, incluindo o E-mail!');
+      if(el) el.focus();
+      return;
+    }
+  }
+
+  if (itensNoCarrinho.length === 0) {
+    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione produtos antes de finalizar!');
+    return;
+  }
+
+  if (enviandoVendaAgora) return;
+  enviandoVendaAgora = true;
+
+  const btn = document.getElementById('btnFinalizar');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando Dados...';
+  }
+
+  // --- 2. CÁLCULOS ---
+  const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
+  const tipo = document.getElementById('tipoPagamento').value;
+  const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
+  const descontoVendedor = parseFloat(document.getElementById('descontoVendedor').value) || 0;
+  const parcelasQtd = (tipo === 'vista') ? 1 : (parseInt(document.getElementById('numeroParcelas').value) || 1); 
+  
+  const descontoSistema = (tipo === 'vista' ? bruto * 0.10 : 0);
+  const valorVendaReal = bruto - descontoSistema - descontoVendedor;
+  const valorParcela = (valorVendaReal - entrada) / parcelasQtd;
+  
+  const idVendaUnico = 'V' + Date.now();
+  const parcelasParaBanco = [];
+
+  // --- 3. GERAÇÃO DAS PARCELAS ---
+  for (let i = 0; i < parcelasQtd; i++) {
+    let d = new Date(document.getElementById('dataVencimento').value + 'T00:00:00');
+    d.setMonth(d.getMonth() + i);
+    
+    parcelasParaBanco.push({
+      id_venda: idVendaUnico,
+      cliente_nome: document.getElementById('nomeCliente').value,
+      cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
+      telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
+      produtos_resumo: itensNoCarrinho.map(item => `${item.nome} (x${item.qtd})`).join(", "),
+      valor_total: valorVendaReal,
+      valor_entrada: i === 0 ? entrada : 0,
+      valor_parcela: valorParcela,
+      qtd_parcelas: i + 1,
+      condicao: 'pendente',
+      status: 'pendente',
+      metodo_pagamento: tipo,
+      data_venda: new Date().toISOString(),
+      data_vencimento: d.toISOString().split('T')[0]
+    });
+  }
+
+  try {
+    // 4. SALVAMENTO NO SUPABASE (Vendas)
+    const resVenda = await fetch(`${SB_URL}/vendas`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(parcelasParaBanco)
+    });
+
+    // 5. UPSERT NO CLIENTE (Salva ou Atualiza dados do cliente)
+    await fetch(`${SB_URL}/clientes`, {
+      method: 'POST',
+      headers: { 
+        'apikey': SB_KEY, 
+        'Authorization': 'Bearer ' + SB_KEY, 
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-first' 
+      },
+      body: JSON.stringify({
+        nome: document.getElementById('nomeCliente').value,
+        cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
+        email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
+        telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
+        cep: document.getElementById('cepCliente')?.value || '',
+        rua: document.getElementById('ruaCliente')?.value || '',
+        bairro: document.getElementById('bairroCliente')?.value || '',
+        cidade: document.getElementById('cidadeCliente')?.value || ''
+      })
+    });
+
+    if (resVenda.ok) {
+      mostrarAviso('sucesso', 'Venda Realizada!', 'Os dados foram salvos no Supabase.');
+      fecharModal('modalVenda');
+      
+      // Limpeza do Carrinho
+      itensNoCarrinho = [];
+      if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
+      
+      // Atualiza a tela de listagem
+      await mostrarLista('cadastro-vendas');
+    } else {
+      throw new Error('Erro ao salvar parcelas');
+    }
+
+  } catch (err) {
+    console.error(err);
+    mostrarAviso('erro', 'Erro no Banco', 'Não foi possível salvar a venda. Verifique a conexão.');
+  } finally {
+    enviandoVendaAgora = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'FINALIZAR';
+    }
+  }
+}
+
+// Função Auxiliar para busca de CEP (Opcional)
+function buscaCep() {
+  const cep = document.getElementById('cepCliente').value.replace(/\D/g, '');
+  if (cep.length === 8) {
+    fetch('https://viacep.com.br/ws/' + cep + '/json/')
+      .then(res => res.json())
+      .then(dados => {
+        if (!dados.erro) {
+          document.getElementById('ruaCliente').value = dados.logradouro;
+          document.getElementById('bairroCliente').value = dados.bairro;
+          document.getElementById('cidadeCliente').value = dados.localidade;
+        }
+      });
+  }
+}
+
+function imprimirComprovante() {
+    const nome = document.getElementById('nomeCliente').value || "Não informado";
+    const cpf = document.getElementById('cpfCliente').value || "Não informado";
+    const rua = document.getElementById('ruaCliente').value || ""; 
+    const numero = document.getElementById('numComplemento').value || ""; 
+    const bairro = document.getElementById('bairroCliente').value || "";
+    const cidade = document.getElementById('cidadeCliente').value || "";
+    
+    // Captura o texto do Total Líquido da interface (que já está com a entrada abatida)
+    const totalLiquidoTexto = document.getElementById('valorTotal').innerText;
+    
+    const pagamento = document.getElementById('tipoPagamento').value === 'vista' ? 'À Vista' : 'Parcelado';
+    const parcelas = document.getElementById('numeroParcelas').value;
+    
+    // Captura e formata a ENTRADA
+    const entradaValor = parseFloat(document.getElementById('valorEntrada').value) || 0;
+    const entradaHTML = entradaValor > 0 ? `<p style="margin:3px 0;">ENTRADA: <strong>R$ ${entradaValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
+
+    // Captura e formata o DESCONTO VENDEDOR
+    const descontoValor = parseFloat(document.getElementById('descontoVendedor').value) || 0;
+    const descontoHTML = descontoValor > 0 ? `<p style="margin:3px 0; color: #000;">DESCONTO: <strong>R$ ${descontoValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
+
+    // Tratamento de data para evitar erro se estiver vazio
+    const dataInput = document.getElementById('dataVencimento').value;
+    const dataVenc = dataInput ? dataInput.split('-').reverse().join('/') : '--/--/----';
+
+    const recibo = document.createElement('div');
+    recibo.style.width = '400px';
+    recibo.style.padding = '20px';
+    recibo.style.background = '#ffffff';
+    recibo.style.color = '#000000';
+    recibo.style.fontFamily = 'Courier New, Courier, monospace';
+    recibo.style.position = 'absolute';
+    recibo.style.left = '-9999px';
+
+    recibo.innerHTML = `
+        <div style="text-align:center; margin-bottom: 15px;">
+            <img src="https://i.postimg.cc/N0D8vD8T/crediariomeirelles.jpg" style="width: 250px; height: auto; margin-bottom: 10px;">
+            <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; margin-top: 10px;">
+                <strong style="font-size: 16px;">COMPROVANTE DE VENDA</strong>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 15px; font-size: 13px; line-height: 1.4;">
+            <strong>CLIENTE:</strong> ${nome}<br>
+            <strong>CPF:</strong> ${cpf}<br>
+            <strong>ENDEREÇO:</strong> ${rua}${numero ? ', ' + numero : ''}<br>
+            <strong>BAIRRO:</strong> ${bairro} - ${cidade}<br>
+            <strong>DATA/HORA:</strong> ${new Date().toLocaleString('pt-BR')}
+        </div>
+
+        <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;">
+            <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #000;">
+                        <th style="text-align:left; padding-bottom:5px;">PRODUTO</th>
+                        <th style="text-align:right; padding-bottom:5px;">VALOR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itensNoCarrinho.map(i => `
+                        <tr>
+                            <td style="padding:5px 0;">${i.qtd}x ${i.nome}</td>
+                            <td style="text-align:right;">R$ ${i.subtotal.toFixed(2).replace('.', ',')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:right; font-size:14px;">
+            <p style="margin:3px 0;">FORMA DE PGTO: <strong>${pagamento}</strong></p>
+            ${descontoHTML}
+            ${entradaHTML}
+            <p style="margin:3px 0;">PARCELAS: <strong>${parcelas}</strong></p>
+            <p style="margin:3px 0; font-size: 18px;"><strong>TOTAL A PAGAR: ${totalLiquidoTexto}</strong></p>
+            <p style="margin:3px 0; font-size:12px;">VENCIMENTO 1ª PARCELA: ${dataVenc}</p>
+        </div>
+
+        <div style="margin-top:30px; text-align:center; font-size:11px; border-top: 1px dashed #000; padding-top: 15px;">
+            <p style="margin:0;">OBRIGADO PELA PREFERÊNCIA!</p>
+            <p style="margin:5px 0; font-weight: bold;">CREDIÁRIO MEIRELLES</p>
+            <p style="margin:0; font-size: 9px;">Este documento não possui valor fiscal.</p>
+        </div>
+    `;
+
+    document.body.appendChild(recibo);
+
+    setTimeout(() => {
+        html2canvas(recibo, { 
+            scale: 2,
+            useCORS: true,
+            allowTaint: true 
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `Recibo_${nome.split(' ')[0]}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            document.body.removeChild(recibo);
+        });
+    }, 500);
+}
+
+// Função que o botão "NOVA VENDA" chama
+function prepararNovaVenda() {
+    document.getElementById('modalConfirmar').style.display = 'flex';
+}
+
+// Esta função só roda se o usuário clicar em "Sim, Limpar" no modal
+function executarLimpezaTotal() {
+    // 1. Fecha o modal de confirmação
+    const modal = document.getElementById('modalConfirmar');
+    if (modal) modal.style.display = 'none';
+
+    // 2. Destrava variáveis de controle (Essencial para o botão voltar a funcionar)
+    enviandoAgora = false;
+    enviadoSistema = false;
+
+    // 3. Reseta o Botão "FINALIZAR VENDA" para VERDE
+    const btnFin = document.getElementById('btnFinalizar');
+    if (btnFin) {
+        btnFin.disabled = false;
+        // Usamos setProperty para garantir que o verde vença o cinza do CSS
+        btnFin.style.setProperty('background', '#10b981', 'important'); 
+        btnFin.style.opacity = "1";
+        btnFin.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
+    }
+
+    // 4. Reseta o Botão de Recibo
+    const btnComp = document.getElementById('btnComprovante');
+    if (btnComp) {
+        btnComp.disabled = true;
+        btnComp.style.opacity = "0.5";
+    }
+
+    // 5. Limpa os campos de texto e endereço
+    const campos = [
+        'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente',
+        'cepCliente', 'ruaCliente', 'numComplemento', 'bairroCliente', 
+        'cidadeCliente', 'dataVencimento', 'valorEntrada', 
+        'numeroParcelas', 'descontoVendedor', 'qtdProduto'
+    ];
+    
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+
+    // 6. Limpa o Carrinho (Memória e Tela)
+    itensNoCarrinho = [];
+    
+    // IMPORTANTE: No seu código o ID da tabela é 'corpoCarrinho'
+    const corpo = document.getElementById('corpoCarrinho');
+    if (corpo) {
+        corpo.innerHTML = ""; // Isso limpa os produtos da tela na hora
+    }
+    
+    // Chama a função que você já tem para atualizar os cálculos (Total R$ 0,00)
+    if (typeof calcularVendaFinal === "function") {
+        calcularVendaFinal();
+    }
+
+    // 7. Reseta Selects para o padrão
+    if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
+    if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
+    if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
+
+    // 8. Foco no início para agilizar
+    const campoNome = document.getElementById('nomeCliente');
+    if(campoNome) campoNome.focus();
+}
+
+// --- FUNÇÕES DE EDIÇÃO DE PRODUTO (CORRIGIDAS) ---
+
+// --- FUNÇÕES DE EDIÇÃO DE PRODUTO (ATUALIZADAS COM URL) ---
+
+function abrirEdicaoProduto(index) {
+  const produto = dadosPlanilha[index]; 
+  if (!produto) return;
+
+  document.getElementById('editProdIndex').value = index;
+  document.getElementById('editProdCategoria').value = produto[0] || ""; // Coluna A
+  document.getElementById('editProdNome').value = produto[1] || "";      // Coluna B
+  document.getElementById('editProdPreco').value = produto[2] || 0;       // Coluna C
+  document.getElementById('editProdUrl').value = produto[3] || "";        // Coluna D
+  document.getElementById('editProdEstoque').value = produto[5] || 0;     // Coluna F
+  
+  cancelarEdicaoProduto(); 
+  document.getElementById('modalEdicaoProduto').style.display = 'flex';
+}
+
+function habilitarCamposProduto() {
+  // Incluímos a Categoria na lista de campos para destravar
+  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.readOnly = false;
+      el.classList.remove('input-travado');
+      el.classList.add('input-editavel');
+    }
+  });
+
+  document.getElementById('containerBotoesProd').innerHTML = `
+    <button onclick="confirmarSalvarProduto()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:5px; cursor:pointer; width:100%;">
+      <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+    </button>
+    <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:5px;">CANCELAR</button>
+  `;
+}
+
+function cancelarEdicaoProduto() {
+  // AJUSTADO: Adicionado 'editProdCategoria' para travar corretamente
+  const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl'];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.readOnly = true;
+      el.classList.remove('input-editavel');
+      el.classList.add('input-travado');
+    }
+  });
+
+  document.getElementById('containerBotoesProd').innerHTML = `
+    <button onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width:100%;">
+      <i class="fas fa-pencil-alt"></i> EDITAR CAMPOS
+    </button>
+    <button class="btn-cancelar" onclick="fecharModal('modalEdicaoProduto')" style="width:100%; margin-top:5px;">VOLTAR</button>
+  `;
+}
+
+async function confirmarSalvarProduto() {
+  // 1. Captura os valores do modal de edição
+  // Certifique-se de que o campo 'editProdIndex' agora guarde o ID real do produto no Supabase
+  const idProduto = document.getElementById('editProdIndex').value;
+  const categoria = document.getElementById('editProdCategoria').value;
+  const nome = document.getElementById('editProdNome').value;
+  const preco = parseFloat(document.getElementById('editProdPreco').value.replace(',', '.')) || 0;
+  const url = document.getElementById('editProdUrl').value;
+  const estoque = parseInt(document.getElementById('editProdEstoque').value) || 0;
+
+  // 2. Feedback visual
+  const containerBotoes = document.getElementById('containerBotoesProd');
+  const htmlOriginal = containerBotoes.innerHTML;
+  containerBotoes.innerHTML = '<div style="color:#38bdf8; text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Gravando...</div>';
+
+  // 3. Objeto com os dados atualizados (nomes das colunas do seu banco)
+  const dadosAtualizados = {
+    categoria: categoria,
+    nome: nome,
+    preco: preco,
+    imagem_url: url,
+    estoque: estoque
+  };
+
+  try {
+    // 4. Chamada PATCH para o Supabase
+    const response = await fetch(`${SB_URL}/produtos?id=eq.${idProduto}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(dadosAtualizados)
+    });
+
+    if (response.ok) {
+      mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado no banco de dados.');
+      fecharModal('modalEdicaoProduto');
+      
+      // 5. Recarrega a lista do Supabase para atualizar a tabela na tela
+      await mostrarLista('cadastro-produtos'); 
+    } else {
+      throw new Error("Erro ao salvar no Supabase");
+    }
+
+  } catch (erro) {
+    console.error(erro);
+    alert("ERRO: " + erro.message);
+    
+    // 6. Restaura os botões se houver erro
+    containerBotoes.innerHTML = htmlOriginal; 
+  }
+}
+
+
+// 3. CENTRAL DE ATALHOS (ENTER E ESC)
+function configurarAtalhos() {
+  // Foco inicial no login
+  const campoUser = document.getElementById('usuario');
+  if (campoUser) setTimeout(() => campoUser.focus(), 500);
+
+  document.addEventListener('keydown', function(event) {
+    const modalAviso = document.getElementById('modalAviso');
+    const loginScreen = document.getElementById('loginScreen');
+    const vendasScreen = document.getElementById('vendasScreen');
+    const resumoVenda = document.getElementById('resumoVenda') || document.getElementById('modalResumo');
+
+    // --- TECLA ESC: FECHA TUDO ---
+    if (event.key === "Escape") {
+      const modais = ['modalAviso', 'modalEsqueci', 'modalSenha', 'modalConfirmarVenda', 'modalExcluir'];
+      modais.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+
+      if (vendasScreen && vendasScreen.style.display !== 'none') {
+        if (typeof navegar === 'function') {
+          navegar('dashboard');
+        } else {
+          vendasScreen.style.display = 'none';
+          if(document.getElementById('dashboard')) document.getElementById('dashboard').style.display = 'block';
+        }
+      }
+      if (resumoVenda) resumoVenda.style.display = 'none';
+    }
+
+    // --- TECLA ENTER: LOGIN E OK ---
+    if (event.key === "Enter") {
+      if (modalAviso && modalAviso.style.display === 'flex') {
+        modalAviso.style.display = 'none';
+      } 
+      else if (loginScreen && loginScreen.style.display !== 'none') {
+        login(); 
+      }
+    }
+  });
+}
+
+// Inicializa quando a página carregar
+window.onload = configurarAtalhos;
+
+ </script>
+</body>
+</html>

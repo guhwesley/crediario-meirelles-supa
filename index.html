@@ -2164,7 +2164,7 @@ async function finalizarVenda() {
   const btn = document.getElementById('btnFinalizar');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando Dados...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
   }
 
   // --- 2. CÁLCULOS ---
@@ -2172,12 +2172,12 @@ async function finalizarVenda() {
   const tipo = document.getElementById('tipoPagamento').value;
   const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
   const descontoVendedor = parseFloat(document.getElementById('descontoVendedor').value) || 0;
-  const parcelasQtd = (tipo === 'vista') ? 1 : (parseInt(document.getElementById('numeroParcelas').value) || 1);
-
+  const parcelasQtd = (tipo === 'vista') ? 1 : (parseInt(document.getElementById('numeroParcelas').value) || 1); 
+  
   const descontoSistema = (tipo === 'vista' ? bruto * 0.10 : 0);
   const valorVendaReal = bruto - descontoSistema - descontoVendedor;
   const valorParcela = (valorVendaReal - entrada) / parcelasQtd;
-
+  
   const idVendaUnico = 'V' + Date.now();
   const parcelasParaBanco = [];
 
@@ -2185,7 +2185,7 @@ async function finalizarVenda() {
   for (let i = 0; i < parcelasQtd; i++) {
     let d = new Date(document.getElementById('dataVencimento').value + 'T00:00:00');
     d.setMonth(d.getMonth() + i);
-
+    
     parcelasParaBanco.push({
       id_venda: idVendaUnico,
       cliente_nome: document.getElementById('nomeCliente').value,
@@ -2212,16 +2212,16 @@ async function finalizarVenda() {
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    // 5. SALVAMENTO NO CLIENTE (Ajustado para formato de Array e Upsert correto)
+    // 5. UPSERT NO CLIENTE (Ajustado: corpo como Array [] e Preferências corrigidas)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': 'Bearer ' + SB_KEY,
+      headers: { 
+        'apikey': SB_KEY, 
+        'Authorization': 'Bearer ' + SB_KEY, 
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-first,return=minimal' // Ajuste na resolução de conflito
+        'Prefer': 'resolution=merge-first, return=minimal' 
       },
-      body: JSON.stringify([{ // ENVIANDO COMO ARRAY []
+      body: JSON.stringify([{ // <--- PRECISA SER UM ARRAY
         nome: document.getElementById('nomeCliente').value,
         cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
         email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
@@ -2233,32 +2233,25 @@ async function finalizarVenda() {
       }])
     });
 
-   if (resVenda.ok) {
-      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos! Agora você pode imprimir o recibo.');
+    if (resVenda.ok) {
+      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos. Você já pode emitir o recibo.');
 
-      // 1. LIBERA O BOTÃO DE RECIBO
+      // --- AJUSTE: Não fechar o modal, apenas liberar o recibo ---
       const btnComprovante = document.getElementById('btnComprovante');
       if (btnComprovante) {
         btnComprovante.disabled = false;
         btnComprovante.style.opacity = "1";
-        btnComprovante.style.cursor = "pointer";
       }
 
-      // 2. MUDANÇA NO BOTÃO SALVAR (Para indicar que já foi gravado)
       if (btn) {
         btn.innerHTML = '<i class="fas fa-check"></i> GRAVADO';
-        btn.style.background = "#64748b"; // Cor cinza para indicar finalizado
-        btn.disabled = true; 
+        btn.style.background = "#64748b";
+        btn.disabled = true;
       }
 
-      // 3. LIMPEZA INTERNA (Sem fechar a tela)
       itensNoCarrinho = [];
       if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
-      
-      // Atualiza a lista lá no fundo da tela
       await mostrarLista('cadastro-vendas');
-
-      // --- IMPORTANTE: Removi o fecharModal daqui para a tela não sumir ---
 
     } else {
       throw new Error('Erro ao salvar parcelas');
@@ -2266,18 +2259,15 @@ async function finalizarVenda() {
 
   } catch (err) {
     console.error(err);
-    mostrarAviso('erro', 'Erro no Banco', 'Não foi possível salvar. Verifique o console.');
-    
-    // Se deu erro, reativa o botão para tentar de novo
+    mostrarAviso('erro', 'Erro no Banco', 'Não foi possível salvar a venda.');
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = 'FINALIZAR';
+      btn.innerHTML = 'SALVAR';
     }
   } finally {
     enviandoVendaAgora = false;
-    // O botão 'FINALIZAR' não volta ao estado original aqui no finally 
-    // porque queremos que ele continue escrito "GRAVADO" se deu certo.
   }
+}
 
 // Função Auxiliar para busca de CEP (Opcional)
 function buscaCep() {

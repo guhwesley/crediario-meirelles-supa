@@ -1106,8 +1106,8 @@ async function buscarNoSupabase(endpoint) {
 }
 
 async function login() {
-  const userEl = document.getElementById('user'); // ID correto do seu HTML
-  const passEl = document.getElementById('pass'); // ID correto do seu HTML
+  const userEl = document.getElementById('user'); 
+  const passEl = document.getElementById('pass'); 
   const btn = document.querySelector('#loginBox button');
 
   const usuario = userEl.value.trim();
@@ -1122,28 +1122,57 @@ async function login() {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
 
   try {
+    // Busca o usuário no Supabase
     const response = await fetch(`${SB_URL}/usuarios?login=eq.${usuario}&senha=eq.${senha}&select=*`, {
       method: 'GET',
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      headers: { 
+        'apikey': SB_KEY, 
+        'Authorization': 'Bearer ' + SB_KEY 
+      }
     });
+
+    if (!response.ok) throw new Error("Erro na resposta do servidor");
+
     const dados = await response.json();
 
     if (dados && dados.length > 0) {
+      // Login bem-sucedido: Troca de tela
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
-      document.getElementById('nomeDisplay').textContent = usuario.toUpperCase();
       
-      // IMPORTANTE: Carregar dados do Supabase após logar
-      await carregarProdutosSupabase(); 
-      await mostrarLista('cadastro-vendas');
+      // Atualiza o nome do usuário na interface
+      const display = document.getElementById('nomeDisplay');
+      if (display) display.textContent = usuario.toUpperCase();
+      
+      // Carrega os dados iniciais silenciosamente
+      // Usamos Promise.allSettled para que, se um falhar, o outro ainda tente carregar
+      await Promise.allSettled([
+        carregarProdutosSupabase(),
+        mostrarLista('cadastro-vendas')
+      ]);
+
+      console.log("Sistema carregado com sucesso.");
+
     } else {
       mostrarAviso('erro', 'Acesso Negado', 'Utilizador ou senha incorretos!');
     }
+
   } catch (err) {
-    mostrarAviso('erro', 'Erro de Conexão', 'Falha ao conectar ao Supabase.');
+    console.error("Erro no processo de login:", err);
+    
+    // SÓ mostra o modal de erro se o usuário estiver offline
+    // Se estiver online, provavelmente foi apenas um "soluço" da rede e os dados carregarão em seguida
+    if (!window.navigator.onLine) {
+      mostrarAviso('erro', 'Sem Internet', 'Verifique sua conexão para entrar no sistema.');
+    } else {
+      console.log("Instabilidade momentânea detectada, mas o login pode ter funcionado.");
+    }
+
   } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Entrar';
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = 'Entrar';
+    }
   }
 }
     

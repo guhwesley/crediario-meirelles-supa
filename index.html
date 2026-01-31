@@ -2389,42 +2389,34 @@ function imprimirComprovante() {
 }
 
 // Função que o botão "NOVA VENDA" chama
-function prepararNovaVenda() {
-    document.getElementById('modalConfirmar').style.display = 'flex';
-}
-
-// Esta função só roda se o usuário clicar em "Sim, Limpar" no modal
 function executarLimpezaTotal() {
-    // 1. Fecha o modal de confirmação
     const modal = document.getElementById('modalConfirmar');
     if (modal) modal.style.display = 'none';
 
-    // 2. Destrava variáveis de controle (Essencial para o botão voltar a funcionar)
-    enviandoAgora = false;
-    enviadoSistema = false;
+    // 1. CORREÇÃO: Use o mesmo nome da variável da função finalizarVenda
+    enviandoVendaAgora = false; 
 
-    // 3. Reseta o Botão "FINALIZAR VENDA" para VERDE
+    // 2. Reseta o Botão "SALVAR" para VERDE
     const btnFin = document.getElementById('btnFinalizar');
     if (btnFin) {
         btnFin.disabled = false;
-        // Usamos setProperty para garantir que o verde vença o cinza do CSS
         btnFin.style.setProperty('background', '#10b981', 'important'); 
         btnFin.style.opacity = "1";
         btnFin.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
     }
 
-    // 4. Reseta o Botão de Recibo
+    // 3. Reseta o Botão de Recibo
     const btnComp = document.getElementById('btnComprovante');
     if (btnComp) {
         btnComp.disabled = true;
         btnComp.style.opacity = "0.5";
     }
 
-    // 5. Limpa os campos de texto e endereço
+    // 4. Limpa os campos (Adicionado 'clienteEmail')
     const campos = [
-        'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente',
-        'cepCliente', 'ruaCliente', 'numComplemento', 'bairroCliente', 
-        'cidadeCliente', 'dataVencimento', 'valorEntrada', 
+        'nomeCliente', 'telCliente', 'cpfCliente', 'clienteEmail', // <-- Adicionado aqui
+        'trabalhoCliente', 'cepCliente', 'ruaCliente', 'numComplemento', 
+        'bairroCliente', 'cidadeCliente', 'dataVencimento', 'valorEntrada', 
         'numeroParcelas', 'descontoVendedor', 'qtdProduto'
     ];
     
@@ -2433,26 +2425,21 @@ function executarLimpezaTotal() {
         if (el) el.value = "";
     });
 
-    // 6. Limpa o Carrinho (Memória e Tela)
+    // 5. Limpa o Carrinho
     itensNoCarrinho = [];
-    
-    // IMPORTANTE: No seu código o ID da tabela é 'corpoCarrinho'
     const corpo = document.getElementById('corpoCarrinho');
-    if (corpo) {
-        corpo.innerHTML = ""; // Isso limpa os produtos da tela na hora
-    }
+    if (corpo) corpo.innerHTML = ""; 
     
-    // Chama a função que você já tem para atualizar os cálculos (Total R$ 0,00)
+    // Atualiza os cálculos na tela (Total R$ 0,00)
     if (typeof calcularVendaFinal === "function") {
         calcularVendaFinal();
     }
 
-    // 7. Reseta Selects para o padrão
+    // 6. Reseta Selects
     if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
     if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
     if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
 
-    // 8. Foco no início para agilizar
     const campoNome = document.getElementById('nomeCliente');
     if(campoNome) campoNome.focus();
 }

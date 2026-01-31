@@ -1650,59 +1650,65 @@ async function atualizarCards() {
 
 async function finalizarVenda() {
     const btn = document.getElementById('btnFinalizar');
-    if (btn) btn.disabled = true;
-
     try {
-        const nomeCli = document.getElementById('nomeCliente').value;
-        const cpfCli = document.getElementById('cpfCliente').value.replace(/\D/g, '');
-        const dataVenc = document.getElementById('dataVencimento').value;
+        if (btn) btn.disabled = true;
+
+        // Captura dados básica
+        const nome = document.getElementById('nomeCliente').value;
+        const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
+        const dataVencBase = document.getElementById('dataVencimento').value;
         const parcelasQtd = parseInt(document.getElementById('numeroParcelas').value) || 1;
+        
+        // Cálculo financeiro
         const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
         const valorParcela = Math.round((bruto / parcelasQtd) * 100) / 100;
+        const idVendaUnico = 'V' + Date.now();
 
-        const dadosVenda = [];
+        const parcelasParaEnviar = [];
+
         for (let i = 0; i < parcelasQtd; i++) {
-            dadosVenda.push({
-                id_venda: 'V' + Date.now(),
-                cliente_nome: nomeCli,       
-                cpf_cnpj: cpfCli,
+            let d = new Date(dataVencBase + 'T00:00:00');
+            d.setMonth(d.getMonth() + i);
+
+            parcelasParaEnviar.push({
+                id_venda: idVendaUnico,      // Obrigatório no SQL acima
+                cliente_nome: nome,
+                cpf_cnpj: cpf,
                 valor_parcela: valorParcela,
-                qtd_parcelas: `${i + 1}/${parcelasQtd}`, 
+                qtd_parcelas: `${i + 1}/${parcelasQtd}`,
                 status: 'Pendente',
-                data_vencimento: dataVenc
+                data_vencimento: d.toISOString().split('T')[0]
             });
         }
 
-        const res = await fetch(`${SB_URL}/rest/v1/vendas`, {
+        // POST para o banco (usando o caminho que não quebra o login)
+        const res = await fetch(`${SB_URL}/vendas`, {
             method: 'POST',
-            headers: { 
-                'apikey': SB_KEY, 
-                'Authorization': 'Bearer ' + SB_KEY, 
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal' 
+            headers: {
+                'apikey': SB_KEY,
+                'Authorization': `Bearer ${SB_KEY}`,
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(dadosVenda)
+            body: JSON.stringify(parcelasParaEnviar)
         });
 
-        // SE DER ERRO, VAMOS LER A MENSAGEM DO SUPABASE
         if (!res.ok) {
-            const erroTecnico = await res.json();
-            console.error("ERRO COMPLETO:", erroTecnico);
-            
-            // ESTE ALERTA É O QUE PRECISAMOS
-            alert("MOTIVO DO ERRO 400:\n\n" + erroTecnico.message + "\n\nDica: " + (erroTecnico.hint || "Verifique os nomes das colunas"));
-            return;
+            const erroBanco = await res.json();
+            throw new Error(erroBanco.message);
         }
 
-        alert("Venda salva!");
+        alert("✅ Venda salva com sucesso!");
         location.reload();
 
-    } catch (err) {
-        alert("Erro no código: " + err.message);
+    } catch (error) {
+        console.error("Erro técnico:", error);
+        alert("🚨 Falha ao salvar: " + error.message);
     } finally {
         if (btn) btn.disabled = false;
     }
 }
+
+
 function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
   const h = dadosPlanilha[0]; // Cabeçalho da planilha
   const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
@@ -2856,4 +2862,5 @@ window.onload = async () => {
  </script>
 </body>
 </html>
+
 

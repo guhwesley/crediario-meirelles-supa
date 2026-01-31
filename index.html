@@ -1650,104 +1650,57 @@ async function atualizarCards() {
 
 async function finalizarVenda() {
     const btn = document.getElementById('btnFinalizar');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
-    }
+    if (btn) btn.disabled = true;
 
     try {
-        // 1. Coleta de dados do HTML
         const nomeCli = document.getElementById('nomeCliente').value;
         const cpfCli = document.getElementById('cpfCliente').value.replace(/\D/g, '');
-        const telCli = document.getElementById('telCliente').value.replace(/\D/g, '');
-        const emailCli = document.getElementById('clienteEmail').value;
-        const dataVencBase = document.getElementById('dataVencimento').value;
-        const tipoPgto = document.getElementById('tipoPagamento').value;
-        const parcelasQtd = (tipoPgto === 'vista') ? 1 : (parseInt(document.getElementById('numeroParcelas').value) || 1);
-
-        // 2. Cálculos Financeiros
+        const dataVenc = document.getElementById('dataVencimento').value;
+        const parcelasQtd = parseInt(document.getElementById('numeroParcelas').value) || 1;
         const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
-        const valorVendaReal = bruto - (tipoPgto === 'vista' ? bruto * 0.10 : 0);
-        const valorParcela = Math.round((valorVendaReal / parcelasQtd) * 100) / 100;
-        const idVendaUnico = 'V' + Date.now();
-        const resumoProdutos = itensNoCarrinho.map(item => `${item.nome} (x${item.qtd})`).join(", ");
+        const valorParcela = Math.round((bruto / parcelasQtd) * 100) / 100;
 
-        // 3. Preparar Parcelas para a Tabela 'vendas'
-        const parcelasParaBanco = [];
+        const dadosVenda = [];
         for (let i = 0; i < parcelasQtd; i++) {
-            let d = new Date(dataVencBase + 'T00:00:00');
-            d.setMonth(d.getMonth() + i);
-
-            parcelasParaBanco.push({
-                id_venda: idVendaUnico,
-                cliente_nome: nomeCli,       // Conforme seu novo SQL
+            dadosVenda.push({
+                id_venda: 'V' + Date.now(),
+                cliente_nome: nomeCli,       
                 cpf_cnpj: cpfCli,
-                telefone: telCli,
-                produtos_resumo: resumoProdutos,
-                valor_total: valorVendaReal,
                 valor_parcela: valorParcela,
-                qtd_parcelas: `${i + 1}/${parcelasQtd}`, // Formato "1/3"
-                metodo_pagamento: tipoPgto,
+                qtd_parcelas: `${i + 1}/${parcelasQtd}`, 
                 status: 'Pendente',
-                data_vencimento: d.toISOString().split('T')[0]
+                data_vencimento: dataVenc
             });
         }
 
-        // --- ENVIO PARA O SUPABASE ---
-
-        // A. Gravar Vendas
-        const resVenda = await fetch(`${SB_URL}/rest/v1/vendas`, {
-            method: 'POST',
-            headers: { 
-                'apikey': SB_KEY, 
-                'Authorization': 'Bearer ' + SB_KEY, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify(parcelasParaBanco)
-        });
-
-        if (!resVenda.ok) {
-            const erroV = await resVenda.json();
-            throw new Error(`Erro Vendas: ${erroV.message}`);
-        }
-
-        // B. Gravar/Atualizar Cliente (Upsert baseado no CPF)
-        const resCliente = await fetch(`${SB_URL}/rest/v1/clientes`, {
+        const res = await fetch(`${SB_URL}/rest/v1/vendas`, {
             method: 'POST',
             headers: { 
                 'apikey': SB_KEY, 
                 'Authorization': 'Bearer ' + SB_KEY, 
                 'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates' 
+                'Prefer': 'return=minimal' 
             },
-            body: JSON.stringify({
-                cliente_nome: nomeCli,       // Conforme seu novo SQL
-                cpf_cnpj: cpfCli,
-                telefone: telCli,
-                email: emailCli
-            })
+            body: JSON.stringify(dadosVenda)
         });
 
-        if (!resCliente.ok) {
-            const erroC = await resCliente.json();
-            throw new Error(`Erro Cliente: ${erroC.message}`);
+        // SE DER ERRO, VAMOS LER A MENSAGEM DO SUPABASE
+        if (!res.ok) {
+            const erroTecnico = await res.json();
+            console.error("ERRO COMPLETO:", erroTecnico);
+            
+            // ESTE ALERTA É O QUE PRECISAMOS
+            alert("MOTIVO DO ERRO 400:\n\n" + erroTecnico.message + "\n\nDica: " + (erroTecnico.hint || "Verifique os nomes das colunas"));
+            return;
         }
 
-        // 4. Sucesso Final
-        alert("Venda e Cliente registrados com sucesso!");
-        
-        // Limpeza e recarregamento
-        if (typeof itensNoCarrinho !== 'undefined') itensNoCarrinho = [];
+        alert("Venda salva!");
         location.reload();
 
     } catch (err) {
-        console.error("Falha na operação:", err);
-        alert("Ocorreu um erro: " + err.message);
+        alert("Erro no código: " + err.message);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
-        }
+        if (btn) btn.disabled = false;
     }
 }
 function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
@@ -1832,6 +1785,7 @@ async function abrirExcluir(idx) {
     document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idx, idVendaAgrupador, 'total');
   }
 }
+    
 
 async function processarExclusao(idx, idVenda, modo) {
   const btnUnica = document.getElementById('btnExcluirUnica');
@@ -2902,3 +2856,4 @@ window.onload = async () => {
  </script>
 </body>
 </html>
+

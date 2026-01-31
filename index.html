@@ -826,39 +826,14 @@
 
 <div id="modalSenha" class="modal">
   <div class="form-box">
-    <h3><i class="fa-solid fa-user-gear"></i> Gerenciar Acessos</h3>
+    <h3><i class="fa-solid fa-lock"></i> Alterar Minha Senha</h3>
+    <input type="password" id="senhaAtual" placeholder="Senha Atual">
+    <input type="password" id="novaSenha" placeholder="Nova Senha">
+    <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
     
-    <div id="secaoTrocaSenha">
-      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Alterar minha senha atual</p>
-      <input type="password" id="senhaAtual" placeholder="Senha Atual">
-      <input type="password" id="novaSenha" placeholder="Nova Senha">
-      <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
-      <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()" style="width: 100%; margin-bottom: 10px;">Salvar Nova Senha</button>
-    </div>
-
-    <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
-
-    <div id="secaoNovoUser">
-      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Cadastrar novo vendedor/usuário</p>
-      <button class="btn-novo-user" onclick="abrirModalNovoUsuario()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-        <i class="fa-solid fa-user-plus"></i> CRIAR NOVO ACESSO
-      </button>
-    </div>
-    
-    <button class="btn-cancelar" onclick="fecharModal('modalSenha')" style="width: 100%; margin-top: 15px; background: #999;">Fechar</button>
+    <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()">Salvar Nova Senha</button>
+    <button class="btn-cancelar" onclick="fecharModal('modalSenha')">Cancelar</button>
   </div>
-</div>
-
-<div id="modalNovoUsuario" class="modal" style="display:none;">
-    <div class="form-box">
-        <h3><i class="fa-solid fa-user-plus"></i> Novo Cadastro</h3>
-        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)">
-        <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso">
-        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)">
-        
-        <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" class="btn-gravar" style="width: 100%; background: #10b981;">Finalizar Cadastro</button>
-        <button onclick="fecharModal('modalNovoUsuario')" class="btn-cancelar" style="width: 100%; margin-top: 10px;">Voltar</button>
-    </div>
 </div>
 
 <div id="modalEsqueci" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
@@ -1131,8 +1106,8 @@ async function buscarNoSupabase(endpoint) {
 }
 
 async function login() {
-  const userEl = document.getElementById('user'); 
-  const passEl = document.getElementById('pass'); 
+  const userEl = document.getElementById('user'); // ID correto do seu HTML
+  const passEl = document.getElementById('pass'); // ID correto do seu HTML
   const btn = document.querySelector('#loginBox button');
 
   const usuario = userEl.value.trim();
@@ -1147,57 +1122,28 @@ async function login() {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
 
   try {
-    // Busca o usuário no Supabase
     const response = await fetch(`${SB_URL}/usuarios?login=eq.${usuario}&senha=eq.${senha}&select=*`, {
       method: 'GET',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': 'Bearer ' + SB_KEY 
-      }
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
     });
-
-    if (!response.ok) throw new Error("Erro na resposta do servidor");
-
     const dados = await response.json();
 
     if (dados && dados.length > 0) {
-      // Login bem-sucedido: Troca de tela
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('nomeDisplay').textContent = usuario.toUpperCase();
       
-      // Atualiza o nome do usuário na interface
-      const display = document.getElementById('nomeDisplay');
-      if (display) display.textContent = usuario.toUpperCase();
-      
-      // Carrega os dados iniciais silenciosamente
-      // Usamos Promise.allSettled para que, se um falhar, o outro ainda tente carregar
-      await Promise.allSettled([
-        carregarProdutosSupabase(),
-        mostrarLista('cadastro-vendas')
-      ]);
-
-      console.log("Sistema carregado com sucesso.");
-
+      // IMPORTANTE: Carregar dados do Supabase após logar
+      await carregarProdutosSupabase(); 
+      await mostrarLista('cadastro-vendas');
     } else {
       mostrarAviso('erro', 'Acesso Negado', 'Utilizador ou senha incorretos!');
     }
-
   } catch (err) {
-    console.error("Erro no processo de login:", err);
-    
-    // SÓ mostra o modal de erro se o usuário estiver offline
-    // Se estiver online, provavelmente foi apenas um "soluço" da rede e os dados carregarão em seguida
-    if (!window.navigator.onLine) {
-      mostrarAviso('erro', 'Sem Internet', 'Verifique sua conexão para entrar no sistema.');
-    } else {
-      console.log("Instabilidade momentânea detectada, mas o login pode ter funcionado.");
-    }
-
+    mostrarAviso('erro', 'Erro de Conexão', 'Falha ao conectar ao Supabase.');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = 'Entrar';
-    }
+    btn.disabled = false;
+    btn.innerHTML = 'Entrar';
   }
 }
     
@@ -1574,16 +1520,15 @@ function abrirPagar(idx) {
   
   const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
   const colValIdx = localizar('valor_parcela');
-  const colIdIdx = localizar('id');
-  const colVendaIdIdx = localizar('id_venda'); // Precisamos do ID da venda para achar a próxima
-  const colNumParcIdx = localizar('qtd_parcelas'); // Precisamos saber qual o número desta parcela
+  const colIdIdx = localizar('id'); // No Supabase, geralmente usamos o 'id' único da linha
 
+  // Captura o ID da linha no Supabase para saber qual atualizar
   const idLinha = linha[colIdIdx];
-  const idVenda = linha[colVendaIdIdx];
-  const numParcelaAtual = parseInt(linha[colNumParcIdx]);
   
-  let vBruto = String(linha[colValIdx] || "0").replace(/[R$\s]/g, '').replace(',', '.');
-  const valorOriginal = parseFloat(vBruto) || 0;
+  let vBruto = String(linha[colValIdx] || "0").replace(/[R$\s]/g, '');
+  if (vBruto.includes(',') && vBruto.includes('.')) { vBruto = vBruto.replace(/\./g, ''); }
+  vBruto = vBruto.replace(',', '.');
+  const valorOriginal = Math.round(parseFloat(vBruto) * 100) / 100;
 
   const input = document.getElementById('inputValorPago');
   const btnConfirm = document.getElementById('btnConfirmPagar');
@@ -1597,85 +1542,47 @@ function abrirPagar(idx) {
 
   setTimeout(() => { input.focus(); input.select(); }, 300); 
 
+  // --- AÇÃO DE CONFIRMAR PAGAMENTO ---
   btnConfirm.onclick = async () => {
     const vDigitado = parseFloat(input.value.replace(',', '.'));
-    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Digite um valor válido!");
+    
+    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Por favor, digite um valor válido!");
     
     btnConfirm.disabled = true; 
     btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
 
-    const saldoDevedor = Math.round((valorOriginal - vDigitado) * 100) / 100;
-
     try {
-      // 1. ATUALIZA A PARCELA ATUAL
-      const resAtual = await fetch(`${SB_URL}/vendas?id=eq.${idLinha}`, {
+      // 1. ATUALIZAÇÃO NO SUPABASE (Método PATCH)
+      // Aqui dizemos: "Na tabela vendas, onde o ID for igual a idLinha, mude a condicao para 'paga'"
+      const response = await fetch(`${SB_URL}/vendas?id=eq.${idLinha}`, {
         method: 'PATCH',
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
         body: JSON.stringify({
-          condicao: saldoDevedor > 0 ? 'pago_parcial' : 'paga',
+          condicao: vDigitado < valorOriginal ? 'pago_parcial' : 'paga',
           valor_pago: vDigitado,
           data_pagamento: new Date().toISOString()
         })
       });
 
-      // 2. SE HOUVER SALDO DEVEDOR, APLICA A REGRA DE ROLAGEM
-      if (resAtual.ok && saldoDevedor > 0) {
-        
-        // Busca a próxima parcela desta mesma venda (ex: se pagou a 2, busca a 3)
-        const proximaBusca = await fetch(`${SB_URL}/vendas?id_venda=eq.${idVenda}&qtd_parcelas=eq.${numParcelaAtual + 1}`, {
-          method: 'GET',
-          headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
-        });
-        const proxDados = await proximaBusca.json();
-
-        if (proxDados && proxDados.length > 0) {
-          // CENÁRIO A: Existe próxima parcela, soma o saldo nela
-          const idProx = proxDados[0].id;
-          const novoValorProx = parseFloat(proxDados[0].valor_parcela) + saldoDevedor;
-
-          await fetch(`${SB_URL}/vendas?id=eq.${idProx}`, {
-            method: 'PATCH',
-            headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ valor_parcela: novoValorProx })
-          });
-          console.log("Saldo somado à próxima parcela.");
-        } else {
-          // CENÁRIO B: É a última parcela, cria a "PF" (Parcela Final)
-          // Criamos uma nova linha com vencimento para +30 dias
-          let dataVenc = new Date(linha[localizar('data_vencimento')] + 'T00:00:00');
-          dataVenc.setMonth(dataVenc.getMonth() + 1);
-
-          const novaParcelaPF = {
-            id_venda: idVenda,
-            cliente_nome: linha[localizar('cliente_nome')],
-            cpf_cnpj: linha[localizar('cpf_cnpj')],
-            telefone: linha[localizar('telefone')],
-            valor_parcela: saldoDevedor,
-            qtd_parcelas: "PF", // Nomeamos como PF conforme solicitado
-            condicao: 'pendente',
-            status: 'pendente',
-            data_venda: linha[localizar('data_venda')],
-            data_vencimento: dataVenc.toISOString().split('T')[0]
-          };
-
-          await fetch(`${SB_URL}/vendas`, {
-            method: 'POST',
-            headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify([novaParcelaPF])
-          });
-          console.log("Parcela PF criada.");
-        }
-      }
-
-      if (resAtual.ok) {
+      if (response.ok) {
+        // 2. Envia para o n8n (sua função já existente)
         enviarConfirmacaoParaN8N(linha, vDigitado, valorOriginal);
+
         fecharModal('modalPagar');
-        mostrarLista(abaAtual);
+        mostrarLista(abaAtual); // Recarrega a tabela do Supabase
+        console.log("Pagamento processado com sucesso.");
+      } else {
+        throw new Error("Erro ao atualizar no banco de dados.");
       }
 
     } catch (err) {
       console.error(err);
-      alert("Erro: " + err.message);
+      alert("Erro ao processar pagamento: " + err.message);
     } finally {
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = "Confirmar";
@@ -1685,26 +1592,22 @@ function abrirPagar(idx) {
 
 
 function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
-  const h = dadosPlanilha[0]; // Cabeçalho (agora vindo do Supabase)
+  const h = dadosPlanilha[0]; // Cabeçalho da planilha
   const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
 
-  // Função auxiliar para achar o índice independente de maiúsculas/minúsculas
-  const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
-
-  // Lógica de Pagamento
+  // Lógica: Se o valor recebido for menor que o original (com margem de erro de 0.01), é PARCIAL
   const tipoPagamento = (parseFloat(valorRecebido) < parseFloat(valorOriginal) - 0.01) ? "PARCIAL" : "TOTAL";
 
-  // Mapeamento corrigido para os nomes de coluna do seu Banco de Dados
   const dados = {
-    cliente: linha[localizar('cliente_nome')],
-    telefone: linha[localizar('telefone')],
-    produto: linha[localizar('produtos_resumo')], // Ajustado para a coluna do Supabase
-    parcela: linha[localizar('qtd_parcelas')],   // Ajustado para a coluna do Supabase
+    cliente: linha[h.indexOf('cliente')],
+    telefone: linha[h.indexOf('telefone')],
+    produto: linha[h.indexOf('produto')],
+    parcela: linha[h.indexOf('parcela')],
     valor_pago: valorRecebido,
     valor_original: valorOriginal,
     tipo: tipoPagamento, 
     data_pagamento: new Date().toLocaleDateString('pt-BR'),
-    status: tipoPagamento === "PARCIAL" ? 'pago_parcial' : 'paga'
+    status: 'paga'
   };
 
   fetch(webhookURL, { 
@@ -1712,7 +1615,7 @@ function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dados) 
   })
-  .then(() => console.log(`n8n enviado (${tipoPagamento}):`, dados))
+  .then(() => console.log("n8n enviado com sucesso: " + tipoPagamento))
   .catch(err => console.error("Erro ao disparar n8n:", err));
 }
 
@@ -1720,17 +1623,8 @@ async function abrirExcluir(idx) {
   const h = dadosPlanilha[0];
   const linha = dadosPlanilha[idx];
   
-  // Função auxiliar para evitar erros de maiúsculas/minúsculas ou espaços
-  const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
-
-  // Captura o ID único (UUID) da linha
-  const colId = localizar('id');
-  const idLinhaBanco = linha[colId];
-
-  if (colId === -1) {
-    console.error("Coluna 'id' não encontrada no cabeçalho!");
-    return alert("Erro: Não foi possível localizar o ID deste item.");
-  }
+  // Captura o ID único da linha no Supabase (coluna 'id')
+  const idLinhaBanco = linha[h.indexOf('id')];
 
   // --- SE ESTIVER NA ABA DE PRODUTOS ---
   if (abaAtual === 'cadastro-produtos') {
@@ -1740,6 +1634,7 @@ async function abrirExcluir(idx) {
     btn.innerHTML = "Sim, Excluir";
     btn.disabled = false;
 
+    // Ação de clique para excluir o produto no Supabase
     btn.onclick = async () => {
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
@@ -1756,12 +1651,11 @@ async function abrirExcluir(idx) {
 
         if(response.ok) {
           fecharModal('modalExcluirProduto');
-          await mostrarLista('cadastro-produtos');
+          await mostrarLista('cadastro-produtos'); // Recarrega a lista do banco
         } else {
           throw new Error("Erro ao deletar");
         }
       } catch (err) {
-        console.error(err);
         alert("Erro ao excluir produto.");
         btn.disabled = false;
         btn.innerHTML = "Sim, Excluir";
@@ -1770,56 +1664,43 @@ async function abrirExcluir(idx) {
   } 
   // --- SE ESTIVER NA ABA DE VENDAS ---
   else {
-    const colVendaId = localizar('id_venda');
-    const idVendaAgrupador = linha[colVendaId];
-
-    if (colVendaId === -1) {
-      return alert("Erro: Não foi possível localizar o ID da venda.");
-    }
-
+    // Busca o identificador de agrupamento da venda (id_venda)
+    const idVendaAgrupador = linha[h.indexOf('id_venda')];
     document.getElementById('modalExcluir').style.display = 'flex';
 
-    // Mantemos a chamada para a função processarExclusao
+    // Aqui chamamos a função processarExclusao que você já migrou para o Supabase
     document.getElementById('btnExcluirUnica').onclick = () => processarExclusao(idx, idVendaAgrupador, 'unica');
     document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idx, idVendaAgrupador, 'total');
   }
 }
 
-
 async function processarExclusao(idx, idVenda, modo) {
   const btnUnica = document.getElementById('btnExcluirUnica');
   const btnTudo = document.getElementById('btnExcluirTudo');
 
+  // 1. Captura o ID real da linha no banco (geralmente a coluna 'id')
   const h = dadosPlanilha[0];
   const linha = dadosPlanilha[idx];
-  
-  // Função auxiliar para localizar colunas com segurança
-  const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
-  
-  const idLinhaBanco = linha[localizar('id')]; // ID Único da linha (UUID)
-  const idVendaRef = idVenda; // Agrupador (ex: V1738400...)
+  const idLinhaBanco = linha[h.indexOf('id')]; // ID único da parcela/produto
+  const idVendaRef = idVenda; // O agrupador da venda completa
 
-  // Trava os botões para evitar cliques duplos
-  if (btnUnica) btnUnica.disabled = true;
-  if (btnTudo) btnTudo.disabled = true;
+  // Trava os botões
+  btnUnica.disabled = true;
+  btnTudo.disabled = true;
   
+  const textoOriginal = modo === 'unica' ? "Excluindo parcela..." : "Excluindo venda...";
   const btnAlvo = (modo === 'unica' ? btnUnica : btnTudo);
-  const textoOriginal = btnAlvo.innerHTML;
-  btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...`;
+  btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${textoOriginal}`;
 
   try {
-    let url = `${SB_URL}/vendas`; 
+    let url = `${SB_URL}/${abaAtual === 'cadastro-produtos' ? 'produtos' : 'vendas'}`;
     
-    // Se estivermos na aba de produtos, a tabela muda
-    if (abaAtual === 'cadastro-produtos') url = `${SB_URL}/produtos`;
-
     // 2. Define o filtro da exclusão
+    // Se for 'unica', apaga só pelo ID da linha. 
+    // Se for 'tudo', apaga todas as linhas que tiverem o mesmo id_venda.
     if (modo === 'unica') {
-      // Deleta apenas uma linha específica
       url += `?id=eq.${idLinhaBanco}`;
     } else {
-      // Deleta todas as parcelas que pertencem àquela venda
-      if (!idVendaRef) throw new Error("ID da venda não localizado para exclusão total.");
       url += `?id_venda=eq.${idVendaRef}`;
     }
 
@@ -1834,52 +1715,32 @@ async function processarExclusao(idx, idVenda, modo) {
 
     if (response.ok) {
       fecharModal('modalExcluir');
-      // 3. Recarrega a lista do banco para atualizar a tela
+      // 3. Atualiza a lista na tela buscando do Supabase
       await mostrarLista(abaAtual);
-      console.log(`Exclusão ${modo} realizada com sucesso.`);
+      console.log("Exclusão realizada com sucesso!");
     } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Erro ao deletar no Supabase");
+      throw new Error("Erro ao deletar no Supabase");
     }
 
   } catch (err) {
     console.error(err);
     alert("Erro ao excluir: " + err.message);
   } finally {
-    if (btnUnica) {
-      btnUnica.disabled = false;
-      btnUnica.innerHTML = "Excluir APENAS esta parcela";
-    }
-    if (btnTudo) {
-      btnTudo.disabled = false;
-      btnTudo.innerHTML = "Excluir VENDA COMPLETA";
-    }
+    // Destrava os botões e volta o texto original
+    btnUnica.disabled = false;
+    btnTudo.disabled = false;
+    btnUnica.innerHTML = "Excluir APENAS esta parcela";
+    btnTudo.innerHTML = "Excluir VENDA COMPLETA";
   }
 }
 
-function baixarResumo() {
-  const area = document.getElementById('printArea');
-  if (!area) return alert("Erro: Área de impressão não encontrada.");
-
-  // Adicionamos configurações para melhorar a qualidade e evitar erros de imagens
-  html2canvas(area, {
-    scale: 2,           // Melhora a resolução (imagem menos "embaçada")
-    useCORS: true,      // Permite capturar imagens que venham de links externos (ex: Postimg, Supabase)
-    allowTaint: true,
-    backgroundColor: "#ffffff" // Garante fundo branco se o seu CSS for transparente
-  }).then(canvas => {
-    const link = document.createElement('a');
-    // Nome do arquivo com a data de hoje para facilitar a organização
-    const dataHoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-    link.download = `Resumo_Vendas_${dataHoje}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    
-    console.log("Resumo exportado com sucesso!");
-  }).catch(err => {
-    console.error("Erro ao gerar resumo:", err);
-    alert("Houve um erro ao gerar a imagem do resumo.");
-  });
+function baixarResumo() { 
+  html2canvas(document.getElementById('printArea')).then(c => { 
+    let a = document.createElement('a'); 
+    a.download='resumo.png'; 
+    a.href=c.toDataURL(); 
+    a.click(); 
+  }); 
 }
 
 async function executarTrocaSenha() {
@@ -1887,23 +1748,19 @@ async function executarTrocaSenha() {
   const nova = document.getElementById('novaSenha').value;
   const confirma = document.getElementById('confirmarNovaSenha').value;
   const btn = document.getElementById('btnSalvarSenha');
-  
-  // PEGANDO O USUÁRIO LOGADO: 
-  // Melhor pegar do texto do display de nome que já está na tela
-  const user = document.getElementById('nomeDisplay').textContent.trim().toLowerCase();
+  const user = document.getElementById('usuario').value;
 
   if (!atual || !nova || !confirma) return alert("Preencha todos os campos!");
   if (nova !== confirma) return alert("As novas senhas não coincidem!");
-  if (nova.length < 4) return alert("A nova senha deve ter pelo menos 4 caracteres!");
 
-  // Inicia animação
+  // Inicia animação SALVANDO
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SALVANDO...';
+  btn.classList.add('btn-loading'); 
+  btn.innerHTML = '<div class="spinner"></div> SALVANDO...';
 
   try {
     // 1. VERIFICA SE A SENHA ATUAL ESTÁ CORRETA
-    // Filtramos pelo login (em minúsculo) e pela senha atual
-    const checkRes = await fetch(`${SB_URL}/usuarios?login=eq.${user}&senha=eq.${atual}&select=id`, {
+    const checkRes = await fetch(`${SB_URL}/usuarios?login=eq.${user}&senha=eq.${atual}&select=*`, {
       method: 'GET',
       headers: {
         'apikey': SB_KEY,
@@ -1920,7 +1777,7 @@ async function executarTrocaSenha() {
 
     const idUsuario = usuarioValido[0].id;
 
-    // 2. ATUALIZA PARA A NOVA SENHA NO SUPABASE
+    // 2. ATUALIZA PARA A NOVA SENHA
     const updateRes = await fetch(`${SB_URL}/usuarios?id=eq.${idUsuario}`, {
       method: 'PATCH',
       headers: {
@@ -1935,13 +1792,12 @@ async function executarTrocaSenha() {
     if (updateRes.ok) {
       alert("Senha alterada com sucesso!");
       fecharModal('modalSenha');
-      
-      // Limpa os campos para segurança
+      // Limpa os campos
       document.getElementById('senhaAtual').value = '';
       document.getElementById('novaSenha').value = '';
       document.getElementById('confirmarNovaSenha').value = '';
     } else {
-      throw new Error("Falha ao comunicar com o servidor.");
+      throw new Error("Falha ao atualizar a senha no banco de dados.");
     }
 
   } catch (err) {
@@ -1949,26 +1805,28 @@ async function executarTrocaSenha() {
     alert("Erro: " + err.message);
   } finally {
     btn.disabled = false;
+    btn.classList.remove('btn-loading');
     btn.innerHTML = "Salvar Nova Senha";
   }
 }
 
 async function solicitarRecuperacao() {
   const campo = document.getElementById('recuperarTel');
-  // Remove tudo que não é número para comparar com o banco limpo
-  const telInput = campo.value.trim().replace(/\D/g, ''); 
+  const telInput = campo.value.trim().replace(/\D/g, ''); // Remove parênteses e traços
   const btn = document.getElementById('btnEnviarRecuperacao');
 
+  // 1. Validação básica
   if (!telInput || telInput.length < 10) {
-    return mostrarAviso('erro', 'Atenção', 'Digite um número válido com DDD!');
+    return mostrarAviso('erro', 'Atenção', 'Por favor, digite um número de telefone válido com DDD!');
   }
 
+  // Feedback visual
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
 
   try {
-    // 1. BUSCA NO SUPABASE
-    // Filtramos o telefone. Dica: no banco, salve o telefone sempre só com números.
+    // 2. CONSULTA NO SUPABASE
+    // Procuramos na tabela 'usuarios' onde a coluna 'telefone' seja igual ao digitado
     const response = await fetch(`${SB_URL}/usuarios?telefone=eq.${telInput}&select=*`, {
       method: 'GET',
       headers: {
@@ -1980,37 +1838,37 @@ async function solicitarRecuperacao() {
 
     const dadosUsuarios = await response.json();
 
+    // 3. VERIFICA SE O USUÁRIO EXISTE
     if (dadosUsuarios && dadosUsuarios.length > 0) {
       const usuarioEncontrado = dadosUsuarios[0];
       const webhookN8N = "https://n8n.vps6993.panel.icontainer.net/webhook/recupsenha";
       
-      // 2. ENVIO PARA O N8N
-      // Note que usamos usuarioEncontrado.login (verifique se sua coluna chama 'login' ou 'usuario')
+      // 4. ENVIO PARA O N8N
+      // Como você está usando mode: 'no-cors', não conseguimos ler a resposta do n8n, 
+      // então seguimos o fluxo de sucesso após o envio.
       await fetch(webhookN8N, {
         method: 'POST',
-        mode: 'no-cors', // Mantido no-cors para evitar erros de política de navegador
+        mode: 'no-cors', 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          usuario: usuarioEncontrado.login || usuarioEncontrado.usuario, 
+          usuario: usuarioEncontrado.login, // Ajuste para o nome da sua coluna (ex: login ou usuario)
           senha: usuarioEncontrado.senha,
           telefone: usuarioEncontrado.telefone 
         })
       });
 
-      mostrarAviso('sucesso', 'Enviado!', 'Seus dados foram enviados para o WhatsApp cadastrado.');
-      
-      // Fecha o modal e limpa o campo
-      const modal = document.getElementById('modalEsqueci');
-      if (modal) modal.style.display = 'none';
+      mostrarAviso('sucesso', 'Enviado!', 'Seus dados de acesso foram enviados para o seu WhatsApp.');
+      document.getElementById('modalEsqueci').style.display = 'none';
       campo.value = "";
 
     } else {
-      mostrarAviso('erro', 'Não Encontrado', 'Este telefone não consta em nossa base de usuários.');
+      // Caso não encontre o telefone no banco
+      mostrarAviso('erro', 'Não Encontrado', 'Este telefone não está cadastrado no sistema.');
     }
 
   } catch (err) {
     console.error("Erro na recuperação:", err);
-    mostrarAviso('erro', 'Erro de Conexão', 'Não foi possível consultar o servidor.');
+    mostrarAviso('erro', 'Erro', 'Ocorreu uma falha na conexão com o banco de dados.');
   } finally {
     btn.disabled = false;
     btn.innerHTML = "Enviar";
@@ -2039,16 +1897,18 @@ async function solicitarRecuperacao() {
   modal.style.display = 'flex';
 }
 
-// --- 1. VARIÁVEIS GLOBAIS (Certifique-se de que estão no topo do arquivo) ---
+// --- LÓGICA DE NOVA VENDA ---
+
+// --- 1. VARIÁVEIS GLOBAIS (Deixe sempre no topo deste bloco) ---
 let itensNoCarrinho = []; 
-let enviandoVendaAgora = false; // Adicione esta linha se ainda não tiver
+let listaProdutosSelecionados = []; 
 
-// --- 2. FUNÇÃO NOVA VENDA ---
+// --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA) ---
 function abrirNovaVenda() {
-  // 1. Destrava a lógica de envio
-  enviandoVendaAgora = false; 
+  // 1. Destrava a lógica de envio (Sincronizado com os nomes das suas variáveis)
+  enviandoVendaAgora = false; // Ajustado para bater com o nome usado na finalizarVenda
 
-  // 2. Reset do Botão Finalizar (Volta ao verde original)
+  // 2. Reset do Botão Finalizar
   const btn = document.getElementById('btnFinalizar');
   if (btn) {
     btn.disabled = false;
@@ -2058,14 +1918,14 @@ function abrirNovaVenda() {
     btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
   }
 
-  // 3. Reset do Botão Comprovante
+  // 3. Reset do Botão Comprovante (Fica desativado até a próxima venda ser salva)
   const btnComp = document.getElementById('btnComprovante');
   if (btnComp) {
     btnComp.disabled = true;
     btnComp.style.opacity = "0.5";
   }
 
-  // 4. Limpeza de TODOS os campos (Incluindo novos campos do Supabase)
+  // 4. Limpeza de TODOS os campos (Incluindo o E-mail que agora é obrigatório)
   const camposParaLimpar = [
     'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente', 'clienteEmail',
     'ruaCliente', 'numComplemento', 'bairroCliente', 'cidadeCliente',
@@ -2077,79 +1937,50 @@ function abrirNovaVenda() {
     if (el) el.value = '';
   });
 
-  // 5. Reset de Produtos e Totais
+  // 5. Reset de Produtos (Limpamos a variável e a interface)
   itensNoCarrinho = []; 
   
-  // Forçamos a atualização da interface do carrinho
+  // Atualiza a visualização do carrinho e os totais
   if (typeof atualizarTabelaCarrinho === 'function') {
       atualizarTabelaCarrinho();
   } else {
       const corpo = document.getElementById('corpoCarrinho');
       if (corpo) corpo.innerHTML = "";
-      const vTotal = document.getElementById('valorTotal');
-      if (vTotal) vTotal.innerText = 'R$ 0,00';
+      if (document.getElementById('valorTotal')) document.getElementById('valorTotal').innerText = 'R$ 0,00';
   }
   
   // 6. Reset de Resumos e Selects
   const resumoArea = document.getElementById('resumoParcelas');
   if (resumoArea) resumoArea.innerHTML = '';
   
-  // Reset dos campos de seleção para o padrão
-  const idsSelects = ['tipoPagamento', 'numeroParcelas', 'selectProduto'];
-  idsSelects.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) {
-          if (id === 'tipoPagamento') el.value = 'parcelado';
-          else if (id === 'numeroParcelas') el.value = '1';
-          else el.selectedIndex = 0;
-      }
-  });
+  const tipoPagto = document.getElementById('tipoPagamento');
+  if (tipoPagto) tipoPagto.value = 'parcelado';
+  
+  const numParc = document.getElementById('numeroParcelas');
+  if (numParc) numParc.value = '1';
 
-  // 7. Focar no primeiro campo para agilizar (UX)
-  const primeiroCampo = document.getElementById('nomeCliente');
-  if (primeiroCampo) {
-      primeiroCampo.focus();
-      // Rola a tela para o topo do formulário suavemente
-      primeiroCampo.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
+  const selProd = document.getElementById('selectProduto');
+  if (selProd) selProd.selectedIndex = 0;
 
-  console.log("Sistema Meirelles: Pronto para nova venda.");
+  // 7. Focar no primeiro campo para agilizar o trabalho
+  document.getElementById('nomeCliente')?.focus();
+
+  console.log("Sistema pronto para uma nova venda.");
 }
 
 
 function abrirModalVenda() {
   const modal = document.getElementById('modalVenda');
   if (modal) {
-    modal.style.display = 'flex'; 
+    modal.style.display = 'flex'; // Apenas abre o modal
   }
-
-  // 1. Foca no primeiro campo (Nome do Cliente) automaticamente ao abrir
-  setTimeout(() => {
-    document.getElementById('nomeCliente')?.focus();
-  }, 100);
-
-  // 2. IMPORTANTE: Usamos a função do Supabase
-  // Verifique se o nome da sua função é 'carregarProdutosSupabase' ou 'carregarProdutos'
-  if (typeof carregarProdutosSupabase === 'function') {
-      carregarProdutosSupabase();
-  } else if (typeof carregarProdutos === 'function') {
-      carregarProdutos();
-  }
+  // Se quiser que ele sempre atualize a lista de produtos ao abrir, mantenha a linha abaixo:
+  if (typeof carregarProdutos === 'function') carregarProdutos();
 }
 
 function fecharModal(id) {
-  // Se não passar ID, o padrão é o modalVenda
-  const targetId = id || 'modalVenda';
-  const modal = document.getElementById(targetId);
-  
-  if (modal) {
-    modal.style.display = 'none';
-  }
-
-  // DICA: Se o modal que fechou for o de venda, 
-  // você pode perguntar se quer limpar os campos ou apenas fechar.
-  // Se quiser fechar e LIMPAR tudo para a próxima, use:
-  // if (targetId === 'modalVenda') abrirNovaVenda();
+  const target = id || 'modalVenda';
+  document.getElementById(target).style.display = 'none';
 }
 
 // --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
@@ -2339,13 +2170,12 @@ const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-
 let enviandoVendaAgora = false;
 
 async function finalizarVenda() {
-  // Apenas os campos que REALMENTE existem no seu HTML
   const obrigatorios = ['nomeCliente', 'telCliente', 'cpfCliente', 'dataVencimento', 'clienteEmail'];
 
   for (let id of obrigatorios) {
     const el = document.getElementById(id);
     if (!el || !el.value.trim()) {
-      mostrarAviso('erro', 'Campos Vazios', 'Preencha os dados do cliente!');
+      mostrarAviso('erro', 'Campos Vazios', 'Preencha tudo!');
       if (el) el.focus();
       return;
     }
@@ -2362,7 +2192,7 @@ async function finalizarVenda() {
   const btn = document.getElementById('btnFinalizar');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GRAVANDO...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
   }
 
   // --- CÁLCULOS ---
@@ -2385,7 +2215,7 @@ async function finalizarVenda() {
     
     parcelasParaBanco.push({
       id_venda: idVendaUnico,
-      cliente_nome: document.getElementById('nomeCliente').value.trim(),
+      cliente_nome: document.getElementById('nomeCliente').value,
       cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
       telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
       produtos_resumo: itensNoCarrinho.map(item => `${item.nome} (x${item.qtd})`).join(", "),
@@ -2402,45 +2232,66 @@ async function finalizarVenda() {
   }
 
   try {
-    // 1. SALVAR VENDAS
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) throw new Error('Erro ao salvar no banco (Vendas)');
-
-    // 2. SALVAR CLIENTE (CORRIGIDO: Removido campos de rua/cep que não existem no HTML)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: { 
         'apikey': SB_KEY, 
         'Authorization': 'Bearer ' + SB_KEY, 
         'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates' 
+        'Prefer': 'resolution=merge-first, return=minimal' 
       },
       body: JSON.stringify([{
-        nome: document.getElementById('nomeCliente').value.trim(),
+        nome: document.getElementById('nomeCliente').value,
         cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
         email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
         telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
+        cep: document.getElementById('cepCliente')?.value || '',
+        rua: document.getElementById('ruaCliente')?.value || '',
         bairro: document.getElementById('bairroCliente')?.value || '',
         cidade: document.getElementById('cidadeCliente')?.value || ''
       }])
     });
 
-    mostrarAviso('sucesso', 'Sucesso!', 'Venda concluída.');
-    await mostrarLista('cadastro-vendas');
+    if (resVenda.ok) {
+      mostrarAviso('sucesso', 'Venda Realizada!', 'Dados salvos. O recibo está liberado.');
+
+      // 1. Libera o botão de comprovante
+      const btnComprovante = document.getElementById('btnComprovante');
+      if (btnComprovante) {
+        btnComprovante.disabled = false;
+        btnComprovante.style.opacity = "1";
+      }
+
+      // 2. Muda estado do botão salvar
+      if (btn) {
+        btn.innerHTML = '<i class="fas fa-check"></i> GRAVADO';
+        btn.style.background = "#64748b";
+        btn.disabled = true;
+      }
+
+      // IMPORTANTE: NÃO limpamos o 'itensNoCarrinho' aqui imediatamente!
+      // Isso garante que a função imprimirComprovante() ainda tenha os dados.
+      
+      await mostrarLista('cadastro-vendas');
+
+    } else {
+      throw new Error('Erro ao salvar parcelas');
+    }
 
   } catch (err) {
     console.error(err);
-    mostrarAviso('erro', 'Falha Crítica', err.message);
-  } finally {
+    mostrarAviso('erro', 'Erro no Banco', 'Falha ao salvar.');
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = 'FINALIZAR VENDA';
+      btn.innerHTML = 'SALVAR';
     }
+  } finally {
     enviandoVendaAgora = false;
   }
 }
@@ -2778,60 +2629,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-async function cadastrarNovoUsuario() {
-    const loginNovo = document.getElementById('novoLoginUsuario').value.trim();
-    const senhaNova = document.getElementById('novaSenhaUsuario').value.trim();
-    const telNovo = document.getElementById('novoTelUsuario').value.trim().replace(/\D/g, '');
-    const btn = document.getElementById('btnConfirmarNovoUsuario');
-
-    if (!loginNovo || !senhaNova) {
-        return mostrarAviso('erro', 'Campos Vazios', 'Informe pelo menos o nome de usuário e a senha!');
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Cadastrando...';
-
-    try {
-        const response = await fetch(`${SB_URL}/usuarios`, {
-            method: 'POST',
-            headers: {
-                'apikey': SB_KEY,
-                'Authorization': 'Bearer ' + SB_KEY,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify([{
-                login: loginNovo.toLowerCase(),
-                senha: senhaNova,
-                telefone: telNovo
-            }])
-        });
-
-        if (response.ok) {
-            mostrarAviso('sucesso', 'Sucesso!', 'Novo usuário cadastrado com sucesso.');
-            fecharModal('modalNovoUsuario');
-            
-            // Limpa os campos
-            document.getElementById('novoLoginUsuario').value = '';
-            document.getElementById('novaSenhaUsuario').value = '';
-            document.getElementById('novoTelUsuario').value = '';
-        } else {
-            throw new Error("Erro ao inserir no banco de dados.");
-        }
-    } catch (err) {
-        console.error(err);
-        mostrarAviso('erro', 'Falha', 'Não foi possível cadastrar o usuário.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Cadastrar Usuário';
-    }
-}
-
-function abrirModalNovoUsuario() {
-    fecharModal('modalSenha'); // Fecha o de troca de senha
-    document.getElementById('modalNovoUsuario').style.display = 'flex'; // Abre o de novo cadastro
-}
-
 
 // 3. CENTRAL DE ATALHOS (ENTER E ESC)
 function configurarAtalhos() {
@@ -2893,5 +2690,3 @@ window.onload = async () => {
  </script>
 </body>
 </html>
-
-

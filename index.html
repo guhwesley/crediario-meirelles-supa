@@ -1239,6 +1239,9 @@ function desenharTabela() {
 
   // 1. Cabeçalho e Filtros
   h.forEach((title, i) => {
+    // CORREÇÃO: Pula a renderização se a coluna for o ID do Supabase
+    if (title.toLowerCase() === 'id') return;
+
     cab.innerHTML += `<th>${title}</th>`;
     let thF = document.createElement('th');
     let titleNormalize = title.toString().toLowerCase().trim();
@@ -1272,22 +1275,23 @@ function desenharTabela() {
 
   // --- 3. RENDERIZAÇÃO DAS LINHAS ---
   itensPagina.forEach((item) => { 
-    // O idxReal agora vem do mapeamento que fizemos acima, nunca muda!
     const idxReal = item.indexOriginal; 
     const linha = item.dados;
     
     const tr = document.createElement('tr');
     let condicaoValor = "";
 
-    // Botão do Lápis: agora ele sabe a linha real mesmo se estiver filtrado
     if (abaAtual === 'cadastro-produtos') {
       tr.innerHTML = `<td class="col-resumo"><button onclick="abrirEdicaoProduto(${idxReal})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-pencil-alt" style="color:#f59e0b"></i></button></td>`;
     } else {
       tr.innerHTML = `<td class="col-resumo"><button onclick="abrirResumo(${idxReal})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i></button></td>`;
     }
 
-    // Processamento das colunas (usamos 'linha' que definimos acima)
+    // Processamento das colunas
     linha.forEach((cel, indexCel) => {
+      // CORREÇÃO: Pula a célula se o cabeçalho correspondente for "id"
+      if (h[indexCel] && h[indexCel].toLowerCase() === 'id') return;
+
       let valorExibido = cel;
       let cl = "";
       let tituloColuna = h[indexCel] ? h[indexCel].toLowerCase().trim() : "";
@@ -1336,7 +1340,7 @@ function desenharTabela() {
 
     corpo.appendChild(tr);
   });
-   }
+}
 
 async function salvarProduto(event) {
   if (event) event.preventDefault();

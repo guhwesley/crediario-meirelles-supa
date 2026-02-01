@@ -1794,12 +1794,12 @@ async function finalizarVenda() {
   if (btn) btn.disabled = true;
 
   try {
-    // 1. CAPTURA DADOS DO CLIENTE (Adicionado Email e CEP aqui)
+    // 1. CAPTURA DADOS DO CLIENTE
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
-    const email = document.getElementById('emailCliente')?.value || ""; // <--- NOVO
-    const cep = document.getElementById('cepCliente')?.value || "";     // <--- NOVO
+    const email = document.getElementById('emailCliente')?.value || ""; 
+    const cep = document.getElementById('cepCliente')?.value || "";    
     
     // 2. ENDEREÇO
     const rua = document.getElementById('ruaCliente')?.value || "";
@@ -1867,7 +1867,7 @@ async function finalizarVenda() {
       });
     }
 
-    // 6. ENVIAR PARA O SUPABASE (VENDAS)
+    // 6. ENVIAR PARA O SUPABASE
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: {
@@ -1878,9 +1878,9 @@ async function finalizarVenda() {
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas no banco.");
+    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas.");
 
-    // 7. ATUALIZAR/CRIAR CLIENTE (CAMPOS CEP E EMAIL ADICIONADOS AQUI)
+    // 7. ATUALIZAR CLIENTE
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: {
@@ -1890,35 +1890,30 @@ async function finalizarVenda() {
         'Prefer': 'resolution=merge-duplicates' 
       },
       body: JSON.stringify({
-        cliente_nome: nome,
-        cpf_cnpj: cpf,
-        telefone: tel,
-        email: email, // <--- NOVO
-        cep: cep,     // <--- NOVO
-        logradouro: rua,
-        numero: num,
-        bairro: bairro,
-        cidade: cidade
+        cliente_nome: nome, cpf_cnpj: cpf, telefone: tel,
+        email: email, cep: cep, logradouro: rua,
+        numero: num, bairro: bairro, cidade: cidade
       })
     });
 
-    // 8. FINALIZAÇÃO
-    alert("✅ Venda e Parcelas registradas com sucesso!");
-    
-    itensNoCarrinho = [];
-    renderizarTabela(); 
-    
-    // Adicionado email e cep na limpeza também
-    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'emailCliente', 'cepCliente', 'valorEntrada', 'descontoVendedor', 'dataVencimento', 'trabalhoVenda'];
-    idsParaLimpar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ""; });
+    // 8. FINALIZAÇÃO (ESTA PARTE FOI MODIFICADA)
+    alert("✅ Venda salva! Clique em NOVA para próxima venda.");
 
-    if (typeof mostrarLista === 'function') await mostrarLista('cadastro-vendas');
+    // DESATIVAR O BOTÃO E DEIXAR CINZA
+    if (btn) {
+      btn.disabled = true;
+      btn.style.setProperty('background', '#64748b', 'important'); // Cor cinza
+      btn.style.cursor = 'not-allowed';
+      btn.innerHTML = '<i class="fas fa-lock"></i> VENDA SALVA';
+    }
+
+    // REMOVIDO: A limpeza de itensNoCarrinho e campos daqui 
+    // (Agora só o botão NOVA limpará)
 
   } catch (error) {
     console.error("Erro técnico:", error);
     alert("🚨 Falha ao finalizar: " + error.message);
-  } finally {
-    if (btn) btn.disabled = false;
+    if (btn) btn.disabled = false; // Reativa se der erro para tentar de novo
   }
 }
 
@@ -2232,64 +2227,73 @@ async function solicitarRecuperacao() {
 let itensNoCarrinho = []; 
 let listaProdutosSelecionados = []; 
 
-// --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA PARA SUPABASE) ---
-function abrirNovaVenda() {
-  // 1. Destrava a lógica de envio (importante para não bloquear cliques)
-  enviandoAgora = false; 
-  enviadoSistema = false;
+// 1. O botão chama esta função primeiro
+function prepararNovaVenda() {
+    // Tenta abrir o modal de confirmação
+    const modal = document.getElementById('modalConfirmar');
+    
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        // Se o modal não existir no HTML, usa o alerta padrão do navegador
+        if (confirm("Deseja realmente limpar tudo e iniciar uma nova venda?")) {
+            executarLimpezaTotal();
+        }
+    }
+}
 
-  // 2. Reset do Botão Finalizar
-  const btn = document.getElementById('btnFinalizar');
-  if (btn) {
-    btn.disabled = false;
-    btn.style.setProperty('background', '#10b981', 'important'); 
-    btn.style.opacity = "1";
-    btn.style.cursor = "pointer";
-    btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
-  }
+// 2. Esta função só roda quando você confirmar (no Modal ou no Confirm)
+function executarLimpezaTotal() {
+    // 1. Fecha o modal de confirmação
+    const modal = document.getElementById('modalConfirmar');
+    if (modal) modal.style.display = 'none';
 
-  // 3. Reset do Botão Comprovante (só ativa depois que vende)
-  const btnComp = document.getElementById('btnComprovante');
-  if (btnComp) {
-    btnComp.disabled = true;
-    btnComp.style.opacity = "0.5";
-  }
+    console.log("🧹 Limpando sistema e reativando botão salvar...");
 
-  // 4. Limpeza de TODOS os campos (Ajustado para os IDs que usamos no Supabase)
-  const camposParaLimpar = [
-    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoVenda',
-    'ruaCliente', 'numCliente', 'bairroCliente', 'cidadeCliente',
-    'entradaVenda', 'descontoVenda', 'dataVencimento', 'qtdProduto', 'cepCliente'
-  ];
-  
-  camposParaLimpar.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
+    // 2. REATIVAR O BOTÃO SALVAR (VOLTAR PARA VERDE)
+    // É aqui que desfazemos o cinza e o bloqueio que a função finalizarVenda criou
+    const btnFin = document.getElementById('btnFinalizar');
+    if (btnFin) {
+        btnFin.disabled = false;
+        btnFin.style.setProperty('background', '#10b981', 'important'); // Volta para o Verde
+        btnFin.style.opacity = "1";
+        btnFin.style.cursor = "pointer";
+        btnFin.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
+    }
 
-  // 5. Reset do Carrinho
-  itensNoCarrinho = []; 
-  const corpo = document.getElementById('corpoCarrinho');
-  if (corpo) corpo.innerHTML = ""; 
-  
-  // Se a sua função de atualizar a tabela do carrinho tiver outro nome, ajuste aqui:
-  if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
-  
-  // 6. Reset dos Totais e Selects
-  // Verificamos os dois possíveis IDs de total
-  const elTotal = document.getElementById('valorTotalVenda') || document.getElementById('valorTotal');
-  if (elTotal) {
-    if (elTotal.tagName === 'INPUT') elTotal.value = 'R$ 0,00';
-    else elTotal.innerText = 'R$ 0,00';
-  }
+    // 3. Limpa o Carrinho (Memória e Tela)
+    itensNoCarrinho = [];
+    const corpo = document.getElementById('corpoCarrinho');
+    if (corpo) corpo.innerHTML = "";
 
-  const resumoArea = document.getElementById('resumoParcelas');
-  if (resumoArea) resumoArea.innerHTML = '';
-  
-  if (document.getElementById('formaPagamento')) document.getElementById('formaPagamento').value = 'parcelado';
-  if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
+    // 4. Lista de campos para limpar (IDs sincronizados com seu formulário)
+    const campos = [
+        'nomeCliente', 'telCliente', 'cpfCliente', 'emailCliente', 'cepCliente',
+        'ruaCliente', 'numCliente', 'bairroCliente', 'cidadeCliente',
+        'dataVencimento', 'valorEntrada', 'descontoVendedor', 
+        'numeroParcelas', 'trabalhoVenda', 'qtdProduto'
+    ];
+    
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
 
-  console.log("🧹 Sistema limpo para nova venda.");
+    // 5. Reseta os Selects para o padrão
+    if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
+    if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
+    if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
+
+    // 6. Zera os cálculos e o resumo visual (R$ 0,00)
+    if (typeof calcularVendaFinal === "function") {
+        calcularVendaFinal();
+    }
+
+    // 7. Navegação e Foco
+    if (typeof navegar === 'function') navegar('cadastro-vendas');
+    
+    const campoNome = document.getElementById('nomeCliente');
+    if(campoNome) campoNome.focus();
 }
 
 function abrirModalVenda() {

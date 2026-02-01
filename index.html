@@ -606,6 +606,33 @@
   cursor: not-allowed;
 }
 
+/* Container que envolve o input e o ícone */
+.input-group-senha {
+  position: relative;
+  width: 100%;
+  display: block;
+}
+
+/* Ajuste do ícone para ficar por cima do input */
+.input-group-senha i {
+  position: absolute;
+  right: 12px;   /* Distância da borda direita */
+  top: 12px;     /* Centraliza verticalmente conforme a altura do seu input */
+  cursor: pointer;
+  color: #666;
+  z-index: 10;
+  transition: color 0.3s;
+}
+
+.input-group-senha i:hover {
+  color: #3b82f6; /* Muda de cor ao passar o mouse */
+}
+
+/* Garante que o texto da senha não fique "atrás" do olho */
+.input-group-senha input {
+  padding-right: 40px !important; 
+}
+
 
 </style>
 </head>
@@ -830,9 +857,22 @@
     
     <div id="secaoTrocaSenha">
       <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Alterar minha senha atual</p>
-      <input type="password" id="senhaAtual" placeholder="Senha Atual">
-      <input type="password" id="novaSenha" placeholder="Nova Senha">
-      <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha">
+      
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="senhaAtual" placeholder="Senha Atual" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('senhaAtual', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="novaSenha" placeholder="Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('novaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('confirmarNovaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
       <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()" style="width: 100%; margin-bottom: 10px;">Salvar Nova Senha</button>
     </div>
 
@@ -852,9 +892,14 @@
 <div id="modalNovoUsuario" class="modal" style="display:none;">
     <div class="form-box">
         <h3><i class="fa-solid fa-user-plus"></i> Novo Cadastro</h3>
-        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)">
-        <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso">
-        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)">
+        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)" style="margin-bottom: 10px;">
+        
+        <div style="position: relative; width: 100%;">
+            <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+            <i class="fa-solid fa-eye" onclick="togglePassword('novaSenhaUsuario', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+        </div>
+
+        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)" style="margin-bottom: 10px;">
         
         <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" class="btn-gravar" style="width: 100%; background: #10b981;">Finalizar Cadastro</button>
         <button onclick="fecharModal('modalNovoUsuario')" class="btn-cancelar" style="width: 100%; margin-top: 10px;">Voltar</button>
@@ -1164,6 +1209,13 @@ async function login() {
     const dados = await response.json();
 
     if (dados && dados.length > 0) {
+      // --- SALVANDO DADOS DO USUÁRIO ---
+      // Salva o objeto completo do usuário (id, login, senha, etc)
+      const usuarioLogado = dados[0];
+      localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+      window.usuarioLogado = usuarioLogado; // Backup para editores online
+      // ----------------------------------
+
       // Login bem-sucedido: Troca de tela
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
@@ -1172,14 +1224,13 @@ async function login() {
       const display = document.getElementById('nomeDisplay');
       if (display) display.textContent = usuario.toUpperCase();
       
-      // Carrega os dados iniciais silenciosamente
-      // Usamos Promise.allSettled para que, se um falhar, o outro ainda tente carregar
+      // Carrega os dados iniciais
       await Promise.allSettled([
         carregarProdutosSupabase(),
         mostrarLista('cadastro-vendas')
       ]);
 
-      console.log("Sistema carregado com sucesso.");
+      console.log("Sistema carregado com sucesso para:", usuario);
 
     } else {
       mostrarAviso('erro', 'Acesso Negado', 'Utilizador ou senha incorretos!');
@@ -1188,12 +1239,10 @@ async function login() {
   } catch (err) {
     console.error("Erro no processo de login:", err);
     
-    // SÓ mostra o modal de erro se o usuário estiver offline
-    // Se estiver online, provavelmente foi apenas um "soluço" da rede e os dados carregarão em seguida
     if (!window.navigator.onLine) {
       mostrarAviso('erro', 'Sem Internet', 'Verifique sua conexão para entrar no sistema.');
     } else {
-      console.log("Instabilidade momentânea detectada, mas o login pode ter funcionado.");
+      console.log("Instabilidade momentânea detectada.");
     }
 
   } finally {
@@ -2232,37 +2281,30 @@ async function executarTrocaSenha() {
   const nova = document.getElementById('novaSenha').value;
   const confirma = document.getElementById('confirmarNovaSenha').value;
   const btn = document.getElementById('btnSalvarSenha');
-  const user = document.getElementById('usuario').value;
+
+  // Recupera o usuário que salvamos agora no novo Login
+  const storage = localStorage.getItem('usuarioLogado');
+  const userObj = storage ? JSON.parse(storage) : window.usuarioLogado;
+
+  if (!userObj || !userObj.login) {
+    return alert("Sessão expirada. Por favor, saia e entre novamente no sistema.");
+  }
 
   if (!atual || !nova || !confirma) return alert("Preencha todos os campos!");
   if (nova !== confirma) return alert("As novas senhas não coincidem!");
+  if (nova.length < 4) return alert("A senha deve ter no mínimo 4 caracteres!");
 
-  // Inicia animação SALVANDO
   btn.disabled = true;
-  btn.classList.add('btn-loading'); 
-  btn.innerHTML = '<div class="spinner"></div> SALVANDO...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> SALVANDO...';
 
   try {
-    // 1. VERIFICA SE A SENHA ATUAL ESTÁ CORRETA
-    const checkRes = await fetch(`${SB_URL}/usuarios?login=eq.${user}&senha=eq.${atual}&select=*`, {
-      method: 'GET',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const usuarioValido = await checkRes.json();
-
-    if (!usuarioValido || usuarioValido.length === 0) {
-      throw new Error("Senha atual incorreta!");
+    // 1. Validação local rápida: a senha atual digitada bate com a que está na memória?
+    if (atual !== userObj.senha) {
+      throw new Error("A senha atual digitada está incorreta!");
     }
 
-    const idUsuario = usuarioValido[0].id;
-
-    // 2. ATUALIZA PARA A NOVA SENHA
-    const updateRes = await fetch(`${SB_URL}/usuarios?id=eq.${idUsuario}`, {
+    // 2. Atualiza no Supabase usando o ID único do usuário
+    const response = await fetch(`${SB_URL}/usuarios?id=eq.${userObj.id}`, {
       method: 'PATCH',
       headers: {
         'apikey': SB_KEY,
@@ -2273,26 +2315,54 @@ async function executarTrocaSenha() {
       body: JSON.stringify({ senha: nova })
     });
 
-    if (updateRes.ok) {
+    if (response.ok) {
       alert("Senha alterada com sucesso!");
+
+      // Atualiza a senha na memória do navegador para a próxima troca
+      userObj.senha = nova;
+      localStorage.setItem('usuarioLogado', JSON.stringify(userObj));
+      window.usuarioLogado = userObj;
+
       fecharModal('modalSenha');
-      // Limpa os campos
+      
+      // Limpa os campos por segurança
       document.getElementById('senhaAtual').value = '';
       document.getElementById('novaSenha').value = '';
       document.getElementById('confirmarNovaSenha').value = '';
     } else {
-      throw new Error("Falha ao atualizar a senha no banco de dados.");
+      throw new Error("Erro ao salvar no banco de dados.");
     }
-
   } catch (err) {
-    console.error(err);
     alert("Erro: " + err.message);
   } finally {
     btn.disabled = false;
-    btn.classList.remove('btn-loading');
-    btn.innerHTML = "Salvar Nova Senha";
+    btn.innerHTML = 'Salvar Nova Senha';
   }
 }
+
+// FUNÇÃO PARA O OLHO (Ver Senha)
+function togglePassword(inputId, icone) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icone.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icone.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+
+function togglePassword(inputId, icone) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icone.classList.replace('fa-eye', 'fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icone.classList.replace('fa-eye-slash', 'fa-eye');
+  }
+}
+
 
 async function solicitarRecuperacao() {
   const campo = document.getElementById('recuperarTel');

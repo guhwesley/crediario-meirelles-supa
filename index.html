@@ -1368,9 +1368,9 @@ async function desenharTabela() {
     colunas = ['categoria', 'nome', 'preco']; 
   } else {
     colunas = [
-      'id_venda', 'cliente', 'telefone', 'endereco', 'produto', 
-      'valor_total', 'parcela', 'valor_parcela', 'valor_pago', 
-      'data_vencimento', 'status', 'forma_pagamento', 'trabalho', 'desconto_vendedor'
+      'id_venda', 'cliente', 'telefone', 'endereco', 'trabalho', 'produto', 
+      'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
+      'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'
     ];
   }
 
@@ -1379,11 +1379,12 @@ async function desenharTabela() {
   fil.innerHTML = '<th class="col-resumo"></th>';
   corpo.innerHTML = '';
 
-  // 2. Criar Cabeçalho e Filtros (Misturando Inputs e Selects)
+  // 2. Criar Cabeçalho e Filtros
   colunas.forEach((title) => {
+    // REMOVIDO O STYLE DIFERENTE DA ENTRADA
     cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
+    
     let thF = document.createElement('th');
-
     const colunasSelect = ['id_venda', 'cliente', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
 
     if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
@@ -1403,8 +1404,6 @@ async function desenharTabela() {
 
   if (abaAtual === 'cadastro-vendas') {
     cab.innerHTML += `<th>CONDIÇÃO</th>`;
-    
-    // Adicionando o Select de Filtro para a coluna Condição
     let thFCond = document.createElement('th');
     thFCond.innerHTML = `
       <select onchange="aplicarFiltroDelay('condicao', this.value)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
@@ -1421,21 +1420,16 @@ async function desenharTabela() {
   let thAcoes = document.createElement('th');
   fil.appendChild(thAcoes);
 
-  // 3. Filtro (Unindo Filtro de Texto + Condição + Especial dos Cards)
+  // 3. Filtros
   let filtrados = dadosPlanilha.filter(item => {
-    // Filtro normal dos campos
     let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial" || k === "condicao") return true;
       return String(item[k] || "").toLowerCase().includes(String(filtros[k]).toLowerCase());
     });
-
-    // Lógica para determinar se a linha está resolvida (PAGO/PARCIAL)
     const statusLimpo = String(item.status || "").toUpperCase();
     const resolvido = statusLimpo === "PAGO" || statusLimpo === "PARCIAL" || statusLimpo.includes("CONCLU");
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
-
-    // Filtro da Coluna Condição
     let passaCondicao = true;
     if (filtros["condicao"] && abaAtual === 'cadastro-vendas') {
       const f = filtros["condicao"];
@@ -1447,8 +1441,6 @@ async function desenharTabela() {
         passaCondicao = !resolvido && v && v >= hoje && v <= lim;
       }
     }
-
-    // Filtro dos Cards de Resumo (Especial)
     let passaEspecial = true;
     if (filtros["especial"] && abaAtual === 'cadastro-vendas') {
       if (filtros["especial"] === 'paga') passaEspecial = resolvido;
@@ -1459,92 +1451,85 @@ async function desenharTabela() {
           let lim = new Date(); lim.setDate(hoje.getDate() + 5);
           passaEspecial = v >= hoje && v <= lim;
         }
-      } else {
-        passaEspecial = false;
-      }
+      } else { passaEspecial = false; }
     }
-
     return passaNormal && passaCondicao && passaEspecial;
   });
 
   // 4. Paginação
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
-  const infoPag = document.getElementById('infoPag');
-  if (infoPag) infoPag.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
-  const btnAnt = document.getElementById('btnAnt');
-  const btnProx = document.getElementById('btnProx');
-  if (btnAnt) btnAnt.disabled = paginaAtual === 1;
-  if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
+  if (document.getElementById('infoPag')) document.getElementById('infoPag').textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+  if (document.getElementById('btnAnt')) document.getElementById('btnAnt').disabled = paginaAtual === 1;
+  if (document.getElementById('btnProx')) document.getElementById('btnProx').disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
   // 5. Renderização das Linhas
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
-    
-    if (abaAtual === 'cadastro-produtos') {
-      tr.innerHTML = `<td class="col-resumo">
-        <button onclick="abrirEdicaoProduto('${item.id}')" style="background:none; border:none; cursor:pointer;">
-          <i class="fa-solid fa-pencil-alt" style="color:#f59e0b"></i>
+    tr.innerHTML = `<td class="col-resumo">
+        <button onclick="${abaAtual === 'cadastro-produtos' ? `abrirEdicaoProduto('${item.id}')` : `abrirResumo('${item.id_venda}')`}" style="background:none; border:none; cursor:pointer;">
+          <i class="fa-solid ${abaAtual === 'cadastro-produtos' ? 'fa-pencil-alt' : 'fa-magnifying-glass'}" style="color:${abaAtual === 'cadastro-produtos' ? '#f59e0b' : '#0056b3'}"></i>
         </button>
       </td>`;
-    } else {
-      tr.innerHTML = `<td class="col-resumo">
-        <button onclick="abrirResumo('${item.id_venda}')" style="background:none; border:none; cursor:pointer;">
-          <i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i>
-        </button>
-      </td>`;
-    }
 
     colunas.forEach(col => {
       let valor = item[col] || "";
       let cl = "";
-      if (col.includes('valor') || col.includes('total') || col === 'preco') {
+
+      // CORREÇÃO DO ENDEREÇO (Concatena Rua, Número e Bairro)
+      if (col === 'endereco') {
+        const n = item.numero ? `, ${item.numero}` : "";
+        const b = item.bairro ? ` - ${item.bairro}` : "";
+        valor = `${valor}${n}${b}`;
+      }
+
+      // TRATAMENTO DE DINHEIRO (Entrada com cor normal 'col-valor')
+      if (col.includes('valor') || col.includes('total') || col === 'preco' || col === 'entrada') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        cl = (col === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
+        
+        if (col === 'valor_pago') cl = 'texto-verde-negrito';
+        else cl = 'col-valor'; // Padronizado para todas as colunas de preço
       }
+
       if (col.includes('data') && valor) {
         try { valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR'); } catch(e) { valor = item[col]; }
       }
+
       const td = document.createElement('td');
       td.className = cl;
       td.innerHTML = valor;
       tr.appendChild(td);
     });
 
-    // 6. Condição (Badge Colorida)
+    // 6. Condição
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toUpperCase();
       const jaResolvido = status === "PAGO" || status === "PARCIAL" || status.includes("CONCLU");
-      
       let label = "PENDENTE", bg = "#64748b";
-
-      if (jaResolvido) {
-        label = "PAGO"; 
-        bg = "#10b981";
-      } else {
+      if (jaResolvido) { label = "PAGO"; bg = "#10b981"; } 
+      else {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
         const v = new Date(item.data_vencimento + 'T00:00:00');
         if (v < hoje) { label = "VENCIDO"; bg = "#ef4444"; }
         else if (v <= new Date().setDate(new Date().getDate() + 5)) { label = "ATENÇÃO"; bg = "#f59e0b"; }
       }
-      
       tdCond.innerHTML = `<span style="background:${bg}; color:white; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold; display:inline-block; min-width:70px; text-align:center;">${label}</span>`;
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações (Bloqueado se status for PAGO ou PARCIAL)
+    // 7. Ações
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
       const s = String(item.status || "").toLowerCase();
       const isConcluido = s.includes('pago') || s.includes('conclu') || s.includes('parcial');
       tdA.innerHTML = `
         ${isConcluido ? 
-          `<button class="btn-nav btn-disabled" style="margin-right:5px; opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : 
-          `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`
+          `<button class="btn-nav btn-disabled" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : 
+          `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`
         }
-        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
+        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
       `;
     } else {
       tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
@@ -1981,16 +1966,18 @@ async function finalizarVenda() {
   }
 
   try {
+    // CAPTURA DOS DADOS DO HTML
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
-    const email = document.getElementById('emailCliente')?.value || ""; 
+    const emailValor = document.getElementById('clienteEmail')?.value || ""; 
     const cep = document.getElementById('cepCliente')?.value || "";    
-    
     const rua = document.getElementById('ruaCliente')?.value || "";
-    const num = document.getElementById('numCliente')?.value || "";
     const bairro = document.getElementById('bairroCliente')?.value || "";
     const cidade = document.getElementById('cidadeCliente')?.value || "";
+    const num = document.getElementById('numComplemento')?.value || ""; 
+    
+    // Monta o endereço para a tabela VENDAS
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
 
     if (itensNoCarrinho.length === 0) {
@@ -2002,13 +1989,13 @@ async function finalizarVenda() {
       }
       return;
     }
-    const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
 
+    const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
     const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
     const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
     const formaPagamento = document.getElementById('tipoPagamento')?.value || "";
-    const trabalho = document.getElementById('trabalhoVenda')?.value || "";
+    const trabalho = document.getElementById('trabalhoVenda')?.value || ""; 
 
     const descontoSistema = (formaPagamento === 'vista') ? (bruto * 0.10) : 0;
     const descontoTotal = descontoSistema + descVendedor;
@@ -2031,35 +2018,67 @@ async function finalizarVenda() {
     const valorParcela = Math.round((saldoDevedor / numParcelas) * 100) / 100;
     const idVendaUnico = 'V' + Date.now();
 
+    // 2. MONTAGEM DAS PARCELAS (Tabela Vendas)
     const parcelasParaBanco = [];
     for (let i = 0; i < numParcelas; i++) {
       let d = new Date(dataVencBase + 'T00:00:00');
       d.setMonth(d.getMonth() + i);
       parcelasParaBanco.push({
-        id_venda: idVendaUnico, cliente: nome, telefone: tel, cpf: cpf, endereco: enderecoCompleto,
-        produto: listaProdutosTxt, valor_total: valorLiquidoVenda, parcela: `${i + 1}/${numParcelas}`,
-        valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela, valor_pago: 0,
-        data_vencimento: d.toISOString().split('T')[0], status: 'Pendente', forma_pagamento: formaPagamento,
-        entrada: i === 0 ? entrada : 0, desconto: i === 0 ? descontoTotal : 0, trabalho: trabalho, desconto_vendedor: descVendedor
+        id_venda: idVendaUnico, 
+        cliente: nome, 
+        telefone: tel, // Coluna 'telefone' confirmada em Vendas
+        cpf: cpf, 
+        endereco: enderecoCompleto, 
+        produto: listaProdutosTxt, 
+        valor_total: valorLiquidoVenda, 
+        parcela: `${i + 1}/${numParcelas}`,
+        valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela, 
+        valor_pago: 0,
+        data_vencimento: d.toISOString().split('T')[0], 
+        status: 'Pendente', 
+        forma_pagamento: formaPagamento,
+        entrada: i === 0 ? entrada : 0, 
+        trabalho: trabalho, 
+        desconto_vendedor: descVendedor
       });
     }
 
+    // 3. ENVIO PARA TABELA VENDAS
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas.");
+    if (!resVenda.ok) {
+      const erroVenda = await resVenda.json();
+      throw new Error("Erro em Vendas: " + erroVenda.message);
+    }
 
-    await fetch(`${SB_URL}/clientes`, {
+    // 4. ENVIO PARA TABELA CLIENTES (Colunas simples)
+    const resCliente = await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ cliente_nome: nome, cpf_cnpj: cpf, telefone: tel, email: email, cep: cep, logradouro: rua, numero: num, bairro: bairro, cidade: cidade })
+      headers: { 
+        'apikey': SB_KEY, 
+        'Authorization': `Bearer ${SB_KEY}`, 
+        'Content-Type': 'application/json', 
+        'Prefer': 'resolution=merge-duplicates' 
+      },
+      body: JSON.stringify({ 
+        cliente_nome: nome,
+        cpf_cnpj: cpf,
+        telefone: tel, // Coluna 'telefone' confirmada em Clientes
+        email: emailValor, // Coluna 'email' confirmada em Clientes
+        cep: cep, 
+        logradouro: rua, 
+        numero: num, 
+        bairro: bairro, 
+        cidade: cidade 
+      })
     });
 
-    // --- SUCESSO: ATIVA O BOTÃO DE RECIBO ---
-    alert("✅ Venda salva! Botão RECIBO liberado.");
+    // --- SUCESSO ---
+    alert("✅ Venda e Cliente salvos com sucesso!");
 
     if (btn) {
       btn.disabled = true;
@@ -2074,8 +2093,8 @@ async function finalizarVenda() {
     }
 
   } catch (error) {
-    console.error("Erro:", error);
-    alert("🚨 Falha: " + error.message);
+    console.error("Erro Geral:", error);
+    alert("🚨 Falha ao salvar: " + error.message);
     if (btn) {
       btn.disabled = false;
       btn.style.setProperty('background', '#10b981', 'important');

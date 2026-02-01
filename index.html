@@ -1311,15 +1311,12 @@ async function desenharTabela() {
 
   if (!corpo || !cab || !fil) return;
 
-  // IMPORTANTE: Sincroniza os dados da planilha com a gaveta do resumo
-  // Sem isso, a função abrirResumo não encontra a venda para exibir
   vendasCarregadas = dadosPlanilha;
 
-  // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
+  // 1. DEFINIÇÃO DINÂMICA DE COLUNAS (Incluindo CATEGORIA para produtos)
   let colunas = [];
-  
   if (abaAtual === 'cadastro-produtos') {
-    colunas = ['nome', 'preco'];
+    colunas = ['categoria', 'nome', 'preco']; 
   } else {
     colunas = [
       'id_venda', 'cliente', 'telefone', 'endereco', 'produto', 
@@ -1333,11 +1330,26 @@ async function desenharTabela() {
   fil.innerHTML = '<th class="col-resumo"></th>';
   corpo.innerHTML = '';
 
-  // 2. Criar Cabeçalho e Filtros
+  // 2. Criar Cabeçalho e Filtros (Misturando Inputs e Selects)
   colunas.forEach((title) => {
     cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
     let thF = document.createElement('th');
-    thF.innerHTML = `<input oninput="aplicarFiltroDelay('${title}', this.value)" placeholder="Filtrar...">`;
+
+    // Quais colunas você quer como SELECT?
+    const colunasSelect = ['id_venda', 'cliente', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
+
+    if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
+        let opcoes = [...new Set(dadosPlanilha.map(item => item[title]))].filter(v => v).sort();
+        let htmlSel = `<select onchange="aplicarFiltroDelay('${title}', this.value)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
+                        <option value="">Filtrar...</option>`;
+        opcoes.forEach(opt => {
+            htmlSel += `<option value="${opt}" ${filtros[title] == opt ? 'selected' : ''}>${String(opt).toUpperCase()}</option>`;
+        });
+        htmlSel += `</select>`;
+        thF.innerHTML = htmlSel;
+    } else {
+        thF.innerHTML = `<input oninput="aplicarFiltroDelay('${title}', this.value)" value="${filtros[title] || ''}" placeholder="Filtrar..." style="width:100%;">`;
+    }
     fil.appendChild(thF);
   });
 
@@ -1347,31 +1359,50 @@ async function desenharTabela() {
   }
   cab.innerHTML += '<th>AÇÕES</th>';
 
-  // 3. Filtro (Ajustado para Objetos)
+  // 3. Filtro (Unindo Filtro de Texto + Filtro Especial dos Cards)
   let filtrados = dadosPlanilha.filter(item => {
-    return Object.keys(filtros).every(k => {
+    // Filtro normal dos campos
+    let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial") return true;
       return String(item[k] || "").toLowerCase().includes(String(filtros[k]).toLowerCase());
     });
+
+    // Filtro dos Cards de Resumo (Vencida, Atenção, etc)
+    let passaEspecial = true;
+    if (filtros["especial"] && abaAtual === 'cadastro-vendas') {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const status = String(item.status || "").toLowerCase();
+      const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
+      const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
+
+      if (filtros["especial"] === 'paga') passaEspecial = jaPago;
+      else if (filtros["especial"] === 'pendente') passaEspecial = !jaPago;
+      else if (v) {
+        if (filtros["especial"] === 'vencida') passaEspecial = !jaPago && v < hoje;
+        else if (filtros["especial"] === 'atenção') {
+          let lim = new Date(); lim.setDate(hoje.getDate() + 5);
+          passaEspecial = !jaPago && v >= hoje && v <= lim;
+        }
+      } else passaEspecial = false;
+    }
+    return passaNormal && passaEspecial;
   });
 
-  // 4. Paginação
+  // 4. Paginação (Mantido seu código original)
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
-
   const infoPag = document.getElementById('infoPag');
   if (infoPag) infoPag.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
-  
   const btnAnt = document.getElementById('btnAnt');
   const btnProx = document.getElementById('btnProx');
   if (btnAnt) btnAnt.disabled = paginaAtual === 1;
   if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
-  // 5. Renderização das Linhas
+  // 5. Renderização das Linhas (Mantendo seu layout de botões)
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
     
-    // --- ÍCONE DA ESQUERDA (Lupa ou Lápis) ---
+    // Ícone da Esquerda (Lupa ou Lápis) - Layout Original
     if (abaAtual === 'cadastro-produtos') {
       tr.innerHTML = `<td class="col-resumo">
         <button onclick="abrirEdicaoProduto('${item.id}')" style="background:none; border:none; cursor:pointer;">
@@ -1379,7 +1410,6 @@ async function desenharTabela() {
         </button>
       </td>`;
     } else {
-      // BOTÃO DA LUPA COM id_venda (Abre o Resumo do Comprovante)
       tr.innerHTML = `<td class="col-resumo">
         <button onclick="abrirResumo('${item.id_venda}')" style="background:none; border:none; cursor:pointer;">
           <i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i>
@@ -1387,58 +1417,47 @@ async function desenharTabela() {
       </td>`;
     }
 
-    // Preenche as colunas baseado no objeto
     colunas.forEach(col => {
       let valor = item[col] || "";
       let cl = "";
-
-      // Formatação de Dinheiro
       if (col.includes('valor') || col.includes('total') || col === 'preco') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         cl = (col === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
       }
-
-      // Formatação de Data
       if (col.includes('data') && valor) {
-        try {
-          valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR');
-        } catch(e) { valor = item[col]; }
+        try { valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR'); } catch(e) { valor = item[col]; }
       }
-
       const td = document.createElement('td');
       td.className = cl;
       td.innerHTML = valor;
       tr.appendChild(td);
     });
 
-    // 6. Coluna Condição (Apenas para Vendas)
+    // 6. Condição (Badge Colorida)
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toLowerCase();
-      const jaPago = status.includes('pago') || status.includes('conclu');
-      
+      const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
       let label = "PENDENTE", bg = "#64748b";
-      if (jaPago) {
-        label = "PAGO"; bg = "#10b981";
-      } else {
+      if (jaPago) { label = "PAGO"; bg = "#10b981"; }
+      else {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const lim = new Date(); lim.setDate(hoje.getDate() + 5);
         const v = new Date(item.data_vencimento + 'T00:00:00');
         if (v < hoje) { label = "VENCIDO"; bg = "#ef4444"; }
-        else if (v <= lim) { label = "ATENÇÃO"; bg = "#f59e0b"; }
+        else if (v <= new Date().setDate(new Date().getDate() + 5)) { label = "ATENÇÃO"; bg = "#f59e0b"; }
       }
       tdCond.innerHTML = `<span style="background:${bg}; color:white; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold; display:inline-block; min-width:70px; text-align:center;">${label}</span>`;
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações (Botões Lado Direito)
+    // 7. Ações (O Pulo do Gato: Botão bloqueado se pago)
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
-      const isPago = (item.status || "").toLowerCase().includes('pago');
+      const isPago = (item.status || "").toLowerCase().includes('pago') || (item.status || "").toLowerCase().includes('conclu');
       tdA.innerHTML = `
         ${isPago ? 
-          `<button class="btn-nav btn-disabled" style="margin-right:5px; opacity:0.3">✔</button>` : 
+          `<button class="btn-nav btn-disabled" style="margin-right:5px; opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : 
           `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`
         }
         <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
@@ -1446,7 +1465,6 @@ async function desenharTabela() {
     } else {
       tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
     }
-    
     tr.appendChild(tdA);
     corpo.appendChild(tr);
   });
@@ -1546,23 +1564,25 @@ async function filtrarRapido(c, v) {
 
     // 1. Garante que estamos na aba de vendas
     if (abaAtual !== 'cadastro-vendas') {
-        abaAtual = 'cadastro-vendas';
         await mostrarLista('cadastro-vendas'); 
     }
 
-    // Limpamos filtros anteriores (de texto/input) para não dar conflito
+    // 2. Aplicamos o filtro na variável global 'filtros'
+    // Limpamos outros filtros para o card ser prioridade
     filtros = {}; 
 
-    // Se o clique veio de um card (condição), usamos a marcação "especial"
     if (c === 'condicao') {
-        filtros["especial"] = v; 
+        // Guardamos o valor (vencida, atenção, paga) para a desenharTabela usar
+        filtros["especial"] = v.toLowerCase(); 
     } else {
-        const h = dadosPlanilha[0];
-        filtros[h.indexOf(c)] = v;
+        filtros[c] = v;
     }
 
     paginaAtual = 1; 
+    
+    // 3. O SEGREDO: A desenharTabela precisa ler o filtros["especial"]
     desenharTabela();
+    
     document.getElementById('loaderFiltro').style.display = 'none';
 }
 
@@ -1640,82 +1660,122 @@ async function atualizarCards() {
 
 
 async function abrirPagar(id) {
-  // 1. Localiza a venda pelo ID (UUID) nos dados carregados
+  // 1. Localiza a venda nos dados locais
   const venda = dadosPlanilha.find(v => v.id === id);
-  if (!venda) return alert("Venda não localizada!");
+  if (!venda) return alert("Venda não localizada nos dados locais! Verifique o ID.");
 
-  // --- Limpeza e tratamento do valor da parcela ---
+  // Tratamento do valor da parcela (R$ 100,00 -> 100.00)
   let vBruto = String(venda.valor_parcela || "0").replace(/[R$\s]/g, '');
-  if (vBruto.includes(',') && vBruto.includes('.')) {
-      vBruto = vBruto.replace(/\./g, ''); 
-  }
+  if (vBruto.includes(',') && vBruto.includes('.')) vBruto = vBruto.replace(/\./g, '');
   vBruto = vBruto.replace(',', '.');
   const valorOriginal = Math.round(parseFloat(vBruto) * 100) / 100;
 
-  // 2. Preenche o Modal de Pagamento
   const input = document.getElementById('inputValorPago');
   const btnConfirm = document.getElementById('btnConfirmPagar');
 
   btnConfirm.disabled = false;
   btnConfirm.innerHTML = "Confirmar";
-
   document.getElementById('valParcelaExibir').textContent = valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  
   input.value = valorOriginal.toFixed(2);
   document.getElementById('modalPagar').style.display = 'flex';
 
-  setTimeout(() => {
-    input.focus();
-    input.select();
-  }, 300); 
+  setTimeout(() => { input.focus(); input.select(); }, 300);
 
-  // 3. Configura o clique do botão de confirmação (Agora via fetch)
   btnConfirm.onclick = async () => {
     const vDigitado = parseFloat(input.value.replace(',', '.'));
+    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Digite um valor válido!");
     
-    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Por favor, digite um valor válido!");
-    
-    btnConfirm.disabled = true; 
+    btnConfirm.disabled = true;
     btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
 
     try {
-      // Atualização no Supabase
-      const response = await fetch(`${SB_URL}/vendas?id=eq.${id}`, {
+      const residuo = Math.round((valorOriginal - vDigitado) * 100) / 100;
+
+      // --- PASSO 1: ATUALIZAR PARCELA ATUAL ---
+      // Verifique se no Supabase a coluna UUID se chama 'id'. Se for 'id_venda', mude abaixo.
+      const urlUpdate = `${SB_URL}/vendas?id=eq.${id}`;
+      
+      const resAtual = await fetch(urlUpdate, {
         method: 'PATCH',
         headers: {
           'apikey': SB_KEY,
           'Authorization': 'Bearer ' + SB_KEY,
           'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
+          'Prefer': 'return=representation' 
         },
         body: JSON.stringify({
           status: 'PAGO',
           valor_pago: vDigitado,
-          data_pagamento: new Date().toISOString().split('T')[0] // Opcional: salva a data de hoje
+          data_pagamento: new Date().toISOString().split('T')[0]
         })
       });
 
-      if (response.ok) {
-        // Envia para o n8n (Se você ainda usar essa função)
-        if (typeof enviarConfirmacaoParaN8N === 'function') {
-           enviarConfirmacaoParaN8N(venda, vDigitado, valorOriginal);
+      // Se a resposta não for 200/204, captura o erro do Supabase
+      if (!resAtual.ok) {
+        const errorData = await resAtual.json();
+        console.error("Erro Supabase:", errorData);
+        throw new Error(`Banco diz: ${errorData.message || resAtual.statusText}`);
+      }
+
+      // --- PASSO 2: LÓGICA DE RESÍDUO (PARCIAL/PF) ---
+      if (residuo !== 0) {
+        let proxParcelaNum = "";
+        if (venda.parcela && venda.parcela.includes('/')) {
+          let partes = venda.parcela.split('/');
+          let atual = parseInt(partes[0]);
+          let total = parseInt(partes[1]);
+          if (atual < total) proxParcelaNum = (atual + 1) + "/" + total;
         }
 
-        fecharModal('modalPagar');
-        
-        // Recarrega a lista chamando sua função de navegar ou buscarDados
-        if (typeof navegar === 'function') {
-            await navegar(abaAtual);
-        } else {
-            location.reload(); // Fallback simples
+        let proximaVenda = null;
+        if (proxParcelaNum) {
+          proximaVenda = dadosPlanilha.find(v => 
+            v.id_venda === venda.id_venda && 
+            v.parcela === proxParcelaNum && 
+            !(v.status || "").toLowerCase().includes('pago')
+          );
         }
-        
-        console.log("Pagamento processado no Supabase.");
-      } else {
-        throw new Error("Erro na resposta do banco.");
+
+        if (proximaVenda) {
+          // A: Atualizar próxima parcela
+          let vProx = parseFloat(String(proximaVenda.valor_parcela).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+          await fetch(`${SB_URL}/vendas?id=eq.${proximaVenda.id}`, {
+            method: 'PATCH',
+            headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ valor_parcela: Math.max(0, vProx + residuo) })
+          });
+        } else if (residuo > 0) {
+          // B: Criar parcela PF
+          const dVenc = new Date(venda.data_vencimento + 'T12:00:00');
+          dVenc.setMonth(dVenc.getMonth() + 1);
+          
+          const { id: oldId, ...dadosParaNovo } = venda; // Remove o ID antigo
+          const novaPF = {
+            ...dadosParaNovo,
+            parcela: "PF",
+            valor_parcela: residuo,
+            valor_pago: 0,
+            status: "Pendente",
+            data_vencimento: dVenc.toISOString().split('T')[0],
+            data_pagamento: null
+          };
+
+          await fetch(`${SB_URL}/vendas`, {
+            method: 'POST',
+            headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify(novaPF)
+          });
+        }
       }
+
+      fecharModal('modalPagar');
+      // Recarrega os dados para atualizar a tabela
+      if (typeof buscarDados === 'function') await buscarDados(); 
+      else if (typeof mostrarLista === 'function') await mostrarLista(abaAtual);
+      else location.reload();
+
     } catch (erro) {
-      alert("Erro ao processar pagamento: " + erro.message);
+      alert("Falha no processamento: " + erro.message);
       btnConfirm.disabled = false;
       btnConfirm.innerHTML = "Confirmar";
     }
@@ -2020,32 +2080,30 @@ async function abrirExcluir(idBanco) {
 }
     
 
-async function processarExclusao(idx, idVenda, modo) {
+async function processarExclusao(idBanco, idVendaRef, modo) {
   const btnUnica = document.getElementById('btnExcluirUnica');
   const btnTudo = document.getElementById('btnExcluirTudo');
 
-  // 1. Captura o ID real da linha no banco (geralmente a coluna 'id')
-  const h = dadosPlanilha[0];
-  const linha = dadosPlanilha[idx];
-  const idLinhaBanco = linha[h.indexOf('id')]; // ID único da parcela/produto
-  const idVendaRef = idVenda; // O agrupador da venda completa
+  if (!btnUnica || !btnTudo) return;
 
   // Trava os botões
   btnUnica.disabled = true;
   btnTudo.disabled = true;
   
-  const textoOriginal = modo === 'unica' ? "Excluindo parcela..." : "Excluindo venda...";
   const btnAlvo = (modo === 'unica' ? btnUnica : btnTudo);
-  btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${textoOriginal}`;
+  const textoOriginal = btnAlvo.innerHTML;
+  btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...`;
 
   try {
-    let url = `${SB_URL}/${abaAtual === 'cadastro-produtos' ? 'produtos' : 'vendas'}`;
+    // Determina a tabela
+    const tabela = (abaAtual === 'cadastro-produtos' ? 'produtos' : 'vendas');
+    let url = `${SB_URL}/${tabela}`;
     
-    // 2. Define o filtro da exclusão
-    // Se for 'unica', apaga só pelo ID da linha. 
-    // Se for 'tudo', apaga todas as linhas que tiverem o mesmo id_venda.
+    // Define o filtro: 
+    // Se única: usa o ID (UUID) da linha
+    // Se total: usa o id_venda (agrupador)
     if (modo === 'unica') {
-      url += `?id=eq.${idLinhaBanco}`;
+      url += `?id=eq.${idBanco}`;
     } else {
       url += `?id_venda=eq.${idVendaRef}`;
     }
@@ -2060,19 +2118,22 @@ async function processarExclusao(idx, idVenda, modo) {
     });
 
     if (response.ok) {
-      fecharModal('modalExcluir');
-      // 3. Atualiza a lista na tela buscando do Supabase
+      // Fecha o modal (vendas ou produtos)
+      fecharModal(abaAtual === 'cadastro-produtos' ? 'modalExcluirProduto' : 'modalExcluir');
+      
+      // Atualiza a lista na tela
       await mostrarLista(abaAtual);
       console.log("Exclusão realizada com sucesso!");
     } else {
-      throw new Error("Erro ao deletar no Supabase");
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Erro ao deletar no Supabase");
     }
 
   } catch (err) {
     console.error(err);
     alert("Erro ao excluir: " + err.message);
   } finally {
-    // Destrava os botões e volta o texto original
+    // Destrava e restaura os botões
     btnUnica.disabled = false;
     btnTudo.disabled = false;
     btnUnica.innerHTML = "Excluir APENAS esta parcela";

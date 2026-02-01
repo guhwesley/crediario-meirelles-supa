@@ -1218,11 +1218,19 @@ async function login() {
   document.getElementById('senha').value = '';
 }
 
-   function navegarLimpo(aba) {
-  // 1. Liga o carregando antes de começar a troca
+   async function navegarLimpo(aba) {
+  // 1. Liga o carregando
   document.getElementById('loaderFiltro').style.display = 'block';
+  
   filtros = {}; 
   paginaAtual = 1; 
+
+  // 2. SE FOR VENDAS, CARREGA OS PRODUTOS NO SELECT
+  if (aba === 'cadastro-vendas') {
+    await carregarProdutos(); // Chama aquela função completa que você postou
+  }
+
+  // 3. Mostra a tela
   mostrarLista(aba);
 }
 
@@ -1250,16 +1258,22 @@ async function mostrarLista(aba) {
 
     const resSupabase = await response.json();
 
-    // 3. Organização dos Dados (Agora salvamos o Objeto direto!)
+    // 3. Organização dos Dados
     if (!resSupabase || resSupabase.length === 0) {
-      dadosPlanilha = []; // Lista vazia se não houver dados
+      dadosPlanilha = []; 
     } else {
-      // Diferente da planilha, aqui guardamos os objetos como eles vêm do banco
       dadosPlanilha = resSupabase; 
     }
 
+    // --- O PULO DO GATO ESTÁ AQUI ---
+    // Se a aba for de vendas, além de desenhar a tabela, 
+    // precisamos popular o select de produtos do formulário.
+    if (aba === 'cadastro-vendas') {
+      await carregarProdutos(); // Carrega os nomes no select id="selectProduto"
+    }
+
     // 4. Atualiza a interface
-    await atualizarCards(); 
+    if (typeof atualizarCards === 'function') await atualizarCards(); 
     desenharTabela();
 
   } catch (error) {
@@ -2281,13 +2295,20 @@ function fecharModal(id) {
   if (el) el.style.display = 'none';
 }
 
+
 // --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
 async function carregarProdutos() {
+  // Localiza o select pelo ID que você encontrou no seu HTML
   const select = document.getElementById('selectProduto');
-  select.innerHTML = '<option value="">Carregando produtos...</option>';
+  
+  if (!select) {
+    console.error("ERRO: O elemento 'selectProduto' não existe na página.");
+    return;
+  }
+
+  select.innerHTML = '<option value="">⏳ Carregando produtos...</option>';
 
   try {
-    // Faz a chamada direta para o Supabase
     const response = await fetch(`${SB_URL}/produtos?select=*&order=nome.asc`, {
       method: 'GET',
       headers: {
@@ -2297,32 +2318,38 @@ async function carregarProdutos() {
       }
     });
 
+    if (!response.ok) throw new Error("Erro ao conectar com o banco de dados.");
+
     const produtos = await response.json();
 
     if (!produtos || produtos.length === 0) {
-      select.innerHTML = '<option value="">Nenhum produto encontrado</option>';
+      select.innerHTML = '<option value="">❌ Nenhum produto encontrado</option>';
       return;
     }
 
+    // Preenche as opções
     select.innerHTML = '<option value="">Selecione um produto...</option>';
     produtos.forEach(p => {
       let opt = document.createElement('option');
       opt.value = p.nome;
-      // Ajuste o nome das colunas 'nome' e 'preco' caso no seu Supabase estejam diferentes
-      opt.text = p.nome + " - R$ " + parseFloat(p.preco).toFixed(2);
-      opt.setAttribute('data-preco', p.preco);
+      const preco = parseFloat(p.preco) || 0;
+      opt.textContent = `${p.nome} - R$ ${preco.toFixed(2).replace('.', ',')}`;
+      opt.setAttribute('data-preco', preco);
       select.appendChild(opt);
     });
 
+    console.log("✅ Select 'selectProduto' preenchido!");
+
   } catch (err) {
-    console.error("Erro Supabase:", err);
-    select.innerHTML = '<option value="">Erro ao carregar</option>';
+    console.error("Erro técnico:", err);
+    select.innerHTML = '<option value="">⚠️ Erro ao carregar</option>';
   }
 }
 
 // --- 4. ADICIONAR AO CARRINHO ---
 function adicionarAoCarrinho() {
-  const select = document.getElementById('selectProduto');
+  // Ajuste para encontrar o select correto (vendas ou produtos)
+  const select = document.getElementById('produtoVenda') || document.getElementById('selectProduto');
   const option = select.options[select.selectedIndex];
   
   if (!option || option.value === "") {
@@ -2330,10 +2357,14 @@ function adicionarAoCarrinho() {
     return;
   }
 
-  const nome = option.text;
-  const preco = parseFloat(option.getAttribute('data-preco'));
-  const qtd = parseInt(document.getElementById('qtdProduto').value) || 1;
+  // USAMOS .value para pegar só o nome (ex: "Arroz") 
+  // e não o .text (que tem o preço junto)
+  const nome = option.value; 
+  const preco = parseFloat(option.getAttribute('data-preco')) || 0;
+  const qtdInput = document.getElementById('qtdProduto');
+  const qtd = parseInt(qtdInput ? qtdInput.value : 1) || 1;
 
+  // Verifica se o item já está no carrinho
   const itemExistente = itensNoCarrinho.find(item => item.nome === nome);
 
   if (itemExistente) {
@@ -2348,11 +2379,16 @@ function adicionarAoCarrinho() {
     });
   }
 
-  renderizarTabela();
-  if (typeof calcularVendaFinal === "function") calcularVendaFinal();
+  // Atualiza a visualização do carrinho e os totais
+  renderizarCarrinho(); // Certifique-se que o nome da função é este
   
+  if (typeof calcularVendaFinal === "function") {
+    calcularVendaFinal();
+  }
+  
+  // Reseta os campos após adicionar
   select.selectedIndex = 0;
-  document.getElementById('qtdProduto').value = 1;
+  if(qtdInput) qtdInput.value = 1;
 }
 
 // --- 5. REMOVER ITEM ---

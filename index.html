@@ -1656,74 +1656,69 @@ async function filtrarRapido(c, v) {
 }
 
 async function atualizarCards() {
-  // Se não houver dados, zeramos os cards de vendas e atualizamos apenas o de produtos
   if (!dadosPlanilha || dadosPlanilha.length === 0) {
     const ids = ['cardVendas', 'cardPendentes', 'cardConcluidas', 'cardVencidas', 'cardAtencao'];
     ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = "0"; });
+    return;
   }
 
-  if (abaAtual === 'cadastro-vendas' && dadosPlanilha.length > 0) {
-    // 1. LÓGICA DE VENDAS ÚNICAS (Usando a propriedade .id_venda do objeto)
+  if (abaAtual === 'cadastro-vendas') {
     const idsUnicos = [...new Set(dadosPlanilha.map(x => x.id_venda))].filter(id => id);
     if(document.getElementById('cardVendas')) document.getElementById('cardVendas').textContent = idsUnicos.length;
 
-    // 2. LÓGICA DE PARCELAS
     let contadores = { pendentes: 0, pagas: 0, vencidas: 0, atencao: 0 };
-
-    const hoje = new Date();
+    
+    const hoje = new Date(); 
     hoje.setHours(0, 0, 0, 0);
 
-    const dataLimiteAtencao = new Date();
-    dataLimiteAtencao.setDate(hoje.getDate() + 5);
-    dataLimiteAtencao.setHours(23, 59, 59, 999);
-
-    dadosPlanilha.forEach(venda => {
-      // Acessamos direto pela propriedade do objeto
-      const status = String(venda.status || "").toLowerCase();
-      const vencStr = venda.data_vencimento;
-
-      const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
-
-      if (jaPago) {
+    dadosPlanilha.forEach(item => {
+      const status = String(item.status || "").toUpperCase();
+      const jaResolvido = status === "PAGO" || status === "PARCIAL" || status.includes("CONCLU");
+      
+      if (jaResolvido) {
         contadores.pagas++;
-      } else if (vencStr) {
-        const vencimento = new Date(vencStr + 'T00:00:00');
-        vencimento.setHours(0, 0, 0, 0);
+      } else {
+        // --- SE NÃO ESTÁ PAGA, ELA É CONSIDERADA PENDENTE (TOTAL GERAL) ---
+        contadores.pendentes++; 
 
-        if (vencimento < hoje) {
-          contadores.vencidas++; 
-        } else if (vencimento <= dataLimiteAtencao) {
-          contadores.atencao++; 
-        } else {
-          contadores.pendentes++; 
+        // Agora classificamos para os cards específicos de alerta
+        if (item.data_vencimento) {
+          const v = new Date(item.data_vencimento + 'T00:00:00');
+          v.setHours(0,0,0,0);
+
+          if (v < hoje) {
+            contadores.vencidas++; // Também conta como Vencida
+          } else {
+            let lim = new Date(); 
+            lim.setDate(hoje.getDate() + 5);
+            lim.setHours(23, 59, 59, 999);
+
+            if (v <= lim) {
+              contadores.atencao++; // Também conta como Atenção
+            }
+          }
         }
       }
     });
 
     // Atualiza os elementos na tela
-    if(document.getElementById('cardPendentes')) document.getElementById('cardPendentes').textContent = contadores.pendentes;
+    if(document.getElementById('cardPendentes'))  document.getElementById('cardPendentes').textContent = contadores.pendentes;
     if(document.getElementById('cardConcluidas')) document.getElementById('cardConcluidas').textContent = contadores.pagas;
-    if(document.getElementById('cardVencidas')) document.getElementById('cardVencidas').textContent = contadores.vencidas;
-    if(document.getElementById('cardAtencao')) document.getElementById('cardAtencao').textContent = contadores.atencao;
+    if(document.getElementById('cardVencidas'))   document.getElementById('cardVencidas').textContent = contadores.vencidas;
+    if(document.getElementById('cardAtencao'))    document.getElementById('cardAtencao').textContent = contadores.atencao;
   }
   
-  // --- ATUALIZAÇÃO DO CARD DE PRODUTOS (Busca direta no banco) ---
+  // Card de Produtos
   try {
-    const response = await fetch(`${SB_URL}/produtos?select=id`, {
+    const res = await fetch(`${SB_URL}/produtos?select=id`, {
       method: 'GET',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
     });
-    const produtos = await response.json();
+    const produtos = await res.json();
     if (produtos && document.getElementById('cardProdutos')) {
       document.getElementById('cardProdutos').textContent = produtos.length;
     }
-  } catch (err) {
-    console.error("Erro ao contar produtos:", err);
-  }
+  } catch (err) { console.error("Erro produtos:", err); }
 }
 
 
@@ -3270,5 +3265,6 @@ window.onload = async () => {
  </script>
 </body>
 </html>
+
 
 

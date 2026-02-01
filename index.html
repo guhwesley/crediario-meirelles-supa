@@ -1365,7 +1365,8 @@ async function desenharTabela() {
   // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
   let colunas = [];
   if (abaAtual === 'cadastro-produtos') {
-    colunas = ['categoria', 'nome', 'preco']; 
+    // Adicionado imagem_url após o preço
+    colunas = ['categoria', 'nome', 'preco', 'imagem_url']; 
   } else {
     colunas = [
       'id_venda', 'cliente', 'telefone', 'endereco', 'trabalho', 'produto', 
@@ -1381,7 +1382,6 @@ async function desenharTabela() {
 
   // 2. Criar Cabeçalho e Filtros
   colunas.forEach((title) => {
-    // REMOVIDO O STYLE DIFERENTE DA ENTRADA
     cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
     
     let thF = document.createElement('th');
@@ -1420,7 +1420,7 @@ async function desenharTabela() {
   let thAcoes = document.createElement('th');
   fil.appendChild(thAcoes);
 
-  // 3. Filtros
+  // 3. Filtros (Mantido exatamente igual)
   let filtrados = dadosPlanilha.filter(item => {
     let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial" || k === "condicao") return true;
@@ -1476,23 +1476,28 @@ async function desenharTabela() {
       let valor = item[col] || "";
       let cl = "";
 
-      // CORREÇÃO DO ENDEREÇO (Concatena Rua, Número e Bairro)
-      if (col === 'endereco') {
+      // TRATAMENTO DA URL DA IMAGEM
+      if (col === 'imagem_url') {
+        if (valor && valor.startsWith('http')) {
+          valor = `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>`;
+        } else {
+          valor = `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
+        }
+      }
+      // CORREÇÃO DO ENDEREÇO
+      else if (col === 'endereco') {
         const n = item.numero ? `, ${item.numero}` : "";
         const b = item.bairro ? ` - ${item.bairro}` : "";
         valor = `${valor}${n}${b}`;
       }
-
-      // TRATAMENTO DE DINHEIRO (Entrada com cor normal 'col-valor')
-      if (col.includes('valor') || col.includes('total') || col === 'preco' || col === 'entrada') {
+      // TRATAMENTO DE DINHEIRO
+      else if (col.includes('valor') || col.includes('total') || col === 'preco' || col === 'entrada') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        
         if (col === 'valor_pago') cl = 'texto-verde-negrito';
-        else cl = 'col-valor'; // Padronizado para todas as colunas de preço
+        else cl = 'col-valor';
       }
-
-      if (col.includes('data') && valor) {
+      else if (col.includes('data') && valor) {
         try { valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR'); } catch(e) { valor = item[col]; }
       }
 
@@ -1502,7 +1507,7 @@ async function desenharTabela() {
       tr.appendChild(td);
     });
 
-    // 6. Condição
+    // 6. Condição (Mantido exatamente igual)
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toUpperCase();
@@ -1519,7 +1524,7 @@ async function desenharTabela() {
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações
+    // 7. Ações (Mantido exatamente igual)
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
       const s = String(item.status || "").toLowerCase();

@@ -1794,10 +1794,12 @@ async function finalizarVenda() {
   if (btn) btn.disabled = true;
 
   try {
-    // 1. CAPTURA DADOS DO CLIENTE
+    // 1. CAPTURA DADOS DO CLIENTE (Adicionado Email e CEP aqui)
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
+    const email = document.getElementById('emailCliente')?.value || ""; // <--- NOVO
+    const cep = document.getElementById('cepCliente')?.value || "";     // <--- NOVO
     
     // 2. ENDEREÇO
     const rua = document.getElementById('ruaCliente')?.value || "";
@@ -1806,7 +1808,7 @@ async function finalizarVenda() {
     const cidade = document.getElementById('cidadeCliente')?.value || "";
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
 
-    // 3. CAPTURA DOS ITENS DO CARRINHO (Transforma a lista em texto para o banco)
+    // 3. CAPTURA DOS ITENS DO CARRINHO
     if (itensNoCarrinho.length === 0) {
       alert("O carrinho está vazio!");
       if (btn) btn.disabled = false;
@@ -1814,19 +1816,17 @@ async function finalizarVenda() {
     }
     const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
 
-    // 4. CAPTURA VALORES (Usando os IDs que você confirmou no cálculo dinâmico)
+    // 4. CAPTURA VALORES
     const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
     const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
     const formaPagamento = document.getElementById('tipoPagamento')?.value || "";
     const trabalho = document.getElementById('trabalhoVenda')?.value || "";
 
-    // Lógica de desconto de 10% se for à vista (conforme sua função de cálculo)
     const descontoSistema = (formaPagamento === 'vista') ? (bruto * 0.10) : 0;
     const descontoTotal = descontoSistema + descVendedor;
-
-    const valorLiquidoVenda = bruto - descontoTotal; // Valor total da nota
-    const saldoDevedor = valorLiquidoVenda - entrada; // O que vai ser parcelado
+    const valorLiquidoVenda = bruto - descontoTotal;
+    const saldoDevedor = valorLiquidoVenda - entrada;
 
     const dataVencBase = document.getElementById('dataVencimento').value;
     const numParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
@@ -1852,7 +1852,7 @@ async function finalizarVenda() {
         telefone: tel,
         cpf: cpf,
         endereco: enderecoCompleto,
-        produto: listaProdutosTxt, // Aqui vai a lista de todos os itens do carrinho
+        produto: listaProdutosTxt,
         valor_total: valorLiquidoVenda,
         parcela: `${i + 1}/${numParcelas}`,
         valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela,
@@ -1880,7 +1880,7 @@ async function finalizarVenda() {
 
     if (!resVenda.ok) throw new Error("Erro ao salvar parcelas no banco.");
 
-    // 7. ATUALIZAR/CRIAR CLIENTE
+    // 7. ATUALIZAR/CRIAR CLIENTE (CAMPOS CEP E EMAIL ADICIONADOS AQUI)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: {
@@ -1893,6 +1893,8 @@ async function finalizarVenda() {
         cliente_nome: nome,
         cpf_cnpj: cpf,
         telefone: tel,
+        email: email, // <--- NOVO
+        cep: cep,     // <--- NOVO
         logradouro: rua,
         numero: num,
         bairro: bairro,
@@ -1903,11 +1905,11 @@ async function finalizarVenda() {
     // 8. FINALIZAÇÃO
     alert("✅ Venda e Parcelas registradas com sucesso!");
     
-    // Limpar tudo
     itensNoCarrinho = [];
-    renderizarTabela(); // Limpa a tabela visual do carrinho
+    renderizarTabela(); 
     
-    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'valorEntrada', 'descontoVendedor', 'dataVencimento', 'trabalhoVenda'];
+    // Adicionado email e cep na limpeza também
+    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'emailCliente', 'cepCliente', 'valorEntrada', 'descontoVendedor', 'dataVencimento', 'trabalhoVenda'];
     idsParaLimpar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ""; });
 
     if (typeof mostrarLista === 'function') await mostrarLista('cadastro-vendas');

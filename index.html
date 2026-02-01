@@ -1311,14 +1311,16 @@ async function desenharTabela() {
 
   if (!corpo || !cab || !fil) return;
 
+  // IMPORTANTE: Sincroniza os dados da planilha com a gaveta do resumo
+  // Sem isso, a função abrirResumo não encontra a venda para exibir
+  vendasCarregadas = dadosPlanilha;
+
   // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
   let colunas = [];
   
   if (abaAtual === 'cadastro-produtos') {
-    // Colunas para PRODUTOS
     colunas = ['nome', 'preco'];
   } else {
-    // Colunas para VENDAS (Sua lista original)
     colunas = [
       'id_venda', 'cliente', 'telefone', 'endereco', 'produto', 
       'valor_total', 'parcela', 'valor_parcela', 'valor_pago', 
@@ -1357,9 +1359,13 @@ async function desenharTabela() {
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
 
-  document.getElementById('infoPag').textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
-  document.getElementById('btnAnt').disabled = paginaAtual === 1;
-  document.getElementById('btnProx').disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
+  const infoPag = document.getElementById('infoPag');
+  if (infoPag) infoPag.textContent = `Página ${paginaAtual} de ${totalPaginas || 1}`;
+  
+  const btnAnt = document.getElementById('btnAnt');
+  const btnProx = document.getElementById('btnProx');
+  if (btnAnt) btnAnt.disabled = paginaAtual === 1;
+  if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
   // 5. Renderização das Linhas
   itensPagina.forEach((item) => {
@@ -1367,16 +1373,15 @@ async function desenharTabela() {
     
     // --- ÍCONE DA ESQUERDA (Lupa ou Lápis) ---
     if (abaAtual === 'cadastro-produtos') {
-      // LÁPIS PARA PRODUTOS
       tr.innerHTML = `<td class="col-resumo">
         <button onclick="abrirEdicaoProduto('${item.id}')" style="background:none; border:none; cursor:pointer;">
           <i class="fa-solid fa-pencil-alt" style="color:#f59e0b"></i>
         </button>
       </td>`;
     } else {
-      // LUPA PARA VENDAS
+      // BOTÃO DA LUPA COM id_venda (Abre o Resumo do Comprovante)
       tr.innerHTML = `<td class="col-resumo">
-        <button onclick="abrirResumo('${item.id}')" style="background:none; border:none; cursor:pointer;">
+        <button onclick="abrirResumo('${item.id_venda}')" style="background:none; border:none; cursor:pointer;">
           <i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i>
         </button>
       </td>`;
@@ -1387,7 +1392,7 @@ async function desenharTabela() {
       let valor = item[col] || "";
       let cl = "";
 
-      // Formatação de Dinheiro (valor ou preço)
+      // Formatação de Dinheiro
       if (col.includes('valor') || col.includes('total') || col === 'preco') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -1396,7 +1401,9 @@ async function desenharTabela() {
 
       // Formatação de Data
       if (col.includes('data') && valor) {
-        valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR');
+        try {
+          valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR');
+        } catch(e) { valor = item[col]; }
       }
 
       const td = document.createElement('td');
@@ -1425,7 +1432,7 @@ async function desenharTabela() {
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações (Botão Final)
+    // 7. Ações (Botões Lado Direito)
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
       const isPago = (item.status || "").toLowerCase().includes('pago');
@@ -1437,7 +1444,6 @@ async function desenharTabela() {
         <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
       `;
     } else {
-      // Para Produtos, apenas o excluir (o editar já está no início como o lápis)
       tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
     }
     
@@ -1744,46 +1750,75 @@ function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
   .catch(err => console.error("Erro ao disparar n8n:", err));
 }
 
-function abrirResumo(idx) {
-  // 1. Localiza os dados na matriz global
-  const h = dadosPlanilha[0]; 
-  const l = dadosPlanilha[idx];
+function abrirResumo(idVendaUnico) {
+  try {
+    console.log("Tentando abrir resumo da venda:", idVendaUnico);
 
-  if (!l) return;
-
-  let html = '';
-
-  // 2. Mapeia cada coluna para o resumo
-  h.forEach((t, i) => {
-    // Pula colunas internas que não precisam aparecer no resumo (opcional)
-    if (t.toLowerCase() === 'id' || t.toLowerCase() === 'id_venda') return;
-
-    let valor = l[i] || '';
-    let titulo = t.replace('_', ' ').toUpperCase();
-
-    // Tratamento de Moeda para colunas de valor
-    if (t.toLowerCase().includes('valor') || t.toLowerCase().includes('total')) {
-      let num = parseFloat(String(valor).replace(/[R$\s]/g, '').replace(',', '.')) || 0;
-      valor = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    // 1. Verifica se a gaveta de vendas existe
+    if (!vendasCarregadas || vendasCarregadas.length === 0) {
+        alert("Aguarde o carregamento das vendas...");
+        return;
     }
 
-    // Tratamento de Data (padrão YYYY-MM-DD para DD/MM/YYYY)
-    if (t.toLowerCase().includes('data') && valor) {
-      let p = String(valor).split('T')[0].split('-'); 
-      if (p.length === 3) valor = `${p[2]}/${p[1]}/${p[0]}`;
+    // 2. Localiza a venda
+    const venda = vendasCarregadas.find(v => v.id_venda === idVendaUnico);
+
+    if (!venda) {
+      console.error("Venda não encontrada no cache local:", idVendaUnico);
+      alert("Venda não encontrada! Tente atualizar a página.");
+      return;
     }
 
-    // Gera o HTML de cada linha do resumo
-    html += `
-      <div style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
-        <b style="color: #475569; font-size: 0.85rem;">${titulo}:</b><br>
-        <span style="color: #1e293b; font-weight: 500;">${valor}</span>
-      </div>`;
-  });
+    let html = '';
 
-  // 3. Alimenta o Modal e exibe
-  document.getElementById('resumoConteudo').innerHTML = html;
-  document.getElementById('modalResumo').style.display = 'flex';
+    const camposTraduzidos = {
+      cliente: "CLIENTE",
+      cpf: "CPF",
+      telefone: "TELEFONE",
+      produto: "PRODUTO(S)",
+      valor_total: "VALOR TOTAL",
+      parcela: "PARCELA",
+      valor_parcela: "VALOR DA PARCELA",
+      data_vencimento: "VENCIMENTO",
+      forma_pagamento: "FORMA DE PAGAMENTO",
+      status: "STATUS",
+      trabalho: "TRABALHO"
+    };
+
+    Object.keys(camposTraduzidos).forEach(chave => {
+      let valor = venda[chave] || '---';
+      let titulo = camposTraduzidos[chave];
+
+      if (chave.includes('valor') || chave.includes('total')) {
+        let num = parseFloat(valor) || 0;
+        valor = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      if (chave.includes('data') && valor !== '---') {
+        let p = valor.split('-'); 
+        if (p.length === 3) valor = `${p[2]}/${p[1]}/${p[0]}`;
+      }
+
+      html += `
+        <div style="margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; text-align: left;">
+          <b style="color: #64748b; font-size: 0.75rem; text-transform: uppercase;">${titulo}:</b><br>
+          <span style="color: #1e293b; font-weight: 600; font-size: 0.9rem;">${valor}</span>
+        </div>`;
+    });
+
+    const corpoResumo = document.getElementById('resumoConteudo');
+    const modal = document.getElementById('modalResumo');
+
+    if (corpoResumo && modal) {
+      corpoResumo.innerHTML = html;
+      modal.style.display = 'flex';
+    } else {
+      console.error("Elementos modalResumo ou resumoConteudo não existem no HTML.");
+    }
+
+  } catch (erro) {
+    console.error("Erro crítico ao abrir resumo:", erro);
+  }
 }
 
 
@@ -2058,13 +2093,53 @@ async function processarExclusao(idx, idVenda, modo) {
   }
 }
 
-function baixarResumo() { 
-  html2canvas(document.getElementById('printArea')).then(c => { 
-    let a = document.createElement('a'); 
-    a.download='resumo.png'; 
-    a.href=c.toDataURL(); 
-    a.click(); 
-  }); 
+async function baixarResumo() {
+  const area = document.getElementById('printArea');
+  
+  if (!area) {
+    alert("ERRO: A área 'printArea' não foi encontrada no HTML!");
+    return;
+  }
+
+  // Verifica se a biblioteca foi carregada
+  if (typeof html2canvas === 'undefined') {
+    alert("ERRO: A biblioteca html2canvas não carregou. Verifique sua internet ou o link do script.");
+    return;
+  }
+
+  try {
+    console.log("Iniciando conversão para imagem...");
+    
+    // Gera o canvas
+    const canvas = await html2canvas(area, {
+      backgroundColor: "#ffffff",
+      scale: 2,
+      logging: false,
+      useCORS: true
+    });
+
+    // Converte para Base64
+    const imgData = canvas.toDataURL("image/png");
+    
+    // Cria o link de download de forma "macho" (forçada)
+    const link = document.createElement('a');
+    link.style.display = 'none';
+    link.href = imgData;
+    link.download = `comprovante_${Date.now()}.png`;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // Limpa o link após o clique
+    setTimeout(() => {
+      document.body.removeChild(link);
+      console.log("Download concluído!");
+    }, 100);
+
+  } catch (error) {
+    console.error("Erro ao baixar:", error);
+    alert("Falha ao gerar imagem: " + error.message);
+  }
 }
 
 async function executarTrocaSenha() {

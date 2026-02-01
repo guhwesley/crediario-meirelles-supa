@@ -1799,22 +1799,34 @@ async function finalizarVenda() {
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
     
-    // 2. ENDEREÇO (Para a tabela VENDAS, salvamos tudo junto como no seu CRM antigo)
+    // 2. ENDEREÇO
     const rua = document.getElementById('ruaCliente')?.value || "";
     const num = document.getElementById('numCliente')?.value || "";
     const bairro = document.getElementById('bairroCliente')?.value || "";
     const cidade = document.getElementById('cidadeCliente')?.value || "";
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
 
-    // 3. CAMPOS DO CRM ANTIGO (PRODUTO, VENDEDOR, TRABALHO)
-    const produto = document.getElementById('produtoVenda')?.value || "";
-    const descVendedor = document.getElementById('descontoVendedor')?.value || ""; 
-    const trabalho = document.getElementById('trabalhoVenda')?.value || "";
-    const formaPagamento = document.getElementById('formaPagamento')?.value || "";
+    // 3. CAPTURA DOS ITENS DO CARRINHO (Transforma a lista em texto para o banco)
+    if (itensNoCarrinho.length === 0) {
+      alert("O carrinho está vazio!");
+      if (btn) btn.disabled = false;
+      return;
+    }
+    const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
 
-    const valorTotal = parseFloat(document.getElementById('valorTotalVenda')?.value) || 0;
-    const desconto = parseFloat(document.getElementById('descontoVenda')?.value) || 0;
-    const entrada = parseFloat(document.getElementById('entradaVenda')?.value) || 0;
+    // 4. CAPTURA VALORES (Usando os IDs que você confirmou no cálculo dinâmico)
+    const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
+    const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
+    const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
+    const formaPagamento = document.getElementById('tipoPagamento')?.value || "";
+    const trabalho = document.getElementById('trabalhoVenda')?.value || "";
+
+    // Lógica de desconto de 10% se for à vista (conforme sua função de cálculo)
+    const descontoSistema = (formaPagamento === 'vista') ? (bruto * 0.10) : 0;
+    const descontoTotal = descontoSistema + descVendedor;
+
+    const valorLiquidoVenda = bruto - descontoTotal; // Valor total da nota
+    const saldoDevedor = valorLiquidoVenda - entrada; // O que vai ser parcelado
 
     const dataVencBase = document.getElementById('dataVencimento').value;
     const numParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
@@ -1825,12 +1837,10 @@ async function finalizarVenda() {
       return;
     }
 
-    // 4. CÁLCULO FINANCEIRO
-    const valorLiquido = valorTotal - desconto - entrada;
-    const valorParcela = Math.round((valorLiquido / numParcelas) * 100) / 100;
+    const valorParcela = Math.round((saldoDevedor / numParcelas) * 100) / 100;
     const idVendaUnico = 'V' + Date.now();
 
-    // 5. PREPARAR PARCELAS (Nomes das colunas idênticos ao novo SQL)
+    // 5. PREPARAR PARCELAS
     const parcelasParaBanco = [];
     for (let i = 0; i < numParcelas; i++) {
       let d = new Date(dataVencBase + 'T00:00:00');
@@ -1842,16 +1852,16 @@ async function finalizarVenda() {
         telefone: tel,
         cpf: cpf,
         endereco: enderecoCompleto,
-        produto: produto,
-        valor_total: valorTotal,
+        produto: listaProdutosTxt, // Aqui vai a lista de todos os itens do carrinho
+        valor_total: valorLiquidoVenda,
         parcela: `${i + 1}/${numParcelas}`,
-        valor_parcela: valorParcela,
+        valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela,
         valor_pago: 0,
         data_vencimento: d.toISOString().split('T')[0],
         status: 'Pendente',
         forma_pagamento: formaPagamento,
         entrada: i === 0 ? entrada : 0,
-        desconto: i === 0 ? desconto : 0,
+        desconto: i === 0 ? descontoTotal : 0,
         trabalho: trabalho,
         desconto_vendedor: descVendedor
       });
@@ -1868,9 +1878,9 @@ async function finalizarVenda() {
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas.");
+    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas no banco.");
 
-    // 7. ATUALIZAR TABELA CLIENTES (CADASTRO)
+    // 7. ATUALIZAR/CRIAR CLIENTE
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
       headers: {
@@ -1891,20 +1901,20 @@ async function finalizarVenda() {
     });
 
     // 8. FINALIZAÇÃO
-    alert("✅ Venda finalizada com sucesso!");
+    alert("✅ Venda e Parcelas registradas com sucesso!");
     
-    // Limpar carrinho e campos
+    // Limpar tudo
     itensNoCarrinho = [];
-    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'valorTotalVenda', 'descontoVenda', 'entradaVenda', 'produtoVenda', 'trabalhoVenda', 'descontoVendedor'];
+    renderizarTabela(); // Limpa a tabela visual do carrinho
+    
+    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'valorEntrada', 'descontoVendedor', 'dataVencimento', 'trabalhoVenda'];
     idsParaLimpar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ""; });
 
-    // Atualizar dados e navegar
-    if (typeof carregarDadosSupabase === 'function') await carregarDadosSupabase();
-    navegar('cadastro-vendas');
+    if (typeof mostrarLista === 'function') await mostrarLista('cadastro-vendas');
 
   } catch (error) {
     console.error("Erro técnico:", error);
-    alert("🚨 Falha: " + error.message);
+    alert("🚨 Falha ao finalizar: " + error.message);
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -2233,7 +2243,7 @@ function abrirNovaVenda() {
     btn.style.setProperty('background', '#10b981', 'important'); 
     btn.style.opacity = "1";
     btn.style.cursor = "pointer";
-    btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
+    btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
   }
 
   // 3. Reset do Botão Comprovante (só ativa depois que vende)
@@ -2348,23 +2358,22 @@ async function carregarProdutos() {
 
 // --- 4. ADICIONAR AO CARRINHO ---
 function adicionarAoCarrinho() {
-  // Ajuste para encontrar o select correto (vendas ou produtos)
-  const select = document.getElementById('produtoVenda') || document.getElementById('selectProduto');
-  const option = select.options[select.selectedIndex];
+  // Tenta encontrar o select pelos dois IDs possíveis
+  const select = document.getElementById('selectProduto') || document.getElementById('produtoVenda');
+  const option = select ? select.options[select.selectedIndex] : null;
   
   if (!option || option.value === "") {
     alert("Por favor, selecione um produto!");
     return;
   }
 
-  // USAMOS .value para pegar só o nome (ex: "Arroz") 
-  // e não o .text (que tem o preço junto)
+  // Pega o nome puro e o preço do atributo data-preco
   const nome = option.value; 
   const preco = parseFloat(option.getAttribute('data-preco')) || 0;
   const qtdInput = document.getElementById('qtdProduto');
   const qtd = parseInt(qtdInput ? qtdInput.value : 1) || 1;
 
-  // Verifica se o item já está no carrinho
+  // Verifica se o item já está no carrinho para somar
   const itemExistente = itensNoCarrinho.find(item => item.nome === nome);
 
   if (itemExistente) {
@@ -2379,23 +2388,27 @@ function adicionarAoCarrinho() {
     });
   }
 
-  // Atualiza a visualização do carrinho e os totais
-  renderizarCarrinho(); // Certifique-se que o nome da função é este
+  // --- ATENÇÃO AQUI: Chame o nome correto da função de desenhar ---
+  renderizarTabela(); 
   
   if (typeof calcularVendaFinal === "function") {
     calcularVendaFinal();
   }
   
-  // Reseta os campos após adicionar
+  // Reseta os campos
   select.selectedIndex = 0;
   if(qtdInput) qtdInput.value = 1;
 }
 
 // --- 5. REMOVER ITEM ---
 function removerItem(index) {
-  itensNoCarrinho.splice(index, 1);
-  renderizarTabela();
-  if (typeof calcularVendaFinal === "function") calcularVendaFinal();
+  if (confirm("Deseja remover este item do carrinho?")) {
+    itensNoCarrinho.splice(index, 1);
+    renderizarTabela(); // Mantendo o padrão
+    if (typeof calcularVendaFinal === "function") {
+      calcularVendaFinal();
+    }
+  }
 }
 
 // --- 6. RENDERIZAR TABELA (AQUI ELA LIMPA O HTML) ---
@@ -2406,12 +2419,16 @@ function renderizarTabela() {
   corpo.innerHTML = ""; // Limpa a tabela visualmente
 
   itensNoCarrinho.forEach((item, index) => {
+    // Garantimos que os valores são números para evitar erro de .toFixed
+    const preco = parseFloat(item.preco) || 0;
+    const subtotal = parseFloat(item.subtotal) || 0;
+
     corpo.innerHTML += `
       <tr style="border-bottom: 1px solid #334155; background: #0f172a;">
         <td style="padding: 12px; text-align: left; color: white !important;">${item.nome}</td>
         <td style="padding: 12px; text-align: center; color: white !important;">${item.qtd}</td>
-        <td style="padding: 12px; text-align: center; color: white !important;">R$ ${item.preco.toFixed(2)}</td>
-        <td style="padding: 12px; text-align: center; font-weight: bold; color: #38bdf8 !important;">R$ ${item.subtotal.toFixed(2)}</td>
+        <td style="padding: 12px; text-align: center; color: white !important;">R$ ${preco.toFixed(2).replace('.', ',')}</td>
+        <td style="padding: 12px; text-align: center; font-weight: bold; color: #38bdf8 !important;">R$ ${subtotal.toFixed(2).replace('.', ',')}</td>
         <td style="padding: 12px; text-align: center;">
           <button type="button" onclick="removerItem(${index})" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">
             <i class="fas fa-trash-alt"></i>

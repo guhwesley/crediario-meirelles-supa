@@ -2304,131 +2304,6 @@ const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-
 // Variável global para evitar envios duplicados
 let enviandoVendaAgora = false;
 
-async function finalizarVenda() {
-  const obrigatorios = ['nomeCliente', 'telCliente', 'cpfCliente', 'dataVencimento', 'clienteEmail'];
-
-  // 1. VALIDAÇÃO DE CAMPOS
-  for (let id of obrigatorios) {
-    const el = document.getElementById(id);
-    if (!el || !el.value.trim()) {
-      mostrarAviso('erro', 'Campos Vazios', 'Preencha todos os campos obrigatórios!');
-      if (el) el.focus();
-      return;
-    }
-  }
-
-  if (itensNoCarrinho.length === 0) {
-    mostrarAviso('erro', 'Carrinho Vazio', 'Adicione produtos ao carrinho!');
-    return;
-  }
-
-  if (enviandoVendaAgora) return;
-  enviandoVendaAgora = true;
-
-  const btn = document.getElementById('btnFinalizar');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
-  }
-
-  // 2. CÁLCULOS FINANCEIROS
-  const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
-  const tipo = document.getElementById('tipoPagamento').value;
-  const entrada = parseFloat(document.getElementById('valorEntrada').value) || 0;
-  const descontoVendedor = parseFloat(document.getElementById('descontoVendedor').value) || 0;
-  const parcelasQtd = (tipo === 'vista') ? 1 : (parseInt(document.getElementById('numeroParcelas').value) || 1); 
-  
-  const descontoSistema = (tipo === 'vista' ? bruto * 0.10 : 0);
-  const valorVendaReal = bruto - descontoSistema - descontoVendedor;
-  const valorParcela = Math.round(((valorVendaReal - entrada) / parcelasQtd) * 100) / 100;
-  
-  const idVendaUnico = 'V' + Date.now();
-  const parcelasParaBanco = [];
-
-  // 3. MONTAGEM DAS PARCELAS
-  for (let i = 0; i < parcelasQtd; i++) {
-    let d = new Date(document.getElementById('dataVencimento').value + 'T00:00:00');
-    d.setMonth(d.getMonth() + i);
-    
-    const textoParcela = `${i + 1}/${parcelasQtd}`;
-
-    parcelasParaBanco.push({
-      id_venda: idVendaUnico,
-      cliente_nome: document.getElementById('nomeCliente').value,
-      cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
-      telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
-      produtos_resumo: itensNoCarrinho.map(item => `${item.nome} (x${item.qtd})`).join(", "),
-      valor_total: valorVendaReal,
-      valor_entrada: i === 0 ? entrada : 0,
-      valor_parcela: valorParcela,
-      parcela: textoParcela, 
-      status: 'Pendente', // Única coluna de controle agora
-      metodo_pagamento: tipo,
-      data_venda: new Date().toISOString(),
-      data_vencimento: d.toISOString().split('T')[0]
-    });
-  }
-
-  try {
-    // 4. SALVAR VENDAS NO SUPABASE
-    const resVenda = await fetch(`${SB_URL}/vendas`, {
-      method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': 'Bearer ' + SB_KEY, 
-        'Content-Type': 'application/json' 
-      },
-      body: JSON.stringify(parcelasParaBanco)
-    });
-
-    if (!resVenda.ok) throw new Error('Erro ao salvar parcelas no banco de dados.');
-
-    // 5. SALVAR/ATUALIZAR CLIENTE (UPSERT)
-    await fetch(`${SB_URL}/clientes`, {
-      method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': 'Bearer ' + SB_KEY, 
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates' 
-      },
-      body: JSON.stringify({
-        nome: document.getElementById('nomeCliente').value,
-        cpf_cnpj: document.getElementById('cpfCliente').value.replace(/\D/g, ''),
-        email: document.getElementById('clienteEmail').value.toLowerCase().trim(),
-        telefone: document.getElementById('telCliente').value.replace(/\D/g, ''),
-        bairro: document.getElementById('bairroCliente')?.value || '',
-        cidade: document.getElementById('cidadeCliente')?.value || ''
-      })
-    });
-
-    // 6. SUCESSO E LIMPEZA
-    mostrarAviso('sucesso', 'Venda Realizada!', `Venda de ${parcelasQtd}x salva com sucesso.`);
-    
-    // Habilita botão de comprovante se houver
-    const btnComp = document.getElementById('btnComprovante');
-    if (btnComp) {
-        btnComp.disabled = false;
-        btnComp.style.opacity = "1";
-    }
-    
-    // Recarrega a lista da aba atual
-    await mostrarLista('cadastro-vendas');
-
-    // Limpeza opcional do carrinho (se sua lógica permitir)
-    // itensNoCarrinho = []; 
-
-  } catch (err) {
-    console.error("Erro na finalização:", err);
-    mostrarAviso('erro', 'Erro Fatal', 'Falha ao salvar no Supabase. Verifique o console.');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = 'FINALIZAR VENDA';
-    }
-    enviandoVendaAgora = false;
-  }
-}
 
 // Função Auxiliar para busca de CEP (Opcional)
 function buscaCep() {
@@ -2878,6 +2753,7 @@ window.onload = async () => {
  </script>
 </body>
 </html>
+
 
 
 

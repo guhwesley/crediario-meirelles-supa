@@ -941,7 +941,9 @@
     
     <div class="grid-cadastro">
         <input type="text" id="nomeCliente" placeholder="Nome Completo do Cliente" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="text" id="cpfCliente" placeholder="CPF" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+        <input type="text" id="cpfCliente" placeholder="CPF" required 
+       onblur="buscarClientePorCPF(this.value)"
+       style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
         <input type="tel" id="telCliente" placeholder="Telefone" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
 
         <input type="email" id="clienteEmail" placeholder="E-mail do Cliente (Para Recibo)" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
@@ -1229,7 +1231,7 @@ async function mostrarLista(aba) {
   // 1. Liga o carregando
   document.getElementById('loaderFiltro').style.display = 'block';
 
-  // RESET de filtros ao trocar de aba para evitar erros de busca
+  // RESET de filtros ao trocar de aba
   filtros = {}; 
   paginaAtual = 1;
 
@@ -1248,22 +1250,15 @@ async function mostrarLista(aba) {
 
     const resSupabase = await response.json();
 
+    // 3. Organização dos Dados (Agora salvamos o Objeto direto!)
     if (!resSupabase || resSupabase.length === 0) {
-      dadosPlanilha = [["Nenhum dado encontrado"], []];
+      dadosPlanilha = []; // Lista vazia se não houver dados
     } else {
-      // 3. Organização dos Dados
-      const cabecalhos = Object.keys(resSupabase[0]);
-      
-      // Ordenação opcional: Se você quiser garantir que o 'id' seja sempre o primeiro
-      // ou que colunas específicas venham em certa ordem, poderia manipular o array 'cabecalhos' aqui.
-
-      const linhas = resSupabase.map(obj => cabecalhos.map(col => obj[col]));
-      dadosPlanilha = [cabecalhos, ...linhas];
+      // Diferente da planilha, aqui guardamos os objetos como eles vêm do banco
+      dadosPlanilha = resSupabase; 
     }
 
     // 4. Atualiza a interface
-    // Importante: atualizarCards deve vir antes de desenharTabela 
-    // para que os totais estejam prontos.
     await atualizarCards(); 
     desenharTabela();
 
@@ -1273,58 +1268,60 @@ async function mostrarLista(aba) {
         mostrarAviso('erro', 'Erro de Conexão', 'Não foi possível carregar os dados.');
     }
   } finally {
-    // 5. Desliga o carregando
     document.getElementById('loaderFiltro').style.display = 'none';
   }
 }
 
-    function aplicarFiltroDelay(i, v) {
-  // 1. Liga o aviso de carregando na tela
+    function aplicarFiltroDelay(coluna, valor) {
   document.getElementById('loaderFiltro').style.display = 'block';
 
   clearTimeout(timerFiltro);
   
   timerFiltro = setTimeout(() => { 
-    filtros[i] = v; 
+    filtros[coluna] = valor; // 'coluna' agora é o nome (ex: 'cliente')
     paginaAtual = 1; 
     desenharTabela(); 
     
-    // 2. Desliga o aviso após os 4 segundos e a tabela atualizar
     document.getElementById('loaderFiltro').style.display = 'none';
-  }, 4000);
+  }, 500); // Reduzi para 500ms para ficar mais rápido, 4s é muito tempo.
 }
 
     function mudarPagina(valor) {
       paginaAtual += valor; desenharTabela();
     }
 
-function desenharTabela() {
-  const h = dadosPlanilha[0], 
-        corpo = document.getElementById('corpo'), 
-        cab = document.getElementById('cabecalho'), 
+async function desenharTabela() {
+  const corpo = document.getElementById('corpo'),
+        cab = document.getElementById('cabecalho'),
         fil = document.getElementById('filtros');
 
+  if (!corpo || !cab || !fil) return;
+
+  // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
+  let colunas = [];
+  
+  if (abaAtual === 'cadastro-produtos') {
+    // Colunas para PRODUTOS
+    colunas = ['nome', 'preco'];
+  } else {
+    // Colunas para VENDAS (Sua lista original)
+    colunas = [
+      'id_venda', 'cliente', 'telefone', 'endereco', 'produto', 
+      'valor_total', 'parcela', 'valor_parcela', 'valor_pago', 
+      'data_vencimento', 'status', 'forma_pagamento', 'trabalho', 'desconto_vendedor'
+    ];
+  }
+
   // Limpeza inicial
-  cab.innerHTML = '<th class="col-resumo">🔎</th>'; 
-  fil.innerHTML = '<th class="col-resumo"></th>'; 
+  cab.innerHTML = '<th class="col-resumo">🔎</th>';
+  fil.innerHTML = '<th class="col-resumo"></th>';
   corpo.innerHTML = '';
 
-  // 1. Cabeçalho e Filtros
-  h.forEach((title, i) => {
-    if (title.toLowerCase() === 'id') return;
-    cab.innerHTML += `<th>${title}</th>`;
+  // 2. Criar Cabeçalho e Filtros
+  colunas.forEach((title) => {
+    cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
     let thF = document.createElement('th');
-    let titleNormalize = title.toString().toLowerCase().trim();
-
-    if (colunasSelect.includes(titleNormalize)) {
-      let u = [...new Set(dadosPlanilha.slice(1).map(d => d[i]))].filter(x => x).sort();
-      thF.innerHTML = `<select onchange="filtros[${i}]=this.value; paginaAtual=1; desenharTabela();">
-                        <option value="">Todos</option>
-                        ${u.map(v => `<option value="${v}">${v}</option>`).join('')}
-                      </select>`;
-    } else {
-      thF.innerHTML = `<input oninput="aplicarFiltroDelay(${i}, this.value)" placeholder="Filtrar...">`;
-    }
+    thF.innerHTML = `<input oninput="aplicarFiltroDelay('${title}', this.value)" placeholder="Filtrar...">`;
     fil.appendChild(thF);
   });
 
@@ -1332,41 +1329,17 @@ function desenharTabela() {
     cab.innerHTML += `<th>CONDIÇÃO</th>`;
     fil.innerHTML += `<th></th>`;
   }
-  cab.innerHTML += '<th>Ações</th>';
+  cab.innerHTML += '<th>AÇÕES</th>';
 
-  // 2. Filtro e Paginação
-  let filtrados = dadosPlanilha.slice(1)
-    .map((l, i) => ({ dados: l, indexOriginal: i + 1 })) 
-    .filter(item => {
-      const passaFiltroNormal = Object.keys(filtros).every(k => {
-        if (k === "especial") return true; 
-        return !filtros[k] || String(item.dados[k]).toLowerCase().includes(String(filtros[k]).toLowerCase());
-      });
-
-      if (!passaFiltroNormal) return false;
-
-      if (filtros["especial"]) {
-        const iS = h.indexOf('status');
-        const iV = h.indexOf('data_vencimento');
-        const status = String(item.dados[iS] || "").toLowerCase();
-        const vencStr = item.dados[iV];
-        const isPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
-
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const limite = new Date(); limite.setDate(hoje.getDate() + 5); 
-        limite.setHours(23,59,59,999);
-        const venc = new Date(vencStr + 'T00:00:00'); venc.setHours(0,0,0,0);
-
-        const v = filtros["especial"].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-        if (v === 'vencida')  return !isPago && (venc < hoje);
-        if (v === 'atencao')  return !isPago && (venc >= hoje && venc <= limite);
-        if (v === 'paga' || v === 'concluida' || v === 'concluidas') return isPago;
-        if (v === 'pendente') return !isPago && (venc > limite);
-      }
-      return true;
+  // 3. Filtro (Ajustado para Objetos)
+  let filtrados = dadosPlanilha.filter(item => {
+    return Object.keys(filtros).every(k => {
+      if (!filtros[k] || k === "especial") return true;
+      return String(item[k] || "").toLowerCase().includes(String(filtros[k]).toLowerCase());
     });
+  });
 
+  // 4. Paginação
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
 
@@ -1374,71 +1347,63 @@ function desenharTabela() {
   document.getElementById('btnAnt').disabled = paginaAtual === 1;
   document.getElementById('btnProx').disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
-  // 3. Renderização das Linhas
-  itensPagina.forEach((item) => { 
-    const idxReal = item.indexOriginal; 
-    const linha = item.dados;
+  // 5. Renderização das Linhas
+  itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
     
-    tr.innerHTML = `<td class="col-resumo"><button onclick="${abaAtual === 'cadastro-produtos' ? 'abrirEdicaoProduto' : 'abrirResumo'}(${idxReal})" style="background:none; border:none; cursor:pointer;"><i class="fa-solid ${abaAtual === 'cadastro-produtos' ? 'fa-pencil-alt' : 'fa-magnifying-glass'}" style="color:${abaAtual === 'cadastro-produtos' ? '#f59e0b' : '#0056b3'}"></i></button></td>`;
+    // --- ÍCONE DA ESQUERDA (Lupa ou Lápis) ---
+    if (abaAtual === 'cadastro-produtos') {
+      // LÁPIS PARA PRODUTOS
+      tr.innerHTML = `<td class="col-resumo">
+        <button onclick="abrirEdicaoProduto('${item.id}')" style="background:none; border:none; cursor:pointer;">
+          <i class="fa-solid fa-pencil-alt" style="color:#f59e0b"></i>
+        </button>
+      </td>`;
+    } else {
+      // LUPA PARA VENDAS
+      tr.innerHTML = `<td class="col-resumo">
+        <button onclick="abrirResumo('${item.id}')" style="background:none; border:none; cursor:pointer;">
+          <i class="fa-solid fa-magnifying-glass" style="color:#0056b3"></i>
+        </button>
+      </td>`;
+    }
 
-    let statusVenda = "";
-    let vencimentoVenda = "";
-
-    linha.forEach((cel, indexCel) => {
-      if (h[indexCel] && h[indexCel].toLowerCase() === 'id') return;
-
-      let valorExibido = cel;
+    // Preenche as colunas baseado no objeto
+    colunas.forEach(col => {
+      let valor = item[col] || "";
       let cl = "";
-      let tituloColuna = h[indexCel] ? h[indexCel].toLowerCase().trim() : "";
 
-      if (tituloColuna === 'status') statusVenda = String(cel || "").toLowerCase();
-      if (tituloColuna === 'data_vencimento') vencimentoVenda = cel;
-
-      // --- REGRA PARA VALORES (INCLUINDO OCULTAR ZERO NO VALOR PAGO) ---
-      if (tituloColuna.includes('valor') || tituloColuna.includes('preço')) {
-        let num = (typeof cel === 'number') ? cel : parseFloat(String(cel).replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.'));
-        
-        // Se for a coluna valor_pago e o número for 0, fica vazio
-        if (tituloColuna === 'valor_pago' && (num === 0 || isNaN(num))) {
-          valorExibido = "";
-        } else if (!isNaN(num)) {
-          valorExibido = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-        cl = (tituloColuna === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
+      // Formatação de Dinheiro (valor ou preço)
+      if (col.includes('valor') || col.includes('total') || col === 'preco') {
+        let num = parseFloat(valor) || 0;
+        valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        cl = (col === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
       }
 
-      // Máscara Data
-      if (tituloColuna.includes('data') && cel) {
-        let d = new Date(cel);
-        if (!isNaN(d.getTime())) {
-          if (tituloColuna.includes('pagamento')) {
-            valorExibido = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-          } else {
-            let dFixo = new Date(cel + 'T00:00:00');
-            valorExibido = dFixo.toLocaleDateString('pt-BR');
-          }
-        }
+      // Formatação de Data
+      if (col.includes('data') && valor) {
+        valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR');
       }
 
       const td = document.createElement('td');
       td.className = cl;
-      td.innerHTML = valorExibido;
+      td.innerHTML = valor;
       tr.appendChild(td);
     });
 
-    // 4. Coluna Condição
+    // 6. Coluna Condição (Apenas para Vendas)
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
+      const status = String(item.status || "").toLowerCase();
+      const jaPago = status.includes('pago') || status.includes('conclu');
+      
       let label = "PENDENTE", bg = "#64748b";
-      const jaPago = statusVenda.includes('paga') || statusVenda.includes('pago') || statusVenda.includes('conclu');
-
       if (jaPago) {
         label = "PAGO"; bg = "#10b981";
-      } else if (vencimentoVenda) {
+      } else {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const lim = new Date(); lim.setDate(hoje.getDate() + 5); 
-        const v = new Date(vencimentoVenda + 'T00:00:00'); v.setHours(0,0,0,0);
+        const lim = new Date(); lim.setDate(hoje.getDate() + 5);
+        const v = new Date(item.data_vencimento + 'T00:00:00');
         if (v < hoje) { label = "VENCIDO"; bg = "#ef4444"; }
         else if (v <= lim) { label = "ATENÇÃO"; bg = "#f59e0b"; }
       }
@@ -1446,16 +1411,23 @@ function desenharTabela() {
       tr.appendChild(tdCond);
     }
 
-    // 5. Ações
-    let botoes = `<button onclick="abrirExcluir(${idxReal})" class="btn-nav" style="background:#ef4444;">✘</button>`;
-    if(abaAtual === 'cadastro-vendas') {
-        const isPago = statusVenda.includes('paga') || statusVenda.includes('pago') || statusVenda.includes('conclu');
-        let btnPagar = isPago ? 
-            `<button class="btn-nav btn-disabled" style="margin-right:5px;">✔</button>` : 
-            `<button onclick="abrirPagar(${idxReal})" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`;
-        botoes = btnPagar + botoes;
+    // 7. Ações (Botão Final)
+    const tdA = document.createElement('td');
+    if (abaAtual === 'cadastro-vendas') {
+      const isPago = (item.status || "").toLowerCase().includes('pago');
+      tdA.innerHTML = `
+        ${isPago ? 
+          `<button class="btn-nav btn-disabled" style="margin-right:5px; opacity:0.3">✔</button>` : 
+          `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`
+        }
+        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
+      `;
+    } else {
+      // Para Produtos, apenas o excluir (o editar já está no início como o lápis)
+      tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
     }
-    const tdA = document.createElement('td'); tdA.innerHTML = botoes; tr.appendChild(tdA);
+    
+    tr.appendChild(tdA);
     corpo.appendChild(tr);
   });
 }
@@ -1575,17 +1547,15 @@ async function filtrarRapido(c, v) {
 }
 
 async function atualizarCards() {
-  const h = dadosPlanilha[0];
-  const linhasDados = dadosPlanilha.slice(1);
-  
-  // Localiza os índices necessários
-  const iS = h.indexOf('status');
-  const iV = h.indexOf('data_vencimento');
-  const iId = h.indexOf('id_venda'); 
+  // Se não houver dados, zeramos os cards de vendas e atualizamos apenas o de produtos
+  if (!dadosPlanilha || dadosPlanilha.length === 0) {
+    const ids = ['cardVendas', 'cardPendentes', 'cardConcluidas', 'cardVencidas', 'cardAtencao'];
+    ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = "0"; });
+  }
 
-  if (abaAtual === 'cadastro-vendas') {
-    // 1. LÓGICA DE VENDAS ÚNICAS
-    const idsUnicos = [...new Set(linhasDados.map(x => x[iId]))].filter(id => id);
+  if (abaAtual === 'cadastro-vendas' && dadosPlanilha.length > 0) {
+    // 1. LÓGICA DE VENDAS ÚNICAS (Usando a propriedade .id_venda do objeto)
+    const idsUnicos = [...new Set(dadosPlanilha.map(x => x.id_venda))].filter(id => id);
     if(document.getElementById('cardVendas')) document.getElementById('cardVendas').textContent = idsUnicos.length;
 
     // 2. LÓGICA DE PARCELAS
@@ -1598,12 +1568,11 @@ async function atualizarCards() {
     dataLimiteAtencao.setDate(hoje.getDate() + 5);
     dataLimiteAtencao.setHours(23, 59, 59, 999);
 
-    linhasDados.forEach(linha => {
-      const status = String(linha[iS] || "").toLowerCase();
-      const vencStr = linha[iV];
+    dadosPlanilha.forEach(venda => {
+      // Acessamos direto pela propriedade do objeto
+      const status = String(venda.status || "").toLowerCase();
+      const vencStr = venda.data_vencimento;
 
-      // CRUCIAL: Agora aceita "concluido", "paga", "pago" ou "pago_parcial"
-      // Se você quiser que o parcial conte como "concluído", mantenha assim:
       const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
 
       if (jaPago) {
@@ -1622,14 +1591,14 @@ async function atualizarCards() {
       }
     });
 
-    // Atualiza os elementos na tela com segurança
+    // Atualiza os elementos na tela
     if(document.getElementById('cardPendentes')) document.getElementById('cardPendentes').textContent = contadores.pendentes;
     if(document.getElementById('cardConcluidas')) document.getElementById('cardConcluidas').textContent = contadores.pagas;
     if(document.getElementById('cardVencidas')) document.getElementById('cardVencidas').textContent = contadores.vencidas;
     if(document.getElementById('cardAtencao')) document.getElementById('cardAtencao').textContent = contadores.atencao;
   }
   
-  // --- ATUALIZAÇÃO DO CARD DE PRODUTOS ---
+  // --- ATUALIZAÇÃO DO CARD DE PRODUTOS (Busca direta no banco) ---
   try {
     const response = await fetch(`${SB_URL}/produtos?select=id`, {
       method: 'GET',
@@ -1648,88 +1617,180 @@ async function atualizarCards() {
   }
 }
 
-async function finalizarVenda() {
-  const btn = document.getElementById('btnFinalizar');
-  try {
-    if (btn) btn.disabled = true;
+async function abrirPagar(idx) {
+  const h = dadosPlanilha[0];
+  const linha = dadosPlanilha[idx];
+  
+  // Localiza os índices necessários
+  const localizar = (n) => h.findIndex(c => c.toString().toLowerCase().trim() === n);
+  const colValIdx = localizar('valor_parcela');
+  const colIdIdx = localizar('id'); // ID único do Supabase
 
-    // Coleta dados do HTML
-    const nome = document.getElementById('nomeCliente').value.trim();
-    const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
-    const dataVencBase = document.getElementById('dataVencimento').value;
-    const numParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
-
-    if (!nome || !dataVencBase) {
-      alert("Preencha Nome e Data de Vencimento!");
-      if (btn) btn.disabled = false;
-      return;
-    }
-
-    // Calcula valor total do carrinho (variável global que você já usa)
-    const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
-    const valorParcela = Math.round((bruto / numParcelas) * 100) / 100;
-    const idVendaUnico = 'V' + Date.now();
-
-    const parcelasParaEnviar = [];
-
-    for (let i = 0; i < numParcelas; i++) {
-      // Ajuste preciso de data para evitar erro de fuso horário
-      let d = new Date(dataVencBase + 'T00:00:00');
-      d.setMonth(d.getMonth() + i);
-
-      parcelasParaEnviar.push({
-        id_venda: idVendaUnico,       // Sua coluna original
-        cliente_nome: nome,           // Sincronizado com o SQL abaixo
-        cpf_cnpj: cpf,
-        valor_parcela: valorParcela,
-        qtd_parcelas: `${i + 1}/${numParcelas}`,
-        status: 'Pendente',
-        data_vencimento: d.toISOString().split('T')[0]
-      });
-    }
-
-    // Chamada ao Supabase
-    // Note: Usamos /vendas porque sua SB_URL já termina em /rest/v1
-    const res = await fetch(`${SB_URL}/vendas`, {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(parcelasParaEnviar)
-    });
-
-    if (!res.ok) {
-      const erroBase = await res.json();
-      throw new Error(erroBase.message || "Erro ao salvar no banco");
-    }
-
-    alert("✅ Venda realizada com sucesso!");
-    
-    // Limpezas pós-venda
-    itensNoCarrinho = [];
-    if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
-    const modal = document.getElementById('modalConfirmarVenda');
-    if (modal) modal.style.display = 'none';
-    
-    location.reload();
-
-  } catch (error) {
-    console.error("Erro Fatal:", error);
-    alert("🚨 Falha ao salvar: " + error.message);
-  } finally {
-    if (btn) btn.disabled = false;
+  const idBanco = linha[colIdIdx];
+  
+  // --- Tratamento do Valor da Parcela ---
+  let vBruto = String(linha[colValIdx] || "0").replace(/[R$\s]/g, '');
+  if (vBruto.includes(',') && vBruto.includes('.')) {
+      vBruto = vBruto.replace(/\./g, ''); 
   }
+  vBruto = vBruto.replace(',', '.');
+  const valorOriginal = Math.round(parseFloat(vBruto) * 100) / 100;
+
+  const input = document.getElementById('inputValorPago');
+  const btnConfirm = document.getElementById('btnConfirmPagar');
+
+  if (!btnConfirm || !input) return console.error("Elementos do modal não encontrados");
+
+  btnConfirm.disabled = false;
+  btnConfirm.innerHTML = "Confirmar";
+
+  // Exibe o valor na tela do modal
+  document.getElementById('valParcelaExibir').textContent = valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  
+  input.value = valorOriginal.toFixed(2);
+  document.getElementById('modalPagar').style.display = 'flex';
+
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 300); 
+
+  // --- Ação ao Confirmar Pagamento ---
+  btnConfirm.onclick = async () => {
+    const vDigitado = parseFloat(input.value.replace(',', '.'));
+    
+    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Por favor, digite um valor válido!");
+    
+    btnConfirm.disabled = true; 
+    btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+
+    try {
+      // 1. ATUALIZA NO SUPABASE
+      // Se o valor digitado for menor que o original, você pode querer mudar o status para 'Pago Parcial'
+      const statusFinal = (vDigitado < valorOriginal - 0.01) ? 'Pago Parcial' : 'Pago';
+
+      const response = await fetch(`${SB_URL}/vendas?id=eq.${idBanco}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          status: statusFinal,
+          valor_pago: vDigitado,
+          data_pagamento: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar no banco.");
+
+      // 2. ENVIA PARA O N8N (Mantendo sua integração)
+      enviarConfirmacaoParaN8N(linha, vDigitado, valorOriginal);
+
+      // 3. FINALIZAÇÃO
+      fecharModal('modalPagar');
+      await mostrarLista('cadastro-vendas'); 
+      if(typeof mostrarAviso === 'function') mostrarAviso('sucesso', 'Sucesso', 'Pagamento processado!');
+
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao processar pagamento: " + error.message);
+    } finally {
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = "Confirmar";
+    }
+  };
+}
+
+async function abrirPagar(id) {
+  // 1. Localiza a venda pelo ID (UUID) nos dados carregados
+  const venda = dadosPlanilha.find(v => v.id === id);
+  if (!venda) return alert("Venda não localizada!");
+
+  // --- Limpeza e tratamento do valor da parcela ---
+  let vBruto = String(venda.valor_parcela || "0").replace(/[R$\s]/g, '');
+  if (vBruto.includes(',') && vBruto.includes('.')) {
+      vBruto = vBruto.replace(/\./g, ''); 
+  }
+  vBruto = vBruto.replace(',', '.');
+  const valorOriginal = Math.round(parseFloat(vBruto) * 100) / 100;
+
+  // 2. Preenche o Modal de Pagamento
+  const input = document.getElementById('inputValorPago');
+  const btnConfirm = document.getElementById('btnConfirmPagar');
+
+  btnConfirm.disabled = false;
+  btnConfirm.innerHTML = "Confirmar";
+
+  document.getElementById('valParcelaExibir').textContent = valorOriginal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  
+  input.value = valorOriginal.toFixed(2);
+  document.getElementById('modalPagar').style.display = 'flex';
+
+  setTimeout(() => {
+    input.focus();
+    input.select();
+  }, 300); 
+
+  // 3. Configura o clique do botão de confirmação (Agora via fetch)
+  btnConfirm.onclick = async () => {
+    const vDigitado = parseFloat(input.value.replace(',', '.'));
+    
+    if (isNaN(vDigitado) || vDigitado <= 0) return alert("Por favor, digite um valor válido!");
+    
+    btnConfirm.disabled = true; 
+    btnConfirm.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+
+    try {
+      // Atualização no Supabase
+      const response = await fetch(`${SB_URL}/vendas?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          status: 'PAGO',
+          valor_pago: vDigitado,
+          data_pagamento: new Date().toISOString().split('T')[0] // Opcional: salva a data de hoje
+        })
+      });
+
+      if (response.ok) {
+        // Envia para o n8n (Se você ainda usar essa função)
+        if (typeof enviarConfirmacaoParaN8N === 'function') {
+           enviarConfirmacaoParaN8N(venda, vDigitado, valorOriginal);
+        }
+
+        fecharModal('modalPagar');
+        
+        // Recarrega a lista chamando sua função de navegar ou buscarDados
+        if (typeof navegar === 'function') {
+            await navegar(abaAtual);
+        } else {
+            location.reload(); // Fallback simples
+        }
+        
+        console.log("Pagamento processado no Supabase.");
+      } else {
+        throw new Error("Erro na resposta do banco.");
+      }
+    } catch (erro) {
+      alert("Erro ao processar pagamento: " + erro.message);
+      btnConfirm.disabled = false;
+      btnConfirm.innerHTML = "Confirmar";
+    }
+  };
 }
 
 
 function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
-  const h = dadosPlanilha[0]; // Cabeçalho da planilha
+  const h = dadosPlanilha[0]; 
   const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
 
-  // Lógica: Se o valor recebido for menor que o original (com margem de erro de 0.01), é PARCIAL
   const tipoPagamento = (parseFloat(valorRecebido) < parseFloat(valorOriginal) - 0.01) ? "PARCIAL" : "TOTAL";
 
   const dados = {
@@ -1753,12 +1814,205 @@ function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
   .catch(err => console.error("Erro ao disparar n8n:", err));
 }
 
-async function abrirExcluir(idx) {
-  const h = dadosPlanilha[0];
-  const linha = dadosPlanilha[idx];
-  
-  // Captura o ID único da linha no Supabase (coluna 'id')
-  const idLinhaBanco = linha[h.indexOf('id')];
+function abrirResumo(idx) {
+  // 1. Localiza os dados na matriz global
+  const h = dadosPlanilha[0]; 
+  const l = dadosPlanilha[idx];
+
+  if (!l) return;
+
+  let html = '';
+
+  // 2. Mapeia cada coluna para o resumo
+  h.forEach((t, i) => {
+    // Pula colunas internas que não precisam aparecer no resumo (opcional)
+    if (t.toLowerCase() === 'id' || t.toLowerCase() === 'id_venda') return;
+
+    let valor = l[i] || '';
+    let titulo = t.replace('_', ' ').toUpperCase();
+
+    // Tratamento de Moeda para colunas de valor
+    if (t.toLowerCase().includes('valor') || t.toLowerCase().includes('total')) {
+      let num = parseFloat(String(valor).replace(/[R$\s]/g, '').replace(',', '.')) || 0;
+      valor = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Tratamento de Data (padrão YYYY-MM-DD para DD/MM/YYYY)
+    if (t.toLowerCase().includes('data') && valor) {
+      let p = String(valor).split('T')[0].split('-'); 
+      if (p.length === 3) valor = `${p[2]}/${p[1]}/${p[0]}`;
+    }
+
+    // Gera o HTML de cada linha do resumo
+    html += `
+      <div style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
+        <b style="color: #475569; font-size: 0.85rem;">${titulo}:</b><br>
+        <span style="color: #1e293b; font-weight: 500;">${valor}</span>
+      </div>`;
+  });
+
+  // 3. Alimenta o Modal e exibe
+  document.getElementById('resumoConteudo').innerHTML = html;
+  document.getElementById('modalResumo').style.display = 'flex';
+}
+
+
+
+
+async function finalizarVenda() {
+  const btn = document.getElementById('btnFinalizar');
+  if (btn) btn.disabled = true;
+
+  try {
+    // 1. CAPTURA DADOS DO CLIENTE
+    const nome = document.getElementById('nomeCliente').value.trim();
+    const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
+    const tel = document.getElementById('telCliente')?.value || "";
+    
+    // 2. ENDEREÇO (Para a tabela VENDAS, salvamos tudo junto como no seu CRM antigo)
+    const rua = document.getElementById('ruaCliente')?.value || "";
+    const num = document.getElementById('numCliente')?.value || "";
+    const bairro = document.getElementById('bairroCliente')?.value || "";
+    const cidade = document.getElementById('cidadeCliente')?.value || "";
+    const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
+
+    // 3. CAMPOS DO CRM ANTIGO (PRODUTO, VENDEDOR, TRABALHO)
+    const produto = document.getElementById('produtoVenda')?.value || "";
+    const descVendedor = document.getElementById('descontoVendedor')?.value || ""; 
+    const trabalho = document.getElementById('trabalhoVenda')?.value || "";
+    const formaPagamento = document.getElementById('formaPagamento')?.value || "";
+
+    const valorTotal = parseFloat(document.getElementById('valorTotalVenda')?.value) || 0;
+    const desconto = parseFloat(document.getElementById('descontoVenda')?.value) || 0;
+    const entrada = parseFloat(document.getElementById('entradaVenda')?.value) || 0;
+
+    const dataVencBase = document.getElementById('dataVencimento').value;
+    const numParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
+
+    if (!nome || !cpf || !dataVencBase) {
+      alert("Por favor, preencha Nome, CPF e Data de Vencimento.");
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    // 4. CÁLCULO FINANCEIRO
+    const valorLiquido = valorTotal - desconto - entrada;
+    const valorParcela = Math.round((valorLiquido / numParcelas) * 100) / 100;
+    const idVendaUnico = 'V' + Date.now();
+
+    // 5. PREPARAR PARCELAS (Nomes das colunas idênticos ao novo SQL)
+    const parcelasParaBanco = [];
+    for (let i = 0; i < numParcelas; i++) {
+      let d = new Date(dataVencBase + 'T00:00:00');
+      d.setMonth(d.getMonth() + i);
+
+      parcelasParaBanco.push({
+        id_venda: idVendaUnico,
+        cliente: nome,
+        telefone: tel,
+        cpf: cpf,
+        endereco: enderecoCompleto,
+        produto: produto,
+        valor_total: valorTotal,
+        parcela: `${i + 1}/${numParcelas}`,
+        valor_parcela: valorParcela,
+        valor_pago: 0,
+        data_vencimento: d.toISOString().split('T')[0],
+        status: 'Pendente',
+        forma_pagamento: formaPagamento,
+        entrada: i === 0 ? entrada : 0,
+        desconto: i === 0 ? desconto : 0,
+        trabalho: trabalho,
+        desconto_vendedor: descVendedor
+      });
+    }
+
+    // 6. ENVIAR PARA O SUPABASE (VENDAS)
+    const resVenda = await fetch(`${SB_URL}/vendas`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(parcelasParaBanco)
+    });
+
+    if (!resVenda.ok) throw new Error("Erro ao salvar parcelas.");
+
+    // 7. ATUALIZAR TABELA CLIENTES (CADASTRO)
+    await fetch(`${SB_URL}/clientes`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates' 
+      },
+      body: JSON.stringify({
+        cliente_nome: nome,
+        cpf_cnpj: cpf,
+        telefone: tel,
+        logradouro: rua,
+        numero: num,
+        bairro: bairro,
+        cidade: cidade
+      })
+    });
+
+    // 8. FINALIZAÇÃO
+    alert("✅ Venda finalizada com sucesso!");
+    
+    // Limpar carrinho e campos
+    itensNoCarrinho = [];
+    const idsParaLimpar = ['nomeCliente', 'cpfCliente', 'telCliente', 'valorTotalVenda', 'descontoVenda', 'entradaVenda', 'produtoVenda', 'trabalhoVenda', 'descontoVendedor'];
+    idsParaLimpar.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ""; });
+
+    // Atualizar dados e navegar
+    if (typeof carregarDadosSupabase === 'function') await carregarDadosSupabase();
+    navegar('cadastro-vendas');
+
+  } catch (error) {
+    console.error("Erro técnico:", error);
+    alert("🚨 Falha: " + error.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function enviarConfirmacaoParaN8N(vendaObjeto, valorRecebido, valorOriginal) {
+  const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
+
+  // Lógica: Se o valor recebido for menor que o original, é PARCIAL
+  const tipoPagamento = (parseFloat(valorRecebido) < parseFloat(valorOriginal) - 0.01) ? "PARCIAL" : "TOTAL";
+
+  // AGORA USAMOS OS NOMES DAS COLUNAS DO SUPABASE
+  const dados = {
+    cliente: vendaObjeto.cliente_nome,    // Antes era linha[h.indexOf...]
+    telefone: vendaObjeto.telefone || "",  // Pegando do objeto da venda
+    produto: vendaObjeto.produto || "Venda Direta", 
+    parcela: vendaObjeto.qtd_parcelas,    // Ex: "1/3"
+    valor_pago: valorRecebido,
+    valor_original: valorOriginal,
+    tipo: tipoPagamento, 
+    data_pagamento: new Date().toLocaleDateString('pt-BR'),
+    status: 'paga',
+    id_venda: vendaObjeto.id_venda        // Útil para o n8n saber qual venda é
+  };
+
+  fetch(webhookURL, { 
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados) 
+  })
+  .then(() => console.log("n8n enviado com sucesso: " + tipoPagamento))
+  .catch(err => console.error("Erro ao disparar n8n:", err));
+}
+
+async function abrirExcluir(idBanco) {
+  // Procura o objeto completo nos nossos dados locais usando o ID único do Supabase
+  const dado = dadosPlanilha.find(item => item.id === idBanco);
+  if (!dado) return;
 
   // --- SE ESTIVER NA ABA DE PRODUTOS ---
   if (abaAtual === 'cadastro-produtos') {
@@ -1768,26 +2022,24 @@ async function abrirExcluir(idx) {
     btn.innerHTML = "Sim, Excluir";
     btn.disabled = false;
 
-    // Ação de clique para excluir o produto no Supabase
     btn.onclick = async () => {
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
       
       try {
-        const response = await fetch(`${SB_URL}/produtos?id=eq.${idLinhaBanco}`, {
+        const response = await fetch(`${SB_URL}/produtos?id=eq.${idBanco}`, {
           method: 'DELETE',
           headers: {
             'apikey': SB_KEY,
-            'Authorization': 'Bearer ' + SB_KEY,
-            'Content-Type': 'application/json'
+            'Authorization': 'Bearer ' + SB_KEY
           }
         });
 
         if(response.ok) {
           fecharModal('modalExcluirProduto');
-          await mostrarLista('cadastro-produtos'); // Recarrega a lista do banco
+          await mostrarLista('cadastro-produtos');
         } else {
-          throw new Error("Erro ao deletar");
+          throw new Error();
         }
       } catch (err) {
         alert("Erro ao excluir produto.");
@@ -1798,13 +2050,13 @@ async function abrirExcluir(idx) {
   } 
   // --- SE ESTIVER NA ABA DE VENDAS ---
   else {
-    // Busca o identificador de agrupamento da venda (id_venda)
-    const idVendaAgrupador = linha[h.indexOf('id_venda')];
+    // Para vendas, usamos o id_venda para o caso de excluir todas as parcelas
+    const idVendaAgrupador = dado.id_venda;
     document.getElementById('modalExcluir').style.display = 'flex';
 
-    // Aqui chamamos a função processarExclusao que você já migrou para o Supabase
-    document.getElementById('btnExcluirUnica').onclick = () => processarExclusao(idx, idVendaAgrupador, 'unica');
-    document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idx, idVendaAgrupador, 'total');
+    // Configuramos os botões do modal para passar o ID real do banco
+    document.getElementById('btnExcluirUnica').onclick = () => processarExclusao(idBanco, idVendaAgrupador, 'unica');
+    document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idBanco, idVendaAgrupador, 'total');
   }
 }
     
@@ -2038,10 +2290,11 @@ async function solicitarRecuperacao() {
 let itensNoCarrinho = []; 
 let listaProdutosSelecionados = []; 
 
-// --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA) ---
+// --- 2. FUNÇÃO NOVA VENDA (CORRIGIDA PARA SUPABASE) ---
 function abrirNovaVenda() {
-  // 1. Destrava a lógica de envio (Sincronizado com os nomes das suas variáveis)
-  enviandoVendaAgora = false; // Ajustado para bater com o nome usado na finalizarVenda
+  // 1. Destrava a lógica de envio (importante para não bloquear cliques)
+  enviandoAgora = false; 
+  enviadoSistema = false;
 
   // 2. Reset do Botão Finalizar
   const btn = document.getElementById('btnFinalizar');
@@ -2053,18 +2306,18 @@ function abrirNovaVenda() {
     btn.innerHTML = '<i class="fas fa-check-circle"></i> FINALIZAR VENDA';
   }
 
-  // 3. Reset do Botão Comprovante (Fica desativado até a próxima venda ser salva)
+  // 3. Reset do Botão Comprovante (só ativa depois que vende)
   const btnComp = document.getElementById('btnComprovante');
   if (btnComp) {
     btnComp.disabled = true;
     btnComp.style.opacity = "0.5";
   }
 
-  // 4. Limpeza de TODOS os campos (Incluindo o E-mail que agora é obrigatório)
+  // 4. Limpeza de TODOS os campos (Ajustado para os IDs que usamos no Supabase)
   const camposParaLimpar = [
-    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoCliente', 'clienteEmail',
-    'ruaCliente', 'numComplemento', 'bairroCliente', 'cidadeCliente',
-    'valorEntrada', 'descontoVendedor', 'dataVencimento', 'qtdProduto', 'cepCliente'
+    'nomeCliente', 'telCliente', 'cpfCliente', 'trabalhoVenda',
+    'ruaCliente', 'numCliente', 'bairroCliente', 'cidadeCliente',
+    'entradaVenda', 'descontoVenda', 'dataVencimento', 'qtdProduto', 'cepCliente'
   ];
   
   camposParaLimpar.forEach(id => {
@@ -2072,50 +2325,44 @@ function abrirNovaVenda() {
     if (el) el.value = '';
   });
 
-  // 5. Reset de Produtos (Limpamos a variável e a interface)
+  // 5. Reset do Carrinho
   itensNoCarrinho = []; 
+  const corpo = document.getElementById('corpoCarrinho');
+  if (corpo) corpo.innerHTML = ""; 
   
-  // Atualiza a visualização do carrinho e os totais
-  if (typeof atualizarTabelaCarrinho === 'function') {
-      atualizarTabelaCarrinho();
-  } else {
-      const corpo = document.getElementById('corpoCarrinho');
-      if (corpo) corpo.innerHTML = "";
-      if (document.getElementById('valorTotal')) document.getElementById('valorTotal').innerText = 'R$ 0,00';
+  // Se a sua função de atualizar a tabela do carrinho tiver outro nome, ajuste aqui:
+  if (typeof atualizarTabelaCarrinho === 'function') atualizarTabelaCarrinho();
+  
+  // 6. Reset dos Totais e Selects
+  // Verificamos os dois possíveis IDs de total
+  const elTotal = document.getElementById('valorTotalVenda') || document.getElementById('valorTotal');
+  if (elTotal) {
+    if (elTotal.tagName === 'INPUT') elTotal.value = 'R$ 0,00';
+    else elTotal.innerText = 'R$ 0,00';
   }
-  
-  // 6. Reset de Resumos e Selects
+
   const resumoArea = document.getElementById('resumoParcelas');
   if (resumoArea) resumoArea.innerHTML = '';
   
-  const tipoPagto = document.getElementById('tipoPagamento');
-  if (tipoPagto) tipoPagto.value = 'parcelado';
-  
-  const numParc = document.getElementById('numeroParcelas');
-  if (numParc) numParc.value = '1';
+  if (document.getElementById('formaPagamento')) document.getElementById('formaPagamento').value = 'parcelado';
+  if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
 
-  const selProd = document.getElementById('selectProduto');
-  if (selProd) selProd.selectedIndex = 0;
-
-  // 7. Focar no primeiro campo para agilizar o trabalho
-  document.getElementById('nomeCliente')?.focus();
-
-  console.log("Sistema pronto para uma nova venda.");
+  console.log("🧹 Sistema limpo para nova venda.");
 }
-
 
 function abrirModalVenda() {
   const modal = document.getElementById('modalVenda');
   if (modal) {
-    modal.style.display = 'flex'; // Apenas abre o modal
+    modal.style.display = 'flex';
+    // Ao abrir, já limpa tudo para não vir lixo da venda anterior
+    abrirNovaVenda(); 
   }
-  // Se quiser que ele sempre atualize a lista de produtos ao abrir, mantenha a linha abaixo:
-  if (typeof carregarProdutos === 'function') carregarProdutos();
 }
 
 function fecharModal(id) {
   const target = id || 'modalVenda';
-  document.getElementById(target).style.display = 'none';
+  const el = document.getElementById(target);
+  if (el) el.style.display = 'none';
 }
 
 // --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
@@ -2305,6 +2552,7 @@ const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-
 let enviandoVendaAgora = false;
 
 
+
 // Função Auxiliar para busca de CEP (Opcional)
 function buscaCep() {
   const cep = document.getElementById('cepCliente').value.replace(/\D/g, '');
@@ -2322,31 +2570,36 @@ function buscaCep() {
 }
 
 function imprimirComprovante() {
-    const nome = document.getElementById('nomeCliente').value || "Não informado";
-    const cpf = document.getElementById('cpfCliente').value || "Não informado";
-    const rua = document.getElementById('ruaCliente').value || ""; 
-    const numero = document.getElementById('numComplemento').value || ""; 
-    const bairro = document.getElementById('bairroCliente').value || "";
-    const cidade = document.getElementById('cidadeCliente').value || "";
+    // 1. CAPTURA DOS DADOS (Ajustado para os IDs comuns do seu sistema)
+    const nome = document.getElementById('nomeCliente')?.value || "Não informado";
+    const cpf = document.getElementById('cpfCliente')?.value || "Não informado";
+    const rua = document.getElementById('ruaCliente')?.value || ""; 
+    // Ajustado de numComplemento para numCliente (verifique seu HTML)
+    const numero = document.getElementById('numCliente')?.value || ""; 
+    const bairro = document.getElementById('bairroCliente')?.value || "";
+    const cidade = document.getElementById('cidadeCliente')?.value || "";
     
-    // Captura o texto do Total Líquido da interface (que já está com a entrada abatida)
-    const totalLiquidoTexto = document.getElementById('valorTotal').innerText;
+    // 2. FINANCEIRO
+    // Se valorTotal for um <span> ou <div> use innerText. Se for <input> use .value
+    const totalElemento = document.getElementById('valorTotalVenda') || document.getElementById('valorTotal');
+    const totalLiquidoTexto = totalElemento?.value || totalElemento?.innerText || "R$ 0,00";
     
-    const pagamento = document.getElementById('tipoPagamento').value === 'vista' ? 'À Vista' : 'Parcelado';
-    const parcelas = document.getElementById('numeroParcelas').value;
+    const pagamento = document.getElementById('formaPagamento')?.value === 'vista' ? 'À Vista' : 'Parcelado';
+    const parcelas = document.getElementById('numeroParcelas')?.value || "1";
     
-    // Captura e formata a ENTRADA
-    const entradaValor = parseFloat(document.getElementById('valorEntrada').value) || 0;
+    // ENTRADA
+    const entradaValor = parseFloat(document.getElementById('entradaVenda')?.value) || 0;
     const entradaHTML = entradaValor > 0 ? `<p style="margin:3px 0;">ENTRADA: <strong>R$ ${entradaValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
 
-    // Captura e formata o DESCONTO VENDEDOR
-    const descontoValor = parseFloat(document.getElementById('descontoVendedor').value) || 0;
+    // DESCONTO (Vendedor/Geral)
+    const descontoValor = parseFloat(document.getElementById('descontoVenda')?.value || document.getElementById('descontoVendedor')?.value) || 0;
     const descontoHTML = descontoValor > 0 ? `<p style="margin:3px 0; color: #000;">DESCONTO: <strong>R$ ${descontoValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
 
-    // Tratamento de data para evitar erro se estiver vazio
-    const dataInput = document.getElementById('dataVencimento').value;
+    // DATA
+    const dataInput = document.getElementById('dataVencimento')?.value;
     const dataVenc = dataInput ? dataInput.split('-').reverse().join('/') : '--/--/----';
 
+    // 3. CRIAÇÃO DO ELEMENTO VISUAL (RECIBO)
     const recibo = document.createElement('div');
     recibo.style.width = '400px';
     recibo.style.padding = '20px';
@@ -2381,12 +2634,15 @@ function imprimirComprovante() {
                     </tr>
                 </thead>
                 <tbody>
-                    ${itensNoCarrinho.map(i => `
-                        <tr>
-                            <td style="padding:5px 0;">${i.qtd}x ${i.nome}</td>
-                            <td style="text-align:right;">R$ ${i.subtotal.toFixed(2).replace('.', ',')}</td>
-                        </tr>
-                    `).join('')}
+                    ${itensNoCarrinho.length > 0 ? 
+                        itensNoCarrinho.map(i => `
+                            <tr>
+                                <td style="padding:5px 0;">${i.qtd}x ${i.nome}</td>
+                                <td style="text-align:right;">R$ ${i.subtotal.toFixed(2).replace('.', ',')}</td>
+                            </tr>
+                        `).join('') : 
+                        `<tr><td colspan="2" style="text-align:center;">Venda Avulsa</td></tr>`
+                    }
                 </tbody>
             </table>
         </div>
@@ -2396,8 +2652,8 @@ function imprimirComprovante() {
             ${descontoHTML}
             ${entradaHTML}
             <p style="margin:3px 0;">PARCELAS: <strong>${parcelas}</strong></p>
-            <p style="margin:3px 0; font-size: 18px;"><strong>TOTAL A PAGAR: ${totalLiquidoTexto}</strong></p>
-            <p style="margin:3px 0; font-size:12px;">VENCIMENTO 1ª PARCELA: ${dataVenc}</p>
+            <p style="margin:3px 0; font-size: 18px;"><strong>TOTAL: ${totalLiquidoTexto}</strong></p>
+            <p style="margin:3px 0; font-size:11px;">VENCIMENTO 1ª PARCELA: ${dataVenc}</p>
         </div>
 
         <div style="margin-top:30px; text-align:center; font-size:11px; border-top: 1px dashed #000; padding-top: 15px;">
@@ -2409,6 +2665,7 @@ function imprimirComprovante() {
 
     document.body.appendChild(recibo);
 
+    // 4. GERAÇÃO DA IMAGEM
     setTimeout(() => {
         html2canvas(recibo, { 
             scale: 2,
@@ -2419,6 +2676,9 @@ function imprimirComprovante() {
             link.download = `Recibo_${nome.split(' ')[0]}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
+            document.body.removeChild(recibo);
+        }).catch(err => {
+            console.error("Erro ao gerar imagem:", err);
             document.body.removeChild(recibo);
         });
     }, 500);
@@ -2484,36 +2744,37 @@ function executarLimpezaTotal() {
 
 // --- FUNÇÕES DE EDIÇÃO DE PRODUTO (ATUALIZADAS COM URL) ---
 
-function abrirEdicaoProduto(index) {
-  const produto = dadosPlanilha[index]; 
-  if (!produto) return;
-
-  // CORREÇÃO AQUI: 
-  // Em vez de 'index', guardamos o produto[0] que é o ID real do banco (UUID)
-  document.getElementById('editProdIndex').value = produto[0]; 
+async function abrirEdicaoProduto(id) {
+  // 1. Procuramos o produto pelo ID (UUID do Supabase) dentro dos dados carregados
+  // Note que agora usamos .find() porque o ID não é mais apenas o índice da linha
+  const produto = dadosPlanilha.find(p => p.id === id); 
   
-  // O restante dos campos seguindo o novo deslocamento (+1):
-  document.getElementById('editProdCategoria').value = produto[1] || ""; 
-  document.getElementById('editProdNome').value      = produto[2] || ""; 
-  document.getElementById('editProdPreco').value     = produto[3] || 0;  
-  document.getElementById('editProdUrl').value       = produto[4] || ""; 
-  
-  // Se a Cor for a coluna 5 (índice 5), o Estoque será a 6 (índice 6)
-  // Verifique a ordem exata no seu Supabase Data Editor
-  document.getElementById('editProdEstoque').value   = produto[6] || 0; 
-  
-  // Se houver campo de cor no seu modal, preencha-o também:
-  if(document.getElementById('editProdCor')) {
-     document.getElementById('editProdCor').value = produto[5] || "";
+  if (!produto) {
+    console.error("Produto não encontrado!");
+    return;
   }
 
-  // Fecha qualquer estado anterior e abre o modal
-  cancelarEdicaoProduto(); 
+  // 2. Preenchemos os campos usando os nomes das colunas do Supabase
+  // O campo oculto guarda o ID real para usarmos no momento de salvar (Update)
+  document.getElementById('editProdIndex').value = produto.id; 
+  
+  // Preenchimento dos campos seguindo os nomes das colunas do seu banco
+  document.getElementById('editProdCategoria').value = produto.categoria || ""; 
+  document.getElementById('editProdNome').value      = produto.nome || ""; 
+  document.getElementById('editProdPreco').value     = produto.preco || 0;  
+  document.getElementById('editProdUrl').value       = produto.url_imagem || produto.url || ""; 
+  document.getElementById('editProdEstoque').value   = produto.estoque || 0; 
+  
+  if(document.getElementById('editProdCor')) {
+     document.getElementById('editProdCor').value = produto.cor || "";
+  }
+
+  // 3. Fecha estados anteriores e abre o modal (Mantendo sua lógica)
+  if (typeof cancelarEdicaoProduto === 'function') cancelarEdicaoProduto(); 
   document.getElementById('modalEdicaoProduto').style.display = 'flex';
 }
 
 function habilitarCamposProduto() {
-  // Adicionei 'editProdCor' (verifique se o ID do campo de cor na edição é este)
   const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl', 'editProdCor'];
   
   campos.forEach(id => {
@@ -2525,15 +2786,18 @@ function habilitarCamposProduto() {
     }
   });
 
-  // Troquei o texto para "GRAVAR ALTERAÇÕES" para ficar padrão
-  document.getElementById('containerBotoesProd').innerHTML = `
-    <button onclick="confirmarSalvarProduto()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
-      <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
-    </button>
-    <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:8px; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
-      CANCELAR
-    </button>
-  `;
+  // Reconstroi os botões para o modo de edição
+  const container = document.getElementById('containerBotoesProd');
+  if (container) {
+    container.innerHTML = `
+      <button onclick="salvarAlteracaoProdutoSupabase()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
+        <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
+      </button>
+      <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:8px; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+        CANCELAR
+      </button>
+    `;
+  }
 }
 
 function cancelarEdicaoProduto() {
@@ -2561,35 +2825,34 @@ function cancelarEdicaoProduto() {
 }
 
 async function confirmarSalvarProduto() {
-  const idProduto = document.getElementById('editProdIndex').value; // Aqui deve estar o UUID
+  const idProduto = document.getElementById('editProdIndex').value; 
   const categoria = document.getElementById('editProdCategoria').value;
   const nome = document.getElementById('editProdNome').value;
   
-  // Tratamento de preço: aceita tanto 10,50 quanto 10.50
-  const precoBruto = document.getElementById('editProdPreco').value.toString();
-  const preco = parseFloat(precoBruto.replace(',', '.')) || 0;
+  // Tratamento de preço: mais robusto contra erros
+  let precoBruto = document.getElementById('editProdPreco').value || "0";
+  const preco = parseFloat(precoBruto.toString().replace(',', '.')) || 0;
   
   const url = document.getElementById('editProdUrl').value;
   const estoque = parseInt(document.getElementById('editProdEstoque').value) || 0;
-  
-  // Opcional: Se tiver o campo cor
   const cor = document.getElementById('editProdCor')?.value || "";
 
   const containerBotoes = document.getElementById('containerBotoesProd');
   const htmlOriginal = containerBotoes.innerHTML;
+  
+  // Feedback visual para o usuário não clicar duas vezes
   containerBotoes.innerHTML = '<div style="color:#38bdf8; text-align:center; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO BANCO...</div>';
 
   const dadosAtualizados = {
     categoria: categoria,
     nome: nome,
     preco: preco,
-    imagem_url: url,
+    url: url, // <-- Verifique se no banco é 'url' ou 'imagem_url'
     estoque: estoque,
-    cor: cor // Remova esta linha se não houver coluna 'cor' no Supabase
+    cor: cor 
   };
 
   try {
-    // PATCH: Atualiza apenas o produto onde o id for igual ao UUID
     const response = await fetch(`${SB_URL}/produtos?id=eq.${idProduto}`, {
       method: 'PATCH',
       headers: {
@@ -2602,12 +2865,20 @@ async function confirmarSalvarProduto() {
     });
 
     if (response.ok) {
-      mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado com sucesso.');
+      // Se você tiver a função mostrarAviso, ela será chamada
+      if (typeof mostrarAviso === 'function') {
+          mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado com sucesso.');
+      } else {
+          alert('Produto atualizado com sucesso!');
+      }
+      
       fecharModal('modalEdicaoProduto');
       
-      // Atualiza a tabela na tela chamando os dados novos do Supabase
-      if (typeof mostrarLista === 'function') {
-          await mostrarLista('cadastro-produtos'); 
+      // Força a atualização da lista para o novo dado aparecer na tabela
+      if (typeof navegar === 'function') {
+          await navegar('cadastro-produtos'); 
+      } else if (typeof buscarDados === 'function') {
+          await buscarDados();
       }
     } else {
       const errorMsg = await response.text();
@@ -2617,26 +2888,11 @@ async function confirmarSalvarProduto() {
   } catch (erro) {
     console.error("Erro na atualização:", erro);
     alert("ERRO AO SALVAR: " + erro.message);
-    containerBotoes.innerHTML = htmlOriginal; 
+    containerBotoes.innerHTML = htmlOriginal; // Devolve os botões caso dê erro
   }
 }
 
-// COLE ISSO NA ÚLTIMA LINHA DO SEU SCRIPT
-document.addEventListener('DOMContentLoaded', () => {
-    // Só tenta buscar dados se a função existir e o login já tiver sido feito
-    if (typeof buscarDados === "function") {
-        setTimeout(() => {
-            try {
-                // Adicionamos uma verificação extra: só busca se existir a tabela na tela
-                if(document.getElementById('corpo')) {
-                    buscarDados();
-                }
-            } catch (e) {
-                console.log("Sistema aguardando login para carregar...");
-            }
-        }, 500); // 500ms é o tempo para o navegador respirar
-    }
-});
+
 
 async function cadastrarNovoUsuario() {
     const loginNovo = document.getElementById('novoLoginUsuario').value.trim();
@@ -2690,6 +2946,46 @@ async function cadastrarNovoUsuario() {
 function abrirModalNovoUsuario() {
     fecharModal('modalSenha'); // Fecha o de troca de senha
     document.getElementById('modalNovoUsuario').style.display = 'flex'; // Abre o de novo cadastro
+}
+
+async function buscarClientePorCPF(cpf) {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  if (cpfLimpo.length < 11) return; // Só busca se tiver o CPF completo
+
+  try {
+    // Busca na tabela de clientes do Supabase
+    const response = await fetch(`${SB_URL}/clientes?cpf_cnpj=eq.${cpfLimpo}`, {
+      method: 'GET',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const dados = await response.json();
+
+    // Se encontrar o cliente, preenche TODOS os campos
+    if (dados && dados.length > 0) {
+      const cliente = dados[0];
+      
+      // Preenchimento automático dos campos
+      document.getElementById('nomeCliente').value = cliente.cliente_nome || "";
+      if(document.getElementById('telCliente')) document.getElementById('telCliente').value = cliente.telefone || "";
+      if(document.getElementById('clienteEmail')) document.getElementById('clienteEmail').value = cliente.email || "";
+      
+      // Preenchimento do Endereço Detalhado
+      if(document.getElementById('cepCliente')) document.getElementById('cepCliente').value = cliente.cep || "";
+      if(document.getElementById('ruaCliente')) document.getElementById('ruaCliente').value = cliente.logradouro || "";
+      if(document.getElementById('numCliente')) document.getElementById('numCliente').value = cliente.numero || "";
+      if(document.getElementById('bairroCliente')) document.getElementById('bairroCliente').value = cliente.bairro || "";
+      if(document.getElementById('cidadeCliente')) document.getElementById('cidadeCliente').value = cliente.cidade || "";
+
+      console.log("✅ Cadastro do cliente carregado via CPF.");
+    }
+  } catch (error) {
+    console.error("Erro ao buscar cliente:", error);
+  }
 }
 
 
@@ -2753,8 +3049,5 @@ window.onload = async () => {
  </script>
 </body>
 </html>
-
-
-
 
 

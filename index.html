@@ -1313,7 +1313,7 @@ async function desenharTabela() {
 
   vendasCarregadas = dadosPlanilha;
 
-  // 1. DEFINIÇÃO DINÂMICA DE COLUNAS (Incluindo CATEGORIA para produtos)
+  // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
   let colunas = [];
   if (abaAtual === 'cadastro-produtos') {
     colunas = ['categoria', 'nome', 'preco']; 
@@ -1335,7 +1335,6 @@ async function desenharTabela() {
     cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
     let thF = document.createElement('th');
 
-    // Quais colunas você quer como SELECT?
     const colunasSelect = ['id_venda', 'cliente', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
 
     if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
@@ -1355,40 +1354,71 @@ async function desenharTabela() {
 
   if (abaAtual === 'cadastro-vendas') {
     cab.innerHTML += `<th>CONDIÇÃO</th>`;
-    fil.innerHTML += `<th></th>`;
+    
+    // Adicionando o Select de Filtro para a coluna Condição
+    let thFCond = document.createElement('th');
+    thFCond.innerHTML = `
+      <select onchange="aplicarFiltroDelay('condicao', this.value)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
+        <option value="">Filtrar...</option>
+        <option value="PAGO" ${filtros['condicao'] == 'PAGO' ? 'selected' : ''}>PAGO</option>
+        <option value="PENDENTE" ${filtros['condicao'] == 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
+        <option value="ATENÇÃO" ${filtros['condicao'] == 'ATENÇÃO' ? 'selected' : ''}>ATENÇÃO</option>
+        <option value="VENCIDO" ${filtros['condicao'] == 'VENCIDO' ? 'selected' : ''}>VENCIDO</option>
+      </select>
+    `;
+    fil.appendChild(thFCond);
   }
   cab.innerHTML += '<th>AÇÕES</th>';
+  let thAcoes = document.createElement('th');
+  fil.appendChild(thAcoes);
 
-  // 3. Filtro (Unindo Filtro de Texto + Filtro Especial dos Cards)
+  // 3. Filtro (Unindo Filtro de Texto + Condição + Especial dos Cards)
   let filtrados = dadosPlanilha.filter(item => {
     // Filtro normal dos campos
     let passaNormal = Object.keys(filtros).every(k => {
-      if (!filtros[k] || k === "especial") return true;
+      if (!filtros[k] || k === "especial" || k === "condicao") return true;
       return String(item[k] || "").toLowerCase().includes(String(filtros[k]).toLowerCase());
     });
 
-    // Filtro dos Cards de Resumo (Vencida, Atenção, etc)
+    // Lógica para determinar se a linha está resolvida (PAGO/PARCIAL)
+    const statusLimpo = String(item.status || "").toUpperCase();
+    const resolvido = statusLimpo === "PAGO" || statusLimpo === "PARCIAL" || statusLimpo.includes("CONCLU");
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
+
+    // Filtro da Coluna Condição
+    let passaCondicao = true;
+    if (filtros["condicao"] && abaAtual === 'cadastro-vendas') {
+      const f = filtros["condicao"];
+      if (f === "PAGO") passaCondicao = resolvido;
+      else if (f === "PENDENTE") passaCondicao = !resolvido;
+      else if (f === "VENCIDO") passaCondicao = !resolvido && v && v < hoje;
+      else if (f === "ATENÇÃO") {
+        let lim = new Date(); lim.setDate(hoje.getDate() + 5);
+        passaCondicao = !resolvido && v && v >= hoje && v <= lim;
+      }
+    }
+
+    // Filtro dos Cards de Resumo (Especial)
     let passaEspecial = true;
     if (filtros["especial"] && abaAtual === 'cadastro-vendas') {
-      const hoje = new Date(); hoje.setHours(0,0,0,0);
-      const status = String(item.status || "").toLowerCase();
-      const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
-      const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
-
-      if (filtros["especial"] === 'paga') passaEspecial = jaPago;
-      else if (filtros["especial"] === 'pendente') passaEspecial = !jaPago;
-      else if (v) {
-        if (filtros["especial"] === 'vencida') passaEspecial = !jaPago && v < hoje;
+      if (filtros["especial"] === 'paga') passaEspecial = resolvido;
+      else if (filtros["especial"] === 'pendente') passaEspecial = !resolvido;
+      else if (v && !resolvido) {
+        if (filtros["especial"] === 'vencida') passaEspecial = v < hoje;
         else if (filtros["especial"] === 'atenção') {
           let lim = new Date(); lim.setDate(hoje.getDate() + 5);
-          passaEspecial = !jaPago && v >= hoje && v <= lim;
+          passaEspecial = v >= hoje && v <= lim;
         }
-      } else passaEspecial = false;
+      } else {
+        passaEspecial = false;
+      }
     }
-    return passaNormal && passaEspecial;
+
+    return passaNormal && passaCondicao && passaEspecial;
   });
 
-  // 4. Paginação (Mantido seu código original)
+  // 4. Paginação
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
   const infoPag = document.getElementById('infoPag');
@@ -1398,11 +1428,10 @@ async function desenharTabela() {
   if (btnAnt) btnAnt.disabled = paginaAtual === 1;
   if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
-  // 5. Renderização das Linhas (Mantendo seu layout de botões)
+  // 5. Renderização das Linhas
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
     
-    // Ícone da Esquerda (Lupa ou Lápis) - Layout Original
     if (abaAtual === 'cadastro-produtos') {
       tr.innerHTML = `<td class="col-resumo">
         <button onclick="abrirEdicaoProduto('${item.id}')" style="background:none; border:none; cursor:pointer;">
@@ -1437,26 +1466,32 @@ async function desenharTabela() {
     // 6. Condição (Badge Colorida)
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
-      const status = String(item.status || "").toLowerCase();
-      const jaPago = status.includes('paga') || status.includes('pago') || status.includes('conclu');
+      const status = String(item.status || "").toUpperCase();
+      const jaResolvido = status === "PAGO" || status === "PARCIAL" || status.includes("CONCLU");
+      
       let label = "PENDENTE", bg = "#64748b";
-      if (jaPago) { label = "PAGO"; bg = "#10b981"; }
-      else {
+
+      if (jaResolvido) {
+        label = "PAGO"; 
+        bg = "#10b981";
+      } else {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
         const v = new Date(item.data_vencimento + 'T00:00:00');
         if (v < hoje) { label = "VENCIDO"; bg = "#ef4444"; }
         else if (v <= new Date().setDate(new Date().getDate() + 5)) { label = "ATENÇÃO"; bg = "#f59e0b"; }
       }
+      
       tdCond.innerHTML = `<span style="background:${bg}; color:white; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold; display:inline-block; min-width:70px; text-align:center;">${label}</span>`;
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações (O Pulo do Gato: Botão bloqueado se pago)
+    // 7. Ações (Bloqueado se status for PAGO ou PARCIAL)
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
-      const isPago = (item.status || "").toLowerCase().includes('pago') || (item.status || "").toLowerCase().includes('conclu');
+      const s = String(item.status || "").toLowerCase();
+      const isConcluido = s.includes('pago') || s.includes('conclu') || s.includes('parcial');
       tdA.innerHTML = `
-        ${isPago ? 
+        ${isConcluido ? 
           `<button class="btn-nav btn-disabled" style="margin-right:5px; opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : 
           `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981; margin-right:5px;">✔</button>`
         }
@@ -1660,11 +1695,10 @@ async function atualizarCards() {
 
 
 async function abrirPagar(id) {
-  // 1. Localiza a venda nos dados locais
   const venda = dadosPlanilha.find(v => v.id === id);
-  if (!venda) return alert("Venda não localizada nos dados locais! Verifique o ID.");
+  if (!venda) return alert("Venda não localizada!");
 
-  // Tratamento do valor da parcela (R$ 100,00 -> 100.00)
+  // Limpeza do valor da parcela atual
   let vBruto = String(venda.valor_parcela || "0").replace(/[R$\s]/g, '');
   if (vBruto.includes(',') && vBruto.includes('.')) vBruto = vBruto.replace(/\./g, '');
   vBruto = vBruto.replace(',', '.');
@@ -1690,34 +1724,29 @@ async function abrirPagar(id) {
 
     try {
       const residuo = Math.round((valorOriginal - vDigitado) * 100) / 100;
+      const hoje = new Date().toISOString().split('T')[0];
 
-      // --- PASSO 1: ATUALIZAR PARCELA ATUAL ---
-      // Verifique se no Supabase a coluna UUID se chama 'id'. Se for 'id_venda', mude abaixo.
+      const novoStatus = (vDigitado < valorOriginal) ? 'PARCIAL' : 'PAGO';
+
+      // 1. ATUALIZAR PARCELA ATUAL
       const urlUpdate = `${SB_URL}/vendas?id=eq.${id}`;
-      
       const resAtual = await fetch(urlUpdate, {
         method: 'PATCH',
         headers: {
           'apikey': SB_KEY,
           'Authorization': 'Bearer ' + SB_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation' 
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          status: 'PAGO',
+          status: novoStatus,
           valor_pago: vDigitado,
-          data_pagamento: new Date().toISOString().split('T')[0]
+          data_pagamento: hoje
         })
       });
 
-      // Se a resposta não for 200/204, captura o erro do Supabase
-      if (!resAtual.ok) {
-        const errorData = await resAtual.json();
-        console.error("Erro Supabase:", errorData);
-        throw new Error(`Banco diz: ${errorData.message || resAtual.statusText}`);
-      }
+      if (!resAtual.ok) throw new Error("Erro ao atualizar parcela.");
 
-      // --- PASSO 2: LÓGICA DE RESÍDUO (PARCIAL/PF) ---
+      // 2. LÓGICA DE RESÍDUO (CORRIGIDA PARA NÃO MULTIPLICAR POR 100)
       if (residuo !== 0) {
         let proxParcelaNum = "";
         if (venda.parcela && venda.parcela.includes('/')) {
@@ -1732,24 +1761,34 @@ async function abrirPagar(id) {
           proximaVenda = dadosPlanilha.find(v => 
             v.id_venda === venda.id_venda && 
             v.parcela === proxParcelaNum && 
-            !(v.status || "").toLowerCase().includes('pago')
+            !(v.status || "").toUpperCase().includes('PAG')
           );
         }
 
         if (proximaVenda) {
-          // A: Atualizar próxima parcela
-          let vProx = parseFloat(String(proximaVenda.valor_parcela).replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+          // --- LIMPEZA RIGOROSA DO VALOR DA PRÓXIMA PARCELA ---
+          let vProxTexto = String(proximaVenda.valor_parcela || "0").replace(/[R$\s]/g, '');
+          
+          // Se tiver ponto de milhar (ex: 1.000,00), remove o ponto antes de trocar a vírgula
+          if (vProxTexto.includes('.') && vProxTexto.includes(',')) {
+            vProxTexto = vProxTexto.replace(/\./g, '');
+          }
+          let vProxLimpo = vProxTexto.replace(',', '.');
+          let vProxNumerico = parseFloat(vProxLimpo) || 0;
+
+          const novoValorSoma = Math.round((vProxNumerico + residuo) * 100) / 100;
+
           await fetch(`${SB_URL}/vendas?id=eq.${proximaVenda.id}`, {
             method: 'PATCH',
             headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ valor_parcela: Math.max(0, vProx + residuo) })
+            body: JSON.stringify({ valor_parcela: novoValorSoma })
           });
         } else if (residuo > 0) {
           // B: Criar parcela PF
           const dVenc = new Date(venda.data_vencimento + 'T12:00:00');
           dVenc.setMonth(dVenc.getMonth() + 1);
           
-          const { id: oldId, ...dadosParaNovo } = venda; // Remove o ID antigo
+          const { id: oldId, ...dadosParaNovo } = venda; 
           const novaPF = {
             ...dadosParaNovo,
             parcela: "PF",
@@ -1769,10 +1808,8 @@ async function abrirPagar(id) {
       }
 
       fecharModal('modalPagar');
-      // Recarrega os dados para atualizar a tabela
       if (typeof buscarDados === 'function') await buscarDados(); 
-      else if (typeof mostrarLista === 'function') await mostrarLista(abaAtual);
-      else location.reload();
+      else await mostrarLista(abaAtual);
 
     } catch (erro) {
       alert("Falha no processamento: " + erro.message);

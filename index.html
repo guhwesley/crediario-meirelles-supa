@@ -1826,32 +1826,38 @@ function abrirResumo(idVendaUnico) {
 
 async function finalizarVenda() {
   const btn = document.getElementById('btnFinalizar');
-  if (btn) btn.disabled = true;
+  const btnComp = document.getElementById('btnComprovante'); 
+  
+  if (btn) {
+    btn.disabled = true;
+    btn.style.setProperty('background', '#64748b', 'important');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+  }
 
   try {
-    // 1. CAPTURA DADOS DO CLIENTE
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
     const email = document.getElementById('emailCliente')?.value || ""; 
     const cep = document.getElementById('cepCliente')?.value || "";    
     
-    // 2. ENDEREÇO
     const rua = document.getElementById('ruaCliente')?.value || "";
     const num = document.getElementById('numCliente')?.value || "";
     const bairro = document.getElementById('bairroCliente')?.value || "";
     const cidade = document.getElementById('cidadeCliente')?.value || "";
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
 
-    // 3. CAPTURA DOS ITENS DO CARRINHO
     if (itensNoCarrinho.length === 0) {
       alert("O carrinho está vazio!");
-      if (btn) btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.style.setProperty('background', '#10b981', 'important');
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
+      }
       return;
     }
     const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
 
-    // 4. CAPTURA VALORES
     const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
     const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
@@ -1868,89 +1874,70 @@ async function finalizarVenda() {
 
     if (!nome || !cpf || !dataVencBase) {
       alert("Por favor, preencha Nome, CPF e Data de Vencimento.");
-      if (btn) btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.style.setProperty('background', '#10b981', 'important');
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
+      }
       return;
     }
 
     const valorParcela = Math.round((saldoDevedor / numParcelas) * 100) / 100;
     const idVendaUnico = 'V' + Date.now();
 
-    // 5. PREPARAR PARCELAS
     const parcelasParaBanco = [];
     for (let i = 0; i < numParcelas; i++) {
       let d = new Date(dataVencBase + 'T00:00:00');
       d.setMonth(d.getMonth() + i);
-
       parcelasParaBanco.push({
-        id_venda: idVendaUnico,
-        cliente: nome,
-        telefone: tel,
-        cpf: cpf,
-        endereco: enderecoCompleto,
-        produto: listaProdutosTxt,
-        valor_total: valorLiquidoVenda,
-        parcela: `${i + 1}/${numParcelas}`,
-        valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela,
-        valor_pago: 0,
-        data_vencimento: d.toISOString().split('T')[0],
-        status: 'Pendente',
-        forma_pagamento: formaPagamento,
-        entrada: i === 0 ? entrada : 0,
-        desconto: i === 0 ? descontoTotal : 0,
-        trabalho: trabalho,
-        desconto_vendedor: descVendedor
+        id_venda: idVendaUnico, cliente: nome, telefone: tel, cpf: cpf, endereco: enderecoCompleto,
+        produto: listaProdutosTxt, valor_total: valorLiquidoVenda, parcela: `${i + 1}/${numParcelas}`,
+        valor_parcela: (i === 0 && saldoDevedor <= 0) ? 0 : valorParcela, valor_pago: 0,
+        data_vencimento: d.toISOString().split('T')[0], status: 'Pendente', forma_pagamento: formaPagamento,
+        entrada: i === 0 ? entrada : 0, desconto: i === 0 ? descontoTotal : 0, trabalho: trabalho, desconto_vendedor: descVendedor
       });
     }
 
-    // 6. ENVIAR PARA O SUPABASE
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
     if (!resVenda.ok) throw new Error("Erro ao salvar parcelas.");
 
-    // 7. ATUALIZAR CLIENTE
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates' 
-      },
-      body: JSON.stringify({
-        cliente_nome: nome, cpf_cnpj: cpf, telefone: tel,
-        email: email, cep: cep, logradouro: rua,
-        numero: num, bairro: bairro, cidade: cidade
-      })
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ cliente_nome: nome, cpf_cnpj: cpf, telefone: tel, email: email, cep: cep, logradouro: rua, numero: num, bairro: bairro, cidade: cidade })
     });
 
-    // 8. FINALIZAÇÃO (ESTA PARTE FOI MODIFICADA)
-    alert("✅ Venda salva! Clique em NOVA para próxima venda.");
+    // --- SUCESSO: ATIVA O BOTÃO DE RECIBO ---
+    alert("✅ Venda salva! Botão RECIBO liberado.");
 
-    // DESATIVAR O BOTÃO E DEIXAR CINZA
     if (btn) {
       btn.disabled = true;
-      btn.style.setProperty('background', '#64748b', 'important'); // Cor cinza
-      btn.style.cursor = 'not-allowed';
+      btn.style.setProperty('background', '#64748b', 'important');
       btn.innerHTML = '<i class="fas fa-lock"></i> VENDA SALVA';
     }
 
-    // REMOVIDO: A limpeza de itensNoCarrinho e campos daqui 
-    // (Agora só o botão NOVA limpará)
+    if (btnComp) {
+      btnComp.disabled = false;
+      btnComp.style.opacity = "1";
+      btnComp.style.cursor = "pointer";
+    }
 
   } catch (error) {
-    console.error("Erro técnico:", error);
-    alert("🚨 Falha ao finalizar: " + error.message);
-    if (btn) btn.disabled = false; // Reativa se der erro para tentar de novo
+    console.error("Erro:", error);
+    alert("🚨 Falha: " + error.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.style.setProperty('background', '#10b981', 'important');
+      btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
+    }
   }
 }
+
 
 function enviarConfirmacaoParaN8N(vendaObjeto, valorRecebido, valorOriginal) {
   const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
@@ -2620,48 +2607,39 @@ function buscaCep() {
 }
 
 function imprimirComprovante() {
-    // 1. CAPTURA DOS DADOS (Ajustado para os IDs comuns do seu sistema)
+    console.log("Gerando recibo...");
+
+    // 1. CAPTURA DOS DADOS
     const nome = document.getElementById('nomeCliente')?.value || "Não informado";
     const cpf = document.getElementById('cpfCliente')?.value || "Não informado";
     const rua = document.getElementById('ruaCliente')?.value || ""; 
-    // Ajustado de numComplemento para numCliente (verifique seu HTML)
     const numero = document.getElementById('numCliente')?.value || ""; 
     const bairro = document.getElementById('bairroCliente')?.value || "";
     const cidade = document.getElementById('cidadeCliente')?.value || "";
     
-    // 2. FINANCEIRO
-    // Se valorTotal for um <span> ou <div> use innerText. Se for <input> use .value
+    // Tenta pegar o total de dois IDs possíveis
     const totalElemento = document.getElementById('valorTotalVenda') || document.getElementById('valorTotal');
     const totalLiquidoTexto = totalElemento?.value || totalElemento?.innerText || "R$ 0,00";
     
-    const pagamento = document.getElementById('formaPagamento')?.value === 'vista' ? 'À Vista' : 'Parcelado';
+    const pagamento = document.getElementById('tipoPagamento')?.value === 'vista' ? 'À Vista' : 'Parcelado';
     const parcelas = document.getElementById('numeroParcelas')?.value || "1";
     
-    // ENTRADA
-    const entradaValor = parseFloat(document.getElementById('entradaVenda')?.value) || 0;
+    const entradaValor = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const entradaHTML = entradaValor > 0 ? `<p style="margin:3px 0;">ENTRADA: <strong>R$ ${entradaValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
 
-    // DESCONTO (Vendedor/Geral)
-    const descontoValor = parseFloat(document.getElementById('descontoVenda')?.value || document.getElementById('descontoVendedor')?.value) || 0;
+    const descontoValor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0;
     const descontoHTML = descontoValor > 0 ? `<p style="margin:3px 0; color: #000;">DESCONTO: <strong>R$ ${descontoValor.toFixed(2).replace('.', ',')}</strong></p>` : '';
 
-    // DATA
     const dataInput = document.getElementById('dataVencimento')?.value;
     const dataVenc = dataInput ? dataInput.split('-').reverse().join('/') : '--/--/----';
 
-    // 3. CRIAÇÃO DO ELEMENTO VISUAL (RECIBO)
+    // 2. MONTAGEM DO ELEMENTO (ESCONDIDO)
     const recibo = document.createElement('div');
-    recibo.style.width = '400px';
-    recibo.style.padding = '20px';
-    recibo.style.background = '#ffffff';
-    recibo.style.color = '#000000';
-    recibo.style.fontFamily = 'Courier New, Courier, monospace';
-    recibo.style.position = 'absolute';
-    recibo.style.left = '-9999px';
+    recibo.style.cssText = "width: 400px; padding: 20px; background: #ffffff; color: #000; font-family: Courier New, Courier, monospace; position: absolute; left: -9999px; top: 0;";
 
     recibo.innerHTML = `
         <div style="text-align:center; margin-bottom: 15px;">
-            <img src="https://i.postimg.cc/N0D8vD8T/crediariomeirelles.jpg" style="width: 250px; height: auto; margin-bottom: 10px;">
+            <img src="https://i.postimg.cc/N0D8vD8T/crediariomeirelles.jpg" crossorigin="anonymous" style="width: 250px; height: auto; margin-bottom: 10px;">
             <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; margin-top: 10px;">
                 <strong style="font-size: 16px;">COMPROVANTE DE VENDA</strong>
             </div>
@@ -2672,7 +2650,7 @@ function imprimirComprovante() {
             <strong>CPF:</strong> ${cpf}<br>
             <strong>ENDEREÇO:</strong> ${rua}${numero ? ', ' + numero : ''}<br>
             <strong>BAIRRO:</strong> ${bairro} - ${cidade}<br>
-            <strong>DATA/HORA:</strong> ${new Date().toLocaleString('pt-BR')}
+            <strong>DATA:</strong> ${new Date().toLocaleString('pt-BR')}
         </div>
 
         <div style="border-bottom: 1px dashed #000; margin-bottom: 10px;">
@@ -2703,7 +2681,7 @@ function imprimirComprovante() {
             ${entradaHTML}
             <p style="margin:3px 0;">PARCELAS: <strong>${parcelas}</strong></p>
             <p style="margin:3px 0; font-size: 18px;"><strong>TOTAL: ${totalLiquidoTexto}</strong></p>
-            <p style="margin:3px 0; font-size:11px;">VENCIMENTO 1ª PARCELA: ${dataVenc}</p>
+            <p style="margin:3px 0; font-size:11px;">1ª PARCELA: ${dataVenc}</p>
         </div>
 
         <div style="margin-top:30px; text-align:center; font-size:11px; border-top: 1px dashed #000; padding-top: 15px;">
@@ -2715,23 +2693,29 @@ function imprimirComprovante() {
 
     document.body.appendChild(recibo);
 
-    // 4. GERAÇÃO DA IMAGEM
+    // 3. GERAÇÃO DA IMAGEM (COM CORREÇÃO DE DOWNLOAD)
     setTimeout(() => {
         html2canvas(recibo, { 
             scale: 2,
             useCORS: true,
-            allowTaint: true 
+            backgroundColor: "#ffffff"
         }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `Recibo_${nome.split(' ')[0]}.png`;
+            link.download = `Recibo_${nome.split(' ')[0] || 'Venda'}.png`;
             link.href = canvas.toDataURL("image/png");
+            
+            // O segredo está aqui: anexar o link antes de clicar
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
+            
             document.body.removeChild(recibo);
+            console.log("Recibo baixado!");
         }).catch(err => {
             console.error("Erro ao gerar imagem:", err);
-            document.body.removeChild(recibo);
+            if(document.body.contains(recibo)) document.body.removeChild(recibo);
         });
-    }, 500);
+    }, 800); // Aumentei um pouco o tempo para garantir o carregamento do logo
 }
 
 // Função que o botão "NOVA VENDA" chama

@@ -1335,7 +1335,7 @@ async function mostrarLista(aba) {
   }
 }
 
-    function aplicarFiltroDelay(coluna, valor) {
+    function aplicarFiltroDinamico(coluna, valor) {
   document.getElementById('loaderFiltro').style.display = 'block';
 
   clearTimeout(timerFiltro);
@@ -1346,7 +1346,7 @@ async function mostrarLista(aba) {
     desenharTabela(); 
     
     document.getElementById('loaderFiltro').style.display = 'none';
-  }, 500); // Reduzi para 500ms para ficar mais rápido, 4s é muito tempo.
+  },4000); // Reduzi para 500ms para ficar mais rápido, 4s é muito tempo.
 }
 
     function mudarPagina(valor) {
@@ -1365,11 +1365,10 @@ async function desenharTabela() {
   // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
   let colunas = [];
   if (abaAtual === 'cadastro-produtos') {
-    // Adicionado imagem_url após o preço
     colunas = ['categoria', 'nome', 'preco', 'imagem_url']; 
   } else {
     colunas = [
-      'id_venda', 'cliente', 'telefone', 'endereco', 'trabalho', 'produto', 
+      'id_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 
       'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
       'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'
     ];
@@ -1385,11 +1384,12 @@ async function desenharTabela() {
     cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
     
     let thF = document.createElement('th');
-    const colunasSelect = ['id_venda', 'cliente', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
+    // ADICIONADO 'cpf' na lista abaixo para virar SELECT
+    const colunasSelect = ['id_venda', 'cliente', 'cpf', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
 
     if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
         let opcoes = [...new Set(dadosPlanilha.map(item => item[title]))].filter(v => v).sort();
-        let htmlSel = `<select onchange="aplicarFiltroDelay('${title}', this.value)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
+        let htmlSel = `<select onchange="aplicarFiltroDinamico('${title}', this.value, event)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
                         <option value="">Filtrar...</option>`;
         opcoes.forEach(opt => {
             htmlSel += `<option value="${opt}" ${filtros[title] == opt ? 'selected' : ''}>${String(opt).toUpperCase()}</option>`;
@@ -1397,7 +1397,8 @@ async function desenharTabela() {
         htmlSel += `</select>`;
         thF.innerHTML = htmlSel;
     } else {
-        thF.innerHTML = `<input oninput="aplicarFiltroDelay('${title}', this.value)" value="${filtros[title] || ''}" placeholder="Filtrar..." style="width:100%;">`;
+        // Chamada otimizada para inputs de texto
+        thF.innerHTML = `<input oninput="aplicarFiltroDinamico('${title}', this.value, event)" value="${filtros[title] || ''}" placeholder="Filtrar..." style="width:100%;">`;
     }
     fil.appendChild(thF);
   });
@@ -1406,7 +1407,7 @@ async function desenharTabela() {
     cab.innerHTML += `<th>CONDIÇÃO</th>`;
     let thFCond = document.createElement('th');
     thFCond.innerHTML = `
-      <select onchange="aplicarFiltroDelay('condicao', this.value)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
+      <select onchange="aplicarFiltroDinamico('condicao', this.value, event)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
         <option value="">Filtrar...</option>
         <option value="PAGO" ${filtros['condicao'] == 'PAGO' ? 'selected' : ''}>PAGO</option>
         <option value="PENDENTE" ${filtros['condicao'] == 'PENDENTE' ? 'selected' : ''}>PENDENTE</option>
@@ -1420,7 +1421,7 @@ async function desenharTabela() {
   let thAcoes = document.createElement('th');
   fil.appendChild(thAcoes);
 
-  // 3. Filtros (Mantido exatamente igual)
+  // 3. Filtros
   let filtrados = dadosPlanilha.filter(item => {
     let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial" || k === "condicao") return true;
@@ -1443,11 +1444,12 @@ async function desenharTabela() {
     }
     let passaEspecial = true;
     if (filtros["especial"] && abaAtual === 'cadastro-vendas') {
-      if (filtros["especial"] === 'paga') passaEspecial = resolvido;
-      else if (filtros["especial"] === 'pendente') passaEspecial = !resolvido;
+      const e = filtros["especial"];
+      if (e === 'paga') passaEspecial = resolvido;
+      else if (e === 'pendente') passaEspecial = !resolvido;
       else if (v && !resolvido) {
-        if (filtros["especial"] === 'vencida') passaEspecial = v < hoje;
-        else if (filtros["especial"] === 'atenção') {
+        if (e === 'vencida') passaEspecial = v < hoje;
+        else if (e === 'atenção') {
           let lim = new Date(); lim.setDate(hoje.getDate() + 5);
           passaEspecial = v >= hoje && v <= lim;
         }
@@ -1476,26 +1478,16 @@ async function desenharTabela() {
       let valor = item[col] || "";
       let cl = "";
 
-      // TRATAMENTO DA URL DA IMAGEM
       if (col === 'imagem_url') {
-        if (valor && valor.startsWith('http')) {
-          valor = `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>`;
-        } else {
-          valor = `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
-        }
+        valor = (valor && valor.startsWith('http')) ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
       }
-      // CORREÇÃO DO ENDEREÇO
       else if (col === 'endereco') {
-        const n = item.numero ? `, ${item.numero}` : "";
-        const b = item.bairro ? ` - ${item.bairro}` : "";
-        valor = `${valor}${n}${b}`;
+        valor = `${valor}${item.numero ? `, ${item.numero}` : ""}${item.bairro ? ` - ${item.bairro}` : ""}`;
       }
-      // TRATAMENTO DE DINHEIRO
       else if (col.includes('valor') || col.includes('total') || col === 'preco' || col === 'entrada') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        if (col === 'valor_pago') cl = 'texto-verde-negrito';
-        else cl = 'col-valor';
+        cl = (col === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
       }
       else if (col.includes('data') && valor) {
         try { valor = new Date(valor + 'T00:00:00').toLocaleDateString('pt-BR'); } catch(e) { valor = item[col]; }
@@ -1507,7 +1499,7 @@ async function desenharTabela() {
       tr.appendChild(td);
     });
 
-    // 6. Condição (Mantido exatamente igual)
+    // 6. Condição
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toUpperCase();
@@ -1524,16 +1516,13 @@ async function desenharTabela() {
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações (Mantido exatamente igual)
+    // 7. Ações
     const tdA = document.createElement('td');
     if (abaAtual === 'cadastro-vendas') {
       const s = String(item.status || "").toLowerCase();
       const isConcluido = s.includes('pago') || s.includes('conclu') || s.includes('parcial');
       tdA.innerHTML = `
-        ${isConcluido ? 
-          `<button class="btn-nav btn-disabled" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : 
-          `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`
-        }
+        ${isConcluido ? `<button class="btn-nav btn-disabled" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`}
         <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
       `;
     } else {
@@ -3270,6 +3259,5 @@ window.onload = async () => {
  </script>
 </body>
 </html>
-
 
 

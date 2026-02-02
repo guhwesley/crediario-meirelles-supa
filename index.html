@@ -633,38 +633,6 @@
   padding-right: 40px !important; 
 }
 
-/* 1. O MODAL (REVISADO E BLINDADO) */
-.modal {
-  display: none; /* O JS muda para flex */
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(0, 0, 0, 0.75) !important; /* Fundo mais escuro para foco total */
-  z-index: 99999 !important; /* Valor máximo para cobrir o CRM */
-  
-  /* Centralização perfeita */
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* 2. A CAIXA BRANCA (Adicione isso para garantir que ela apareça) */
-.modal-box {
-  background: white !important;
-  padding: 20px !important;
-  border-radius: 12px !important;
-  width: 90% !important;
-  max-width: 500px !important;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-  color: #333 !important;
-  position: relative !important;
-}
-
-/* 3. OS BOTÕES DA TABELA (Pode manter, eles garantem o clique) */
-.col-resumo, .col-resumo button {
-  position: relative;
-  z-index: 10;
-  pointer-events: auto !important;
-}
-
 
 </style>
 </head>
@@ -750,13 +718,6 @@
         style="background: #10b981; margin-right: 10px;" 
         title="Abrir Catálogo Externo">
   <i class="fa-solid fa-shop"></i> Catálogo
-</button>
-
-<button onclick="irParaClientes()" 
-  class="btn-nav" 
-  style="background:#8b5cf6; display:flex; align-items:center; justify-content:center; gap:8px;">
-  <i class="fas fa-users"></i>
-  <span>Clientes</span>
 </button>
 
     <button onclick="limparFiltros()" class="btn-nav" style="background:#f59e0b; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -1165,9 +1126,6 @@
     </button>
   </div>
 </div>
-
-
-
   
   <script>
 
@@ -1334,11 +1292,7 @@ async function mostrarLista(aba) {
   filtros = {}; 
   paginaAtual = 1;
 
-  let tabela;
-
-if (aba === 'cadastro-produtos') tabela = 'produtos';
-else if (aba === 'cadastro-clientes') tabela = 'clientes';
-else tabela = 'vendas';
+  const tabela = (aba === 'cadastro-produtos') ? 'produtos' : 'vendas';
 
   try {
     // 2. Busca os dados no Supabase
@@ -1409,31 +1363,16 @@ async function desenharTabela() {
   vendasCarregadas = dadosPlanilha;
 
   // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
- let colunas = [];
-
-if (abaAtual === 'cadastro-produtos') {
-  colunas = ['categoria', 'nome', 'preco', 'imagem_url']; 
-} 
-else if (abaAtual === 'cadastro-clientes') {
-  colunas = [
-    'cliente_nome',
-    'cpf_cnpj',
-    'telefone',
-    'email',
-    'cep',
-    'logradouro',
-    'numero',
-    'bairro',
-    'cidade'
-  ];
-} 
-else {
-  colunas = [
-    'id_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 
-    'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
-    'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'
-  ];
-}
+  let colunas = [];
+  if (abaAtual === 'cadastro-produtos') {
+    colunas = ['categoria', 'nome', 'preco', 'imagem_url']; 
+  } else {
+    colunas = [
+      'id_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 
+      'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
+      'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'
+    ];
+  }
 
   // Limpeza inicial
   cab.innerHTML = '<th class="col-resumo">🔎</th>';
@@ -1446,7 +1385,7 @@ else {
     
     let thF = document.createElement('th');
     // ADICIONADO 'cpf' na lista abaixo para virar SELECT
-   const colunasSelect = ['id_venda', 'cliente', 'cpf', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
+    const colunasSelect = ['id_venda', 'cliente', 'cpf', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
 
     if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
         let opcoes = [...new Set(dadosPlanilha.map(item => item[title]))].filter(v => v).sort();
@@ -1526,68 +1465,21 @@ else {
   if (document.getElementById('btnAnt')) document.getElementById('btnAnt').disabled = paginaAtual === 1;
   if (document.getElementById('btnProx')) document.getElementById('btnProx').disabled = paginaAtual >= totalPaginas || totalPaginas === 0;
 
- // 5. Renderização das Linhas
+  // 5. Renderização das Linhas
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
-    
-    // --- COLUNA DE RESUMO / EDIÇÃO (A PRIMEIRA) ---
-    const tdAcaoInicial = document.createElement('td');
-    tdAcaoInicial.className = "col-resumo";
-    
-    const btnAcao = document.createElement('button');
-    btnAcao.type = "button"; 
-    btnAcao.style.cssText = "background:none; border:none; cursor:pointer; padding:8px; display:inline-block;";
+    tr.innerHTML = `<td class="col-resumo">
+        <button onclick="${abaAtual === 'cadastro-produtos' ? `abrirEdicaoProduto('${item.id}')` : `abrirResumo('${item.id_venda}')`}" style="background:none; border:none; cursor:pointer;">
+          <i class="fa-solid ${abaAtual === 'cadastro-produtos' ? 'fa-pencil-alt' : 'fa-magnifying-glass'}" style="color:${abaAtual === 'cadastro-produtos' ? '#f59e0b' : '#0056b3'}"></i>
+        </button>
+      </td>`;
 
-    // Define ícone e cor por aba
-    let iconeClasse = 'fa-magnifying-glass';
-    let corIcone = '#0056b3';
-
-    if (abaAtual === 'cadastro-produtos') {
-      iconeClasse = 'fa-pencil-alt';
-      corIcone = '#f59e0b';
-    } else if (abaAtual === 'cadastro-clientes') {
-      iconeClasse = 'fa-pencil-alt';
-      corIcone = '#8b5cf6'; // Roxo para clientes
-    }
-
-    btnAcao.innerHTML = `<i class="fa-solid ${iconeClasse}" style="color:${corIcone}; pointer-events:none;"></i>`;
-
-    // CONFIGURAÇÃO DO CLIQUE
-    btnAcao.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      // Prioriza o campo 'id' (UUID do Supabase)
-      const idAtual = item.id || item.id_venda;
-      
-      console.log("Clique detectado! Aba:", abaAtual, "ID:", idAtual);
-
-      if (abaAtual === 'cadastro-produtos') {
-        abrirEdicaoProduto(idAtual);
-      } else if (abaAtual === 'cadastro-clientes') {
-        // ESSENCIAL: Certifique-se que essa função existe no seu script
-        if (typeof abrirEdicaoCliente === 'function') {
-           abrirEdicaoCliente(idAtual);
-        } else {
-           console.error("Erro: Função abrirEdicaoCliente não encontrada!");
-        }
-      } else {
-        abrirResumo(idAtual);
-      }
-    };
-
-    tdAcaoInicial.appendChild(btnAcao);
-    tr.appendChild(tdAcaoInicial);
-
-    // --- COLUNAS DE DADOS ---
     colunas.forEach(col => {
       let valor = item[col] || "";
       let cl = "";
 
       if (col === 'imagem_url') {
-        valor = (valor && String(valor).startsWith('http')) 
-          ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` 
-          : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
+        valor = (valor && valor.startsWith('http')) ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
       }
       else if (col === 'endereco') {
         valor = `${valor}${item.numero ? `, ${item.numero}` : ""}${item.bairro ? ` - ${item.bairro}` : ""}`;
@@ -1607,7 +1499,6 @@ else {
       tr.appendChild(td);
     });
 
-
     // 6. Condição
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
@@ -1625,47 +1516,20 @@ else {
       tr.appendChild(tdCond);
     }
 
-// --- 7. AÇÕES (Lado Direito da Tabela) ---
-const tdA = document.createElement('td');
-tdA.style.textAlign = "center";
-
-// Usamos switch para evitar erros de chaves { } do if/else
-switch (abaAtual) {
-    case 'cadastro-vendas':
-        const statusVenda = String(item.status || "").toLowerCase();
-        const concluida = statusVenda.includes('pago') || statusVenda.includes('conclu');
-        
-        tdA.innerHTML = `
-            ${concluida 
-                ? `<button class="btn-nav" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` 
-                : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`
-            }
-            <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
-        `;
-        break;
-
-    case 'cadastro-clientes':
-        // Botão de excluir cliente (chama a função de confirmação)
-        tdA.innerHTML = `
-            <button onclick="confirmarExclusaoCliente('${item.id}', '${item.cliente_nome}')" class="btn-nav" style="background:#ef4444;">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        `;
-        break;
-
-    case 'cadastro-produtos':
-        tdA.innerHTML = `
-            <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
-        `;
-        break;
-
-    default:
-        // Caso caia em qualquer outra aba, coloca o botão padrão para não quebrar
-        tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
-}
-
-tr.appendChild(tdA);
-corpo.appendChild(tr);
+    // 7. Ações
+    const tdA = document.createElement('td');
+    if (abaAtual === 'cadastro-vendas') {
+      const s = String(item.status || "").toLowerCase();
+      const isConcluido = s.includes('pago') || s.includes('conclu') || s.includes('parcial');
+      tdA.innerHTML = `
+        ${isConcluido ? `<button class="btn-nav btn-disabled" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`}
+        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
+      `;
+    } else {
+      tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
+    }
+    tr.appendChild(tdA);
+    corpo.appendChild(tr);
   });
 }
 
@@ -3294,152 +3158,44 @@ function abrirModalNovoUsuario() {
     document.getElementById('modalNovoUsuario').style.display = 'flex'; // Abre o de novo cadastro
 }
 
-/**
- * 1. ABRE O MODAL E PREENCHE OS DADOS (MODO LEITURA)
- */
-/**
- * 1. ABRE O MODAL BUSCANDO PELO NOME (Já que não temos a coluna ID na tabela visual)
- */
-async function abrirEdicaoCliente(idCliente) {
-  console.log("Iniciando edição do cliente:", idCliente);
-
-  // Busca pelo ID correto
-  const cliente = dadosPlanilha.find(c => String(c.id) === String(idCliente));
-
-  if (!cliente) {
-    console.error("Cliente não localizado:", idCliente);
-    alert("Cliente não encontrado.");
-    return;
-  }
+async function buscarClientePorCPF(cpf) {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  if (cpfLimpo.length < 11) return; // Só busca se tiver o CPF completo
 
   try {
-    document.getElementById('editClienteId').value = cliente.id || ""; 
-    document.getElementById('editClienteNome').value = cliente.cliente_nome || ""; 
-    document.getElementById('editClienteCpf').value = cliente.cpf_cnpj || "";
-    document.getElementById('editClienteTelefone').value = cliente.telefone || "";
-    document.getElementById('editClienteEmail').value = cliente.email || "";
-    document.getElementById('editClienteCep').value = cliente.cep || "";
-    document.getElementById('editClienteLogradouro').value = cliente.logradouro || "";
-    document.getElementById('editClienteNumero').value = cliente.numero || "";
-    document.getElementById('editClienteBairro').value = cliente.bairro || "";
-    document.getElementById('editClienteCidade').value = cliente.cidade || "";
-
-    const modal = document.getElementById('modalEdicaoCliente');
-    modal.style.display = 'flex';
-
-    resetarEstadoModalCliente(); 
-
-  } catch (e) {
-    console.error("Erro ao abrir modal cliente:", e);
-  }
-}
-
-/**
- * 2. ESTADO INICIAL DO MODAL (TRAVADO PARA LEITURA)
- */
-function resetarEstadoModalCliente() {
-  const container = document.getElementById('containerBotoesCliente');
-  if (container) {
-    container.innerHTML = `
-      <button type="button" onclick="habilitarCamposCliente()" 
-        style="background:#f59e0b; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
-        <i class="fas fa-edit"></i> EDITAR DADOS
-      </button>
-    `;
-  }
-
-  const campos = ['editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail', 'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 'editClienteBairro', 'editClienteCidade'];
-  campos.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.readOnly = true;
-      el.classList.add('input-travado');
-      el.classList.remove('input-editavel');
-    }
-  });
-}
-
-/**
- * 3. HABILITA EDIÇÃO DOS CAMPOS
- */
-function habilitarCamposCliente() {
-  const campos = ['editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail', 'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 'editClienteBairro', 'editClienteCidade'];
-  
-  campos.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.readOnly = false;
-      el.classList.remove('input-travado');
-      el.classList.add('input-editavel');
-    }
-  });
-
-  const container = document.getElementById('containerBotoesCliente');
-  if (container) {
-    container.innerHTML = `
-      <button type="button" onclick="salvarAlteracaoClienteSupabase()" 
-        style="background:#10b981; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; width:100%; font-weight:600; margin-bottom:8px;">
-        <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
-      </button>
-      <button type="button" onclick="resetarEstadoModalCliente()" 
-        style="width:100%; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
-        CANCELAR
-      </button>
-    `;
-  }
-}
-
-/**
- * 4. SALVA NO SUPABASE
- */
-async function salvarAlteracaoClienteSupabase() {
-  const id = document.getElementById('editClienteId').value;
-  const payload = {
-    cliente_nome: document.getElementById('editClienteNome').value,
-    cpf_cnpj: document.getElementById('editClienteCpf').value,
-    telefone: document.getElementById('editClienteTelefone').value,
-    email: document.getElementById('editClienteEmail').value,
-    cep: document.getElementById('editClienteCep').value,
-    logradouro: document.getElementById('editClienteLogradouro').value,
-    numero: document.getElementById('editClienteNumero').value,
-    bairro: document.getElementById('editClienteBairro').value,
-    cidade: document.getElementById('editClienteCidade').value
-  };
-
-  try {
-    // Note a inclusão de /rest/v1/ na URL para funcionar corretamente com a API do Supabase
-    const response = await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${id}`, {
-      method: 'PATCH',
+    // Busca na tabela de clientes do Supabase
+    const response = await fetch(`${SB_URL}/clientes?cpf_cnpj=eq.${cpfLimpo}`, {
+      method: 'GET',
       headers: {
         'apikey': SB_KEY,
         'Authorization': `Bearer ${SB_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(payload)
+        'Content-Type': 'application/json'
+      }
     });
 
-    if (response.ok) {
-      alert("✅ Cliente atualizado!");
-      document.getElementById('modalEdicaoCliente').style.display = 'none';
-      if (typeof buscarDados === 'function') buscarDados(); // Recarrega a tabela
-    } else {
-      alert("Erro ao salvar.");
+    const dados = await response.json();
+
+    // Se encontrar o cliente, preenche TODOS os campos
+    if (dados && dados.length > 0) {
+      const cliente = dados[0];
+      
+      // Preenchimento automático dos campos
+      document.getElementById('nomeCliente').value = cliente.cliente_nome || "";
+      if(document.getElementById('telCliente')) document.getElementById('telCliente').value = cliente.telefone || "";
+      if(document.getElementById('clienteEmail')) document.getElementById('clienteEmail').value = cliente.email || "";
+      
+      // Preenchimento do Endereço Detalhado
+      if(document.getElementById('cepCliente')) document.getElementById('cepCliente').value = cliente.cep || "";
+      if(document.getElementById('ruaCliente')) document.getElementById('ruaCliente').value = cliente.logradouro || "";
+      if(document.getElementById('numCliente')) document.getElementById('numCliente').value = cliente.numero || "";
+      if(document.getElementById('bairroCliente')) document.getElementById('bairroCliente').value = cliente.bairro || "";
+      if(document.getElementById('cidadeCliente')) document.getElementById('cidadeCliente').value = cliente.cidade || "";
+
+      console.log("✅ Cadastro do cliente carregado via CPF.");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Erro de conexão.");
+  } catch (error) {
+    console.error("Erro ao buscar cliente:", error);
   }
-}
-
-function cancelarEdicaoCliente() {
-  document.getElementById('modalEdicaoCliente').style.display = 'none';
-}
-
-function irParaClientes() {
-  abaAtual = 'cadastro-clientes';
-  paginaAtual = 1;
-  mostrarLista('cadastro-clientes');
 }
 
 
@@ -3501,51 +3257,6 @@ window.onload = async () => {
 };
 
  </script>
- 
- <div id="modalEdicaoCliente" class="modal" style="display:none;">
-  <div class="modal-box">
-    <h3><i class="fas fa-user-edit"></i> Detalhes do Cliente</h3>
-
-    <input type="hidden" id="editClienteId">
-
-    <div class="modal-form-grid">
-      <label>Nome Completo:</label>
-      <input type="text" id="editClienteNome" class="input-travado" readonly>
-      
-      <label>CPF/CNPJ:</label>
-      <input type="text" id="editClienteCpf" class="input-travado" readonly>
-      
-      <label>Telefone:</label>
-      <input type="text" id="editClienteTelefone" class="input-travado" readonly>
-      
-      <label>E-mail:</label>
-      <input type="email" id="editClienteEmail" class="input-travado" readonly>
-      
-      <label>CEP:</label>
-      <input type="text" id="editClienteCep" class="input-travado" readonly>
-      
-      <label>Logradouro:</label>
-      <input type="text" id="editClienteLogradouro" class="input-travado" readonly>
-      
-      <label>Número:</label>
-      <input type="text" id="editClienteNumero" class="input-travado" readonly>
-      
-      <label>Bairro:</label>
-      <input type="text" id="editClienteBairro" class="input-travado" readonly>
-      
-      <label>Cidade:</label>
-      <input type="text" id="editClienteCidade" class="input-travado" readonly>
-    </div>
-
-    <div id="containerBotoesCliente" style="margin-top: 20px;">
-        </div>
-    
-    <button type="button" onclick="cancelarEdicaoCliente()" style="background:none; border:none; color:#94a3b8; cursor:pointer; margin-top:10px; font-size:0.8rem; text-decoration:underline;">
-        Fechar sem alterar
-    </button>
-  </div>
-</div>
 </body>
 </html>
-
 

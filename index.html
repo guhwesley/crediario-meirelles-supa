@@ -3807,31 +3807,23 @@ async function salvarEdicaoCliente(event) {
     let fotoUrlFinal = null;
     const baseURL = SB_URL.replace('/rest/v1', '');
 
-    // --- PASSO 1: SE TIVER NOVO ARQUIVO, LIMPA O ANTIGO E FAZ UPLOAD ---
+    // --- PASSO 1: UPLOAD E LIMPEZA ---
     if (inputArquivo && inputArquivo.files.length > 0) {
-      
-      // A: LIMPEZA DA FOTO ANTIGA (Usando a variável guardada no abrirEdicao)
       if (urlFotoClienteOriginal && urlFotoClienteOriginal.includes('fotos-clientes/')) {
         try {
           const nomeArquivoAntigo = urlFotoClienteOriginal.split('/').pop().split('?')[0];
-          // IMPORTANTE: URL de exclusão não tem o "/public/"
           const urlDeExclusao = `${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivoAntigo}`;
           
-          console.log("🧹 Limpando foto antiga do cliente:", nomeArquivoAntigo);
-
           await fetch(urlDeExclusao, {
             method: 'DELETE',
-            headers: {
-              'apikey': SB_KEY,
-              'Authorization': `Bearer ${SB_KEY}`
-            }
+            headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
           });
+          console.log("🧹 Foto antiga removida.");
         } catch (e) {
-          console.warn("Aviso: Falha ao deletar foto antiga, mas seguindo com o upload.");
+          console.warn("Falha ao deletar antiga, seguindo...");
         }
       }
 
-      // B: UPLOAD DA FOTO NOVA
       const arquivo = inputArquivo.files[0];
       const extensao = arquivo.name.split('.').pop();
       const nomeArquivo = `${idCliente}_${Date.now()}.${extensao}`;
@@ -3848,15 +3840,12 @@ async function salvarEdicaoCliente(event) {
 
       if (uploadResponse.ok) {
         fotoUrlFinal = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
-        console.log("✅ Upload concluído! URL:", fotoUrlFinal);
       } else {
-        const erroDetalhado = await uploadResponse.json();
-        console.error("❌ Erro no Storage:", erroDetalhado);
-        throw new Error("Erro ao subir imagem para o servidor.");
+        throw new Error("Erro ao subir nova imagem.");
       }
     }
 
-    // --- PASSO 2: MONTA O PAYLOAD ---
+    // --- PASSO 2: PAYLOAD ---
     const dadosCliente = {
       cliente_nome: document.getElementById('editClienteNome').value,
       cpf_cnpj:     document.getElementById('editClienteCpf').value,
@@ -3869,11 +3858,9 @@ async function salvarEdicaoCliente(event) {
       cidade:       document.getElementById('editClienteCidade').value
     };
 
-    if (fotoUrlFinal) {
-      dadosCliente.foto_url = fotoUrlFinal;
-    }
+    if (fotoUrlFinal) dadosCliente.foto_url = fotoUrlFinal;
 
-    // --- PASSO 3: PATCH NO BANCO ---
+    // --- PASSO 3: PATCH ---
     const response = await fetch(`${SB_URL}/clientes?id=eq.${idCliente}`, {
       method: 'PATCH',
       headers: {
@@ -3886,17 +3873,16 @@ async function salvarEdicaoCliente(event) {
     });
 
     if (response.ok) {
-      // --- PASSO 4: ATUALIZAÇÃO DA LISTA ---
+      // --- PASSO 4: ATUALIZAÇÃO DA LISTA (ANTES DO ALERT) ---
+      console.log("🔄 Sincronizando tabela...");
       if (typeof mostrarLista === 'function') {
           await mostrarLista('cadastro-clientes');
-      } else if (typeof navegarLimpo === 'function') {
-          navegarLimpo('cadastro-clientes');
       }
 
       alert("✅ Cliente atualizado com sucesso!");
       fecharModal('modalEdicaoCliente');
       
-      // Reseta a variável para a próxima edição
+      // Limpa a memória da foto
       urlFotoClienteOriginal = ""; 
 
     } else {
@@ -3905,7 +3891,7 @@ async function salvarEdicaoCliente(event) {
     }
 
   } catch (err) {
-    console.error("Erro ao salvar cliente:", err);
+    console.error("Erro:", err);
     alert("Erro ao salvar: " + err.message);
   } finally {
     if (btn) {
@@ -4031,7 +4017,9 @@ async function atualizarFotoDireto(id, input) {
   const imgElement = document.getElementById(`img-tabela-${id}`);
   const urlAntigaParaDeletar = imgElement ? imgElement.src : null;
 
-  if (imgElement) imgElement.style.opacity = "0.3";
+  if (imgElement) {
+    imgElement.style.opacity = "0.3"; // Feedback visual de carregamento
+  }
 
   try {
     // 2. Upload da NOVA foto para o Storage
@@ -4063,14 +4051,11 @@ async function atualizarFotoDireto(id, input) {
 
     if (patchRes.ok) {
       // --- PASSO 4: LIMPEZA DA FOTO ANTIGA NO BUCKET ---
-      // Só tenta deletar se existir uma URL antiga e for do nosso Supabase
       if (urlAntigaParaDeletar && urlAntigaParaDeletar.includes('fotos-clientes/')) {
         try {
           const nomeAntigo = urlAntigaParaDeletar.split('/').pop().split('?')[0];
           const urlDeExclusao = `${baseURL}/storage/v1/object/fotos-clientes/${nomeAntigo}`;
           
-          console.log("🧹 Limpando foto antiga (troca rápida):", nomeAntigo);
-
           await fetch(urlDeExclusao, {
             method: 'DELETE',
             headers: {
@@ -4078,17 +4063,19 @@ async function atualizarFotoDireto(id, input) {
               'Authorization': `Bearer ${SB_KEY}`
             }
           });
+          console.log("🧹 Foto antiga removida com sucesso.");
         } catch (e) {
           console.warn("Aviso: Foto nova salva, mas a antiga não pôde ser removida.");
         }
       }
 
-      // 5. Atualiza a foto na tela na hora!
-      if (imgElement) {
-        imgElement.src = novaUrl;
-        imgElement.style.opacity = "1";
+      // --- PASSO 5: ATUALIZAÇÃO AUTOMÁTICA DA LISTA ---
+      if (typeof mostrarLista === 'function') {
+        console.log("🔄 Recarregando lista de clientes para sincronizar dados...");
+        await mostrarLista('cadastro-clientes');
       }
-      console.log("✅ Foto atualizada e bucket limpo!");
+
+      console.log("✅ Foto atualizada, bucket limpo e lista sincronizada!");
     }
 
   } catch (err) {

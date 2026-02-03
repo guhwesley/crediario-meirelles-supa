@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <base target="_top">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
@@ -774,6 +775,10 @@
     }
 }
 
+.foto-container-tabela:hover .btn-troca-foto {
+    display: flex !important;
+}
+
 
 </style>
 </head>
@@ -1247,6 +1252,37 @@
     <img id="fotoAmpliada" style="max-width:90%; max-height:90%; border-radius:8px; border: 3px solid white; margin: auto; display: block;">
 </div>
 
+<div id="modalEsqueci" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155;">
+    <h3 style="color:white; margin-bottom:10px;">Recuperar Acesso</h3>
+    <p style="color:#94a3b8; font-size:0.9em; margin-bottom:20px;">Digite seu <b>WhatsApp (com DDD)</b> para receber seus dados de acesso.</p>
+    
+    <input type="text" id="recuperarTel" placeholder="Ex: DDD+numero" 
+       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+       style="width:100%; padding:12px; border-radius:8px; background:#0f172a; border:1px solid #334155; color:white; margin-bottom:20px; outline:none;">
+    
+    <div style="display:flex; gap:10px;">
+      <button onclick="document.getElementById('modalEsqueci').style.display='none'" style="flex:1; padding:10px; border-radius:8px; background:#334155; color:white; border:none; cursor:pointer;">Cancelar</button>
+      <button id="btnEnviarRecuperacao" onclick="solicitarRecuperacao()" style="flex:1; padding:10px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold;">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalAviso" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; align-items:center; justify-content:center; backdrop-filter: blur(4px); animation: fadeIn 0.3s ease;">
+  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:320px; text-align:center; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+    <div id="avisoIcone" style="font-size: 3.5rem; margin-bottom: 15px;"></div>
+    
+    <h3 id="avisoTitulo" style="color:white; margin-bottom:10px; font-family: sans-serif; letter-spacing: 0.5px;"></h3>
+    <p id="avisoTexto" style="color:#94a3b8; font-size:0.95em; margin-bottom:25px; line-height:1.5;"></p>
+    
+    <button id="btnModalAviso" onclick="document.getElementById('modalAviso').style.display='none'" 
+            style="width:100%; padding:14px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold; font-size: 1rem; transition: 0.2s;">
+      Entendido
+    </button>
+  </div>
+</div>
+
+
 
   
   <script>
@@ -1374,6 +1410,7 @@ async function login() {
     }
   }
 }
+
     
     function logout() { 
   // Esconde o sistema e mostra o login
@@ -1388,6 +1425,7 @@ async function login() {
   // Opcional: Limpar os campos de usuário e senha para o próximo login
   document.getElementById('senha').value = '';
 }
+
 
    async function navegarLimpo(aba) {
   // 1. Liga o carregando
@@ -1659,14 +1697,29 @@ async function desenharTabela() {
       let cl = "";
 
       // NOVA FUNÇÃO PARA RENDERIZAR FOTO DO CLIENTE
-     if (col === 'foto_url') {
-        valor = valor 
-          ? `<img src="${valor}" 
-                  onclick="ampliarFoto('${valor}')" 
-                  title="Clique para ampliar"
-                  style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #38bdf8; display: block; margin: auto; cursor: zoom-in; transition: transform 0.2s;">` 
-          : `<i class="fa-solid fa-circle-user" style="font-size: 32px; color: #475569; display: block; margin: auto;"></i>`;
-      }
+   if (col === 'foto_url') {
+  const idAtual = item.id;
+  const urlFoto = valor || "";
+
+  valor = `
+    <div class="foto-container-tabela" style="position: relative; width: 40px; height: 40px; margin: auto;">
+      <img src="${urlFoto || 'https://via.placeholder.com/40'}" 
+           onclick="ampliarFoto('${urlFoto}')"
+           id="img-tabela-${idAtual}"
+           title="Clique no centro para ampliar"
+           style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #38bdf8; cursor: zoom-in; display: block;">
+      
+      <div onclick="document.getElementById('input-foto-${idAtual}').click()" 
+           title="Trocar foto"
+           style="position: absolute; bottom: -2px; right: -2px; background: #38bdf8; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #0f172a; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10;">
+        <i class="fas fa-camera" style="font-size: 9px;"></i>
+      </div>
+
+      <input type="file" id="input-foto-${idAtual}" style="display:none" accept="image/*" 
+             onchange="atualizarFotoDireto('${idAtual}', this)">
+    </div>
+  `;
+}
       else if (col === 'imagem_url') {
         valor = (valor && String(valor).startsWith('http')) 
           ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` 
@@ -1979,6 +2032,8 @@ async function abrirPagar(id) {
       });
 
       if (!resAtual.ok) throw new Error("Erro ao atualizar parcela.");
+      
+      enviarConfirmacaoParaN8N(venda, vDigitado, valorOriginal);
 
       // 2. LÓGICA DE RESÍDUO (CORRIGIDA PARA NÃO MULTIPLICAR POR 100)
       if (residuo !== 0) {
@@ -2054,17 +2109,17 @@ async function abrirPagar(id) {
 }
 
 
-function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
-  const h = dadosPlanilha[0]; 
+function enviarConfirmacaoParaN8N(vendaObjeto, valorRecebido, valorOriginal) {
   const webhookURL = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
 
+  // Regra da parcela parcial
   const tipoPagamento = (parseFloat(valorRecebido) < parseFloat(valorOriginal) - 0.01) ? "PARCIAL" : "TOTAL";
 
   const dados = {
-    cliente: linha[h.indexOf('cliente')],
-    telefone: linha[h.indexOf('telefone')],
-    produto: linha[h.indexOf('produto')],
-    parcela: linha[h.indexOf('parcela')],
+    cliente: vendaObjeto.cliente,
+    telefone: vendaObjeto.telefone || "",
+    produto: vendaObjeto.produto || "",
+    parcela: vendaObjeto.parcela || "",
     valor_pago: valorRecebido,
     valor_original: valorOriginal,
     tipo: tipoPagamento, 
@@ -2077,8 +2132,8 @@ function enviarConfirmacaoParaN8N(linha, valorRecebido, valorOriginal) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dados) 
   })
-  .then(() => console.log("n8n enviado com sucesso: " + tipoPagamento))
-  .catch(err => console.error("Erro ao disparar n8n:", err));
+  .then(() => console.log("✅ n8n enviado com sucesso: " + tipoPagamento))
+  .catch(err => console.error("❌ Erro ao disparar n8n:", err));
 }
 
 function abrirResumo(idVendaUnico) {
@@ -2177,7 +2232,7 @@ async function finalizarVenda() {
     const cidade = document.getElementById('cidadeCliente')?.value || "";
     const num = document.getElementById('numComplemento')?.value || ""; 
     
-    // Monta o endereço para a tabela VENDAS
+    // Monta o endereço para a tabela VENDAS e n8n
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
 
     if (itensNoCarrinho.length === 0) {
@@ -2190,12 +2245,16 @@ async function finalizarVenda() {
       return;
     }
 
-    const listaProdutosTxt = itensNoCarrinho.map(item => `${item.qtd}x ${item.nome}`).join(' + ');
+    // Formatação do Produto para o n8n (Ex: R$ 400.00 Espelho -x 1 = R$ 400.00)
+    const listaProdutosTxt = itensNoCarrinho.map(item => 
+      `R$ ${item.preco.toFixed(2)} ${item.nome} -x ${item.qtd} = R$ ${item.subtotal.toFixed(2)}`
+    ).join(' + ');
+
     const bruto = itensNoCarrinho.reduce((acc, item) => acc + item.subtotal, 0);
     const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
     const formaPagamento = document.getElementById('tipoPagamento')?.value || "";
-    const trabalho = document.getElementById('trabalhoVenda')?.value || ""; 
+    const trabalho = document.getElementById('trabalhoVenda')?.value || "Não informado"; 
 
     const descontoSistema = (formaPagamento === 'vista') ? (bruto * 0.10) : 0;
     const descontoTotal = descontoSistema + descVendedor;
@@ -2218,7 +2277,7 @@ async function finalizarVenda() {
     const valorParcela = Math.round((saldoDevedor / numParcelas) * 100) / 100;
     const idVendaUnico = 'V' + Date.now();
 
-    // 2. MONTAGEM DAS PARCELAS (Tabela Vendas)
+    // 2. MONTAGEM DAS PARCELAS
     const parcelasParaBanco = [];
     for (let i = 0; i < numParcelas; i++) {
       let d = new Date(dataVencBase + 'T00:00:00');
@@ -2226,7 +2285,7 @@ async function finalizarVenda() {
       parcelasParaBanco.push({
         id_venda: idVendaUnico, 
         cliente: nome, 
-        telefone: tel, // Coluna 'telefone' confirmada em Vendas
+        telefone: tel, 
         cpf: cpf, 
         endereco: enderecoCompleto, 
         produto: listaProdutosTxt, 
@@ -2243,41 +2302,61 @@ async function finalizarVenda() {
       });
     }
 
-    // 3. ENVIO PARA TABELA VENDAS
+    // 3. ENVIO PARA SUPABASE
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
-    if (!resVenda.ok) {
-      const erroVenda = await resVenda.json();
-      throw new Error("Erro em Vendas: " + erroVenda.message);
-    }
+    if (!resVenda.ok) throw new Error("Erro ao salvar venda no banco.");
 
-    // 4. ENVIO PARA TABELA CLIENTES (Colunas simples)
-    const resCliente = await fetch(`${SB_URL}/clientes`, {
+    await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': `Bearer ${SB_KEY}`, 
-        'Content-Type': 'application/json', 
-        'Prefer': 'resolution=merge-duplicates' 
-      },
-      body: JSON.stringify({ 
-        cliente_nome: nome,
-        cpf_cnpj: cpf,
-        telefone: tel, // Coluna 'telefone' confirmada em Clientes
-        email: emailValor, // Coluna 'email' confirmada em Clientes
-        cep: cep, 
-        logradouro: rua, 
-        numero: num, 
-        bairro: bairro, 
-        cidade: cidade 
-      })
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({ cliente_nome: nome, cpf_cnpj: cpf, telefone: tel, email: emailValor, logradouro: rua, numero: num, bairro: bairro, cidade: cidade })
     });
 
-    // --- SUCESSO ---
+    // --- SUCESSO: ENVIO PARA O N8N (CADASTRO COMPLETO) ---
+    if (!enviandoVendaAgora) {
+      enviandoVendaAgora = true;
+      
+      // Criando o array que o seu n8n "Code in JavaScript1" exige
+      const arrayPlanoPagamento = parcelasParaBanco.map(p => {
+        const [ano, mes, dia] = p.data_vencimento.split('-');
+        return {
+          parcela: p.parcela,
+          valor: p.valor_parcela.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+          vencimento: `${dia}/${mes}/${ano}`
+        };
+      });
+
+      const dadosN8N = {
+        nome: nome,
+        telefone: tel,
+        cpf: cpf,
+        trabalho: trabalho || "Não informado",
+        enderecoCompleto: enderecoCompleto,
+        produto: listaProdutosTxt,
+        valorTotal: valorLiquidoVenda,
+        entrada: entrada,
+        parcelas: numParcelas,
+        vencimento: dataVencBase,
+        pagamento: (entrada >= valorLiquidoVenda - 0.01) ? "vista" : "parcelado",
+        descontoExtra: descVendedor || 0, // Campo que você mostrou no print
+        planoPagamento: arrayPlanoPagamento   // O array de parcelas que o n8n precisa
+      };
+
+      fetch(URL_N8N_CADASTRO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosN8N)
+      })
+      .then(() => console.log("✅ Webhook de cadastro enviado com Plano de Pagamento!"))
+      .catch(err => console.error("❌ Erro ao enviar Webhook:", err))
+      .finally(() => { enviandoVendaAgora = false; });
+    }
+
     alert("✅ Venda e Cliente salvos com sucesso!");
 
     if (btn) {
@@ -3005,7 +3084,8 @@ function calcularVendaFinal() {
 }
 
 // URL do seu Webhook n8n
-const WEBHOOK_URL = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-CADASTRO";
+const URL_N8N_CADASTRO = "https://n8n.vps6993.panel.icontainer.net/webhook/MEIRELLES-CADASTRO";
+const URL_N8N_PAGAMENTO = "https://n8n.vps6993.panel.icontainer.net/webhook/crm-vendaconfirmada";
 
 // Variável global para evitar envios duplicados
 let enviandoVendaAgora = false;
@@ -3743,6 +3823,121 @@ function ampliarFoto(url) {
         modal.style.justifyContent = 'center';
     }
 }
+
+async function atualizarFotoDireto(id, input) {
+  if (!input.files || !input.files[0]) return;
+  
+  const arquivo = input.files[0];
+  const baseURL = SB_URL.replace('/rest/v1', '');
+  const nomeArquivo = `${id}_direto_${Date.now()}.${arquivo.name.split('.').pop()}`;
+
+  // 1. Feedback visual (troca a imagem por um spinner ou deixa opaco)
+  const imgElement = document.getElementById(`img-tabela-${id}`);
+  imgElement.style.opacity = "0.3";
+
+  try {
+    // 2. Upload para o Storage
+    const uploadRes = await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': arquivo.type },
+      body: arquivo
+    });
+
+    if (!uploadRes.ok) throw new Error("Erro no upload");
+
+    const novaUrl = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
+
+    // 3. Update na Tabela Clientes
+    const patchRes = await fetch(`${SB_URL}/clientes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${SB_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ foto_url: novaUrl })
+    });
+
+    if (patchRes.ok) {
+      imgElement.src = novaUrl; // Atualiza a foto na tela na hora!
+      imgElement.style.opacity = "1";
+      console.log("✅ Foto atualizada diretamente!");
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao trocar foto rápida.");
+    imgElement.style.opacity = "1";
+  }
+}
+
+async function confirmarExclusaoCliente(id, nomeCliente) {
+    // 1. Confirmação personalizada com o nome do cliente
+    const mensagem = `⚠️ Tem certeza que deseja excluir o cliente "${nomeCliente}"?\nEsta ação também apagará a foto dele e não pode ser desfeita.`;
+    
+    if (!confirm(mensagem)) {
+        return;
+    }
+
+    try {
+        console.log("Iniciando exclusão do ID:", id);
+
+        // 2. Localiza o cliente na lista local para pegar a URL da foto
+        const listaClientes = window.dadosPlanilha || []; 
+        const cliente = listaClientes.find(c => String(c.id) === String(id));
+        const urlFoto = cliente ? cliente.foto_url : null;
+
+        // 3. Deletar do Banco de Dados (Supabase)
+        const response = await fetch(`${SB_URL}/clientes?id=eq.${id}`, {
+            method: 'DELETE',
+            headers: {
+                'apikey': SB_KEY,
+                'Authorization': `Bearer ${SB_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const erroTxt = await response.text();
+            throw new Error("Erro no banco: " + erroTxt);
+        }
+
+        // 4. Se o cliente tinha foto, removemos do Storage
+        if (urlFoto && urlFoto.includes('fotos-clientes')) {
+            try {
+                const nomeArquivo = urlFoto.split('/').pop();
+                const baseURL = SB_URL.replace('/rest/v1', '');
+                
+                await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SB_KEY,
+                        'Authorization': `Bearer ${SB_KEY}`
+                    }
+                });
+                console.log("Foto removida do storage.");
+            } catch (errFoto) {
+                console.warn("Cliente deletado, mas a foto ficou: ", errFoto);
+            }
+        }
+
+        alert(`✅ Cliente "${nomeCliente}" removido com sucesso!`);
+
+        // 5. Atualiza a interface
+        if (typeof mostrarLista === 'function') {
+            await mostrarLista('cadastro-clientes');
+        } else {
+            location.reload();
+        }
+
+    } catch (error) {
+        console.error("Erro na exclusão:", error);
+        alert("Erro ao excluir: " + error.message);
+    }
+}
+
+
 
 
 

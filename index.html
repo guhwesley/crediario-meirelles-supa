@@ -3487,7 +3487,10 @@ async function confirmarSalvarProduto() {
   const btn = document.getElementById('btnSalvarEdicao');
   const inputUrl = document.getElementById('editProdUrl'); 
   
-  // IMPORTANTE: urlOriginalAntesDeEditar foi definida lá no abrirEdicaoProduto
+  // Captura o que está escrito no campo agora (limpo de espaços)
+  const urlNoCampoAgora = inputUrl.value.trim();
+  
+  // Por padrão, mantemos a URL original, a menos que mude abaixo
   let urlFinalParaBanco = urlOriginalAntesDeEditar; 
 
   try {
@@ -3496,34 +3499,46 @@ async function confirmarSalvarProduto() {
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESSANDO...';
     }
 
-    // 1. SE HOUVER UMA NOVA IMAGEM SELECIONADA
-    if (arquivoTemporarioEdicao) {
-      const baseURL = SB_URL.replace('/rest/v1', '');
+    const baseURL = SB_URL.replace('/rest/v1', '');
 
-      // --- A: LIMPEZA DA IMAGEM ANTIGA REAL ---
-      // Usamos a variável global que "congelou" a URL antes da edição começar
+    // --- LOGICA 1: USUÁRIO APAGOU A URL MANUALMENTE (QUER FICAR SEM FOTO) ---
+    if (urlNoCampoAgora === "" && urlOriginalAntesDeEditar !== "") {
+      console.log("🗑️ Detectado: Campo vazio. Removendo foto do Bucket...");
+      
+      try {
+        const nomeArquivoAntigo = urlOriginalAntesDeEditar.split('/').pop().split('?')[0];
+        const urlDeExclusao = `${baseURL}/storage/v1/object/produtos/${nomeArquivoAntigo}`;
+        
+        await fetch(urlDeExclusao, {
+          method: 'DELETE',
+          headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
+        });
+        console.log("✅ Arquivo deletado do bucket.");
+      } catch (e) {
+        console.warn("Aviso: Falha ao deletar arquivo, mas seguindo com a limpeza do banco.");
+      }
+      
+      urlFinalParaBanco = ""; // Define que o banco será atualizado para vazio
+    }
+
+    // --- LOGICA 2: SE HOUVER UMA NOVA IMAGEM SELECIONADA ---
+    else if (arquivoTemporarioEdicao) {
+      // Limpeza da antiga antes do upload da nova
       if (urlOriginalAntesDeEditar && urlOriginalAntesDeEditar.includes('produtos/')) {
         try {
           const nomeArquivoAntigo = urlOriginalAntesDeEditar.split('/').pop().split('?')[0];
-          
-          // A URL de exclusão NUNCA deve ter "/public/"
           const urlDeExclusao = `${baseURL}/storage/v1/object/produtos/${nomeArquivoAntigo}`;
-          
-          console.log("Limpando arquivo antigo do bucket:", nomeArquivoAntigo);
 
           await fetch(urlDeExclusao, {
             method: 'DELETE',
-            headers: {
-              'apikey': SB_KEY,
-              'Authorization': `Bearer ${SB_KEY}`
-            }
+            headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
           });
         } catch (errLimpeza) {
-          console.warn("A limpeza falhou, mas prosseguindo com o upload:", errLimpeza);
+          console.warn("Falha na limpeza, ignorando...", errLimpeza);
         }
       }
 
-      // --- B: UPLOAD DA NOVA FOTO ---
+      // Upload da nova
       const extensao = arquivoTemporarioEdicao.name.split('.').pop();
       const nomeArquivoNovo = `prod_edit_${Date.now()}.${extensao}`;
 
@@ -3539,17 +3554,18 @@ async function confirmarSalvarProduto() {
 
       if (uploadResponse.ok) {
         urlFinalParaBanco = `${baseURL}/storage/v1/object/public/produtos/${nomeArquivoNovo}`;
-        
-        // Mágica visual: atualiza o campo com a nova URL
         inputUrl.value = urlFinalParaBanco;
         inputUrl.style.backgroundColor = "#dcfce7";
         btn.innerHTML = '<i class="fas fa-check"></i> URL ATUALIZADA!';
-        
-        // Pequena pausa para o usuário ver a nova URL no campo
-        await new Promise(res => setTimeout(res, 1200));
+        await new Promise(res => setTimeout(res, 800));
       } else {
         throw new Error("Falha no upload da nova imagem.");
       }
+    } 
+    
+    // --- LOGICA 3: APENAS ALTEROU TEXTO DA URL (SEM UPLOAD) ---
+    else {
+      urlFinalParaBanco = urlNoCampoAgora;
     }
 
     // --- 2. SALVAR NO BANCO (PATCH) ---
@@ -3557,7 +3573,7 @@ async function confirmarSalvarProduto() {
       categoria:  document.getElementById('editProdCategoria').value,
       nome:       document.getElementById('editProdNome').value,
       preco:      parseFloat(document.getElementById('editProdPreco').value.toString().replace(',', '.')) || 0,
-      imagem_url: urlFinalParaBanco,
+      imagem_url: urlFinalParaBanco, // Salva "", a nova URL ou a antiga
       estoque:    parseInt(document.getElementById('editProdEstoque').value) || 0,
       cor:        document.getElementById('editProdCor')?.value || ""
     };
@@ -3573,12 +3589,11 @@ async function confirmarSalvarProduto() {
     });
 
     if (response.ok) {
-      // 3. ATUALIZA A TABELA AUTOMATICAMENTE
       if (typeof mostrarLista === 'function') {
         await mostrarLista('cadastro-produtos');
       }
       
-      alert("✅ Produto atualizado e imagem antiga removida!");
+      alert("✅ Alterações salvas com sucesso!");
       fecharModal('modalEdicaoProduto');
       
       // Limpeza de variáveis para a próxima

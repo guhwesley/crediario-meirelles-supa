@@ -231,25 +231,7 @@
 
     .form-box h3 { color: #0056b3; font-size: 20px; margin-bottom: 20px; font-family: 'serif'; font-weight: bold; }
 
-    .form-box input {
-
-      width: 100%;
-
-      padding: 12px 15px;
-
-      margin-bottom: 15px;
-
-      border: 1px solid #ccc;
-
-      border-radius: 8px;
-
-      box-sizing: border-box;
-
-      font-size: 15px;
-
-      color: #555;
-
-    }
+   
 
 
 
@@ -482,17 +464,13 @@
   text-align: center;
 }
 
-/* Ajuste para campos de cadastro */
-.grid-cadastro {
-    display: grid; 
-    grid-template-columns: 2fr 1fr 1fr 1fr; /* Nome ocupa o dobro do espaço dos outros */
-    gap: 15px;
-    margin-bottom: 15px;
-}
 
+
+/* Ajuste para não quebrar no telemóvel */
 @media (max-width: 768px) {
-    .grid-cadastro {
-        grid-template-columns: 1fr; /* Em telas pequenas, empilha tudo */
+    .venda-layout-grid {
+        display: flex;
+        flex-direction: column;
     }
 }
 
@@ -528,28 +506,7 @@
     font-weight: bold;
 }
 
-.grid-pagamento {
-  display: flex;
-  flex-wrap: wrap; /* Permite quebrar linha no celular */
-  gap: 10px;
-  background: rgba(15, 23, 42, 0.5); /* Fundo leve para destacar a área */
-  padding: 15px;
-  border-radius: 10px;
-}
 
-.grid-pagamento label {
-  display: block;
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #cbd5e1;
-}
-
-/* Tamanhos no Desktop */
-.col-pgto { flex: 2; min-width: 180px; }     /* Forma pgto é maior */
-.col-entrada { flex: 1; min-width: 100px; }   /* Entrada menor */
-.col-desconto { flex: 1; min-width: 100px; }  /* Desconto menor */
-.col-parcelas { flex: 0.8; min-width: 80px; } /* Parcelas é o menor de todos */
 
 
 /* Ajuste Total para Celular */
@@ -633,6 +590,190 @@
   padding-right: 40px !important; 
 }
 
+/* 1. O MODAL (REVISADO E BLINDADO) */
+.modal {
+  display: none; /* O JS muda para flex */
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.75) !important; /* Fundo mais escuro para foco total */
+  z-index: 99999 !important; /* Valor máximo para cobrir o CRM */
+  
+  /* Centralização perfeita */
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 2. A CAIXA BRANCA (Adicione isso para garantir que ela apareça) */
+.modal-box {
+  background: white !important;
+  padding: 20px !important;
+  border-radius: 12px !important;
+  width: 90% !important;
+  max-width: 500px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+  color: #333 !important;
+  position: relative !important;
+}
+
+/* 3. OS BOTÕES DA TABELA (Pode manter, eles garantem o clique) */
+.col-resumo, .col-resumo button {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
+}
+
+/* ============================================================
+   MODAIS - VERSÃO DARK UNIFICADA (CORREÇÃO DEFINITIVA)
+   ============================================================ */
+
+/* 1. O CONTAINER PRINCIPAL DO MODAL */
+.modal, #modalEdicaoCliente {
+  display: none; /* Controlado pelo JS */
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(7, 10, 19, 0.95) !important; /* Fundo Black-Navy ultra escuro */
+  z-index: 2147483647 !important; /* Prioridade máxima no navegador */
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* 2. A CAIXA DE CONTEÚDO (DESIGN DARK MODERNO) */
+.modal-box, .confirm-box, .form-box {
+  background: #1e293b !important; /* Azul Marinho Profundo */
+  padding: 30px !important;
+  border-radius: 20px !important;
+  width: 90% !important;
+  max-width: 500px !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  color: #f1f5f9 !important;
+  position: relative !important;
+}
+
+/* Títulos dentro dos modais */
+.modal-box h3, .form-box h3 {
+  color: #38bdf8 !important; /* Azul Ciano */
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 20px !important;
+  text-align: center !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Estilização dos Inputs dentro do Modal */
+#modalEdicaoCliente input, .form-box input {
+  background: #0f172a !important; /* Fundo mais escuro */
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+  padding: 12px 15px !important;
+  border-radius: 8px !important;
+  margin-bottom: 12px !important;
+  width: 100% !important;
+  font-size: 14px !important;
+}
+
+/* Labels */
+#modalEdicaoCliente label {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-top: 8px !important;
+  margin-bottom: 4px !important;
+  display: block;
+  text-transform: uppercase;
+}
+
+/* Botões de Ação dentro do Modal */
+.btn-gravar-cliente {
+  background: #10b981 !important;
+  color: white !important;
+  border: none !important;
+  padding: 15px !important;
+  border-radius: 10px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  margin-top: 15px !important;
+  transition: 0.3s !important;
+}
+
+.btn-gravar-cliente:hover {
+  background: #059669 !important;
+  transform: scale(1.02);
+}
+
+/* --- ESTILO PARA O MODAL DE NOVA VENDA (Diferenciado) --- */
+#modalVenda {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: #0f172a !important; 
+  z-index: 99999 !important; /* Um pouco abaixo do modal de edição */
+  overflow-y: auto !important;
+}
+
+/* Estilo para manter o clique funcional na tabela */
+.col-resumo button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* --- NOVO SISTEMA DE GRID E INPUTS (SUBSTITUTO) --- */
+.venda-layout-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+/* Definição das Fatias */
+.fatia-12 { grid-column: span 12; }
+.fatia-7  { grid-column: span 7; }
+.fatia-6  { grid-column: span 6; }
+.fatia-5  { grid-column: span 5; }
+.fatia-4  { grid-column: span 4; }
+.fatia-3  { grid-column: span 3; }
+.fatia-2  { grid-column: span 2; }
+
+/* Estilo Universal para Inputs e Selects no Modal de Venda */
+.venda-layout-grid input, 
+.venda-layout-grid select {
+    width: 100% !important;
+    background: #0f172a !important;
+    color: white !important;
+    border: 1px solid #334155 !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    box-sizing: border-box !important;
+}
+
+.venda-layout-grid label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Responsividade Automática */
+@media (max-width: 768px) {
+    .venda-layout-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .venda-layout-grid > div {
+        width: 100% !important;
+    }
+}
+
 
 </style>
 </head>
@@ -704,7 +845,10 @@
     <button onclick="navegarLimpo('cadastro-produtos')" class="btn-nav" style="background:#0056b3; display: flex; align-items: center; justify-content: center; gap: 8px;">
         <i class="fa-solid fa-box-open"></i> Produtos
     </button>
-
+    
+    
+    
+    
     <button onclick="abrirModalVenda()" class="btn-nav" style="background:#15803d; display: flex; align-items: center; justify-content: center; gap: 8px;">
     <i class="fa-solid fa-cart-plus"></i> Nova Venda
 </button>
@@ -718,6 +862,13 @@
         style="background: #10b981; margin-right: 10px;" 
         title="Abrir Catálogo Externo">
   <i class="fa-solid fa-shop"></i> Catálogo
+</button>
+
+<button onclick="irParaClientes()" 
+  class="btn-nav" 
+  style="background:#8b5cf6; display:flex; align-items:center; justify-content:center; gap:8px;">
+  <i class="fas fa-users"></i>
+  <span>Clientes</span>
 </button>
 
     <button onclick="limparFiltros()" class="btn-nav" style="background:#f59e0b; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -850,122 +1001,66 @@
   </div>
 </div>
 
+<div id="modalEdicaoCliente" class="modal" style="display:none;">
+  <div class="modal-box">
+    <h3><i class="fas fa-user-edit"></i> Detalhes do Cliente</h3>
 
-<div id="modalSenha" class="modal">
-  <div class="form-box">
-    <h3><i class="fa-solid fa-user-gear"></i> Gerenciar Acessos</h3>
-    
-    <div id="secaoTrocaSenha">
-      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Alterar minha senha atual</p>
-      
-      <div style="position: relative; width: 100%;">
-        <input type="password" id="senhaAtual" placeholder="Senha Atual" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
-        <i class="fa-solid fa-eye" onclick="togglePassword('senhaAtual', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
-      </div>
-
-      <div style="position: relative; width: 100%;">
-        <input type="password" id="novaSenha" placeholder="Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
-        <i class="fa-solid fa-eye" onclick="togglePassword('novaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
-      </div>
-
-      <div style="position: relative; width: 100%;">
-        <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
-        <i class="fa-solid fa-eye" onclick="togglePassword('confirmarNovaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
-      </div>
-
-      <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()" style="width: 100%; margin-bottom: 10px;">Salvar Nova Senha</button>
-    </div>
-
-    <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
-
-    <div id="secaoNovoUser">
-      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Cadastrar novo vendedor/usuário</p>
-      <button class="btn-novo-user" onclick="abrirModalNovoUsuario()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
-        <i class="fa-solid fa-user-plus"></i> CRIAR NOVO ACESSO
-      </button>
-    </div>
-    
-    <button class="btn-cancelar" onclick="fecharModal('modalSenha')" style="width: 100%; margin-top: 15px; background: #999;">Fechar</button>
-  </div>
-</div>
-
-<div id="modalNovoUsuario" class="modal" style="display:none;">
-    <div class="form-box">
-        <h3><i class="fa-solid fa-user-plus"></i> Novo Cadastro</h3>
-        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)" style="margin-bottom: 10px;">
-        
-        <div style="position: relative; width: 100%;">
-            <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
-            <i class="fa-solid fa-eye" onclick="togglePassword('novaSenhaUsuario', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+        <div id="areaFotoCliente" onclick="document.getElementById('editInputFile').click()" 
+             style="cursor: pointer; position: relative; width: 100px; height: 100px; border-radius: 50%; background: #0f172a; border: 2px solid #334155; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: 0.3s;">
+            
+            <img id="editPreviewFoto" src="" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+            <i id="editIconePadrao" class="fas fa-user" style="color: #475569; font-size: 40px;"></i>
+            
+            <div style="position: absolute; bottom: 0; right: 0; background: #8b5cf6; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #1e293b;">
+                <i class="fas fa-camera" style="color: white; font-size: 14px;"></i>
+            </div>
         </div>
-
-        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)" style="margin-bottom: 10px;">
-        
-        <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" class="btn-gravar" style="width: 100%; background: #10b981;">Finalizar Cadastro</button>
-        <button onclick="fecharModal('modalNovoUsuario')" class="btn-cancelar" style="width: 100%; margin-top: 10px;">Voltar</button>
+        <input type="file" id="editInputFile" accept="image/*" style="display: none;" onchange="gerarPreviewEdicao(this)">
+        <span style="color: #94a3b8; font-size: 0.7rem; margin-top: 5px;">CLIQUE PARA ALTERAR FOTO</span>
     </div>
-</div>
 
+    <input type="hidden" id="editClienteId">
 
-<div id="modalEsqueci" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155;">
-    <h3 style="color:white; margin-bottom:10px;">Recuperar Acesso</h3>
-    <p style="color:#94a3b8; font-size:0.9em; margin-bottom:20px;">Digite seu <b>WhatsApp (com DDD)</b> para receber seus dados de acesso.</p>
-    
-    <input type="text" id="recuperarTel" placeholder="Ex: DDD+numero" 
-       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-       style="width:100%; padding:12px; border-radius:8px; background:#0f172a; border:1px solid #334155; color:white; margin-bottom:20px; outline:none;">
-    
-    <div style="display:flex; gap:10px;">
-      <button onclick="document.getElementById('modalEsqueci').style.display='none'" style="flex:1; padding:10px; border-radius:8px; background:#334155; color:white; border:none; cursor:pointer;">Cancelar</button>
-      <button id="btnEnviarRecuperacao" onclick="solicitarRecuperacao()" style="flex:1; padding:10px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold;">Enviar</button>
+    <div class="modal-form-grid">
+      <label>Nome Completo:</label>
+      <input type="text" id="editClienteNome" class="input-travado" readonly>
+      
+      <label>CPF/CNPJ:</label>
+      <input type="text" id="editClienteCpf" class="input-travado" readonly>
+      
+      <label>Telefone:</label>
+      <input type="text" id="editClienteTelefone" class="input-travado" readonly>
+      
+      <label>E-mail:</label>
+      <input type="email" id="editClienteEmail" class="input-travado" readonly>
+      
+      <label>CEP:</label>
+      <input type="text" id="editClienteCep" class="input-travado" readonly>
+      
+      <label>Logradouro:</label>
+      <input type="text" id="editClienteLogradouro" class="input-travado" readonly>
+      
+      <label>Número:</label>
+      <input type="text" id="editClienteNumero" class="input-travado" readonly>
+      
+      <label>Bairro:</label>
+      <input type="text" id="editClienteBairro" class="input-travado" readonly>
+      
+      <label>Cidade:</label>
+      <input type="text" id="editClienteCidade" class="input-travado" readonly>
     </div>
-  </div>
-</div>
 
-<div id="modalAviso" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:20000; align-items:center; justify-content:center; backdrop-filter: blur(4px); animation: fadeIn 0.3s ease;">
-  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:320px; text-align:center; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
-    <div id="avisoIcone" style="font-size: 3.5rem; margin-bottom: 15px;"></div>
+    <div id="containerBotoesCliente" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button onclick="habilitarCamposCliente()" class="btn-nav" style="background: #3b82f6; width: 100%;">Editar Campos</button>
+    </div>
     
-    <h3 id="avisoTitulo" style="color:white; margin-bottom:10px; font-family: sans-serif; letter-spacing: 0.5px;"></h3>
-    <p id="avisoTexto" style="color:#94a3b8; font-size:0.95em; margin-bottom:25px; line-height:1.5;"></p>
-    
-    <button id="btnModalAviso" onclick="document.getElementById('modalAviso').style.display='none'" 
-            style="width:100%; padding:14px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold; font-size: 1rem; transition: 0.2s;">
-      Entendido
+    <button type="button" onclick="fecharModal('modalEdicaoCliente')" style="background:none; border:none; color:#94a3b8; cursor:pointer; margin-top:15px; font-size:0.8rem; text-decoration:underline; width: 100%;">
+        Fechar sem alterar
     </button>
   </div>
 </div>
 
-<style>
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-</style>
-
-<div id="modalConfirmar" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:30000; align-items:center; justify-content:center; backdrop-filter: blur(4px); animation: fadeIn 0.3s ease;">
-  <div style="background:#1e293b; padding:30px; border-radius:15px; width:90%; max-width:350px; text-align:center; border: 1px solid #334155; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
-    <div style="font-size: 3.5rem; color: #f59e0b; margin-bottom: 15px;">
-        <i class="fas fa-question-circle"></i>
-    </div>
-    <h3 style="color:white; margin-bottom:10px; font-family: sans-serif;">Nova Venda?</h3>
-    <p style="color:#94a3b8; font-size:0.95em; margin-bottom:25px; line-height:1.5;">
-        Atenção: Isso apagará todos os dados digitados. Deseja continuar?
-    </p>
-    
-    <div style="display:flex; gap:10px;">
-      <button onclick="document.getElementById('modalConfirmar').style.display='none'" 
-              style="flex:1; padding:12px; border-radius:8px; background:#475569; color:white; border:none; cursor:pointer; font-weight:bold; transition: 0.2s;">
-        Cancelar
-      </button>
-      <button onclick="executarLimpezaTotal()" 
-              style="flex:1; padding:12px; border-radius:8px; background:#ef4444; color:white; border:none; cursor:pointer; font-weight:bold; transition: 0.2s;">
-        Sim, Limpar
-      </button>
-    </div>
-  </div>
-</div>
 
 <div id="modalVenda" class="modal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; overflow-y: auto; z-index: 1000; padding: 20px 0;">
     
@@ -980,152 +1075,179 @@
         <form id="formNovaVenda">
             
             <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155;">
-    <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-        <i class="fas fa-user-circle"></i> Dados do Cliente
-    </h3>
-    
-    <div class="grid-cadastro">
-        <input type="text" id="nomeCliente" placeholder="Nome Completo do Cliente" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="text" id="cpfCliente" placeholder="CPF" required 
-       onblur="buscarClientePorCPF(this.value)"
-       style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="tel" id="telCliente" placeholder="Telefone" required style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+                <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-user-circle"></i> Dados do Cliente
+                </h3>
+                
+                <div class="venda-layout-grid">
+                    <div class="fatia-6">
+                        <label>Nome Completo</label>
+                        <input type="text" id="nomeCliente" placeholder="Nome do Cliente" required>
+                    </div>
+                    <div class="fatia-3">
+                        <label>CPF</label>
+                        <input type="text" id="cpfCliente" placeholder="000.000.000-00" onblur="buscarClientePorCPF(this.value)" required>
+                    </div>
+                    <div class="fatia-3">
+                        <label>WhatsApp</label>
+                        <input type="tel" id="telCliente" placeholder="(00) 00000-0000" required>
+                    </div>
 
-        <input type="email" id="clienteEmail" placeholder="E-mail do Cliente (Para Recibo)" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+                    <div class="fatia-4">
+                        <label>E-mail (Recibo)</label>
+                        <input type="email" id="clienteEmail" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="fatia-5">
+                        <label>Local de Trabalho</label>
+                        <input type="text" id="trabalhoCliente" placeholder="Empresa / Cargo">
+                    </div>
+                    <div class="fatia-3">
+                        <label>CEP</label>
+                        <input type="text" id="cepCliente" placeholder="00000-000" onblur="buscaCep()">
+                    </div>
 
-        <input type="text" id="trabalhoCliente" placeholder="Local de Trabalho" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-    </div>
+                    <div class="fatia-5">
+                        <label>Logradouro (Rua)</label>
+                        <input type="text" id="ruaCliente" placeholder="Ex: Av. Central">
+                    </div>
+                    
+                     <div class="fatia-2">
+                        <label>Nº / Compl.</label>
+                        <input type="text" id="numComplemento" placeholder="123 / Ap 1">
+                    </div>
+                    
+                    <div class="fatia-3">
+                        <label>Bairro</label>
+                        <input type="text" id="bairroCliente" placeholder="Bairro">
+                    </div>
+                    <div class="fatia-2">
+                        <label>Cidade</label>
+                        <input type="text" id="cidadeCliente" placeholder="Cidade">
+                    </div>
+                   
+                </div>
+            </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; margin-top: 15px;">
-        <input type="text" id="cepCliente" placeholder="CEP" onblur="buscaCep()" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="text" id="ruaCliente" placeholder="RUA" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="text" id="bairroCliente" placeholder="Bairro" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-    <input type="text" id="cidadeCliente" placeholder="Cidade" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-        <input type="text" id="numComplemento" placeholder="Nº / Complemento" style="background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
-    </div>
-</div>
             <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #334155;">
                 <h3 style="color: #38bdf8; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-shopping-cart"></i> Itens da Venda
                 </h3>
                 
-                <div style="display: grid; grid-template-columns: 3fr 1fr auto; gap: 15px; margin-bottom: 20px; align-items: end;">
-                    <div>
-                        <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; display: block;">Escolha o Produto:</label>
-                        <select id="selectProduto" style="width: 100%; background: #0f172a; color: white; border: 1px solid #38bdf8; padding: 12px; border-radius: 8px;">
+                <div class="venda-layout-grid">
+                    <div class="fatia-7">
+                        <label>Escolha o Produto:</label>
+                        <select id="selectProduto">
                             <option value="">Carregando produtos...</option>
                         </select>
                     </div>
-                    <div>
-                        <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 5px; display: block;">Qtd:</label>
-                        <input type="number" id="qtdProduto" value="1" min="1" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px;">
+                    <div class="fatia-2">
+                        <label>Qtd:</label>
+                        <input type="number" id="qtdProduto" value="1" min="1">
                     </div>
-                    <button type="button" onclick="adicionarAoCarrinho()" style="background: #38bdf8; color: #0f172a; border: none; padding: 0 30px; border-radius: 8px; cursor: pointer; font-weight: bold; height: 48px; transition: 0.3s;" onmouseover="this.style.background='#7dd3fc'">
-                        <i class="fas fa-plus"></i> ADICIONAR
-                    </button>
+                    <div class="fatia-3">
+                        <button type="button" onclick="adicionarAoCarrinho()" class="btn-login-glow" style="margin:0; height: 46px; padding:0; width: 100%;">
+                            <i class="fas fa-plus"></i> ADICIONAR
+                        </button>
+                    </div>
                 </div>
 
-                <div style="background: #0f172a !important; border-radius: 10px; overflow: hidden; border: 1px solid #334155; margin-bottom: 20px;">
-    <table style="width: 100%; border-collapse: collapse; color: white !important; background: #0f172a !important;">
-        <thead>
-            <tr style="background: #38bdf8 !important; color: #0f172a !important;">
-                <th style="padding: 12px; text-align: left;">Produto</th>
-                <th style="padding: 12px; text-align: center;">Qtd</th>
-                <th style="padding: 12px; text-align: center;">Unitário</th>
-                <th style="padding: 12px; text-align: center;">Subtotal</th>
-                <th style="padding: 12px; text-align: center;">Ação</th>
-            </tr>
-        </thead>
-        <tbody id="corpoCarrinho">
-            </tbody>
-    </table>
-<div style="display: flex; flex-wrap: nowrap; gap: 30px; justify-content: center; align-items: flex-end; margin-top: 25px; padding: 0 20px 15px 20px;">
-    
-    <div style="flex: 1; min-width: 180px; max-width: 250px;">
-    <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Forma de Pagamento</label>
-    <select id="tipoPagamento" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
-        <option value="parcelado">Parcelado (Carnê/Cartão)</option>
-        <option value="vista">À Vista (10% Desc.)</option>
-    </select>
-    
-    <div id="labelDesconto" style="display: none; background: #fbbf24; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-top: 8px; width: fit-content;"></div>
-</div>
+                <div style="background: #0f172a; border-radius: 10px; overflow-x: auto; border: 1px solid #334155; margin-top: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; color: white; min-width: 600px;">
+                        <thead>
+                            <tr style="background: #38bdf8; color: #0f172a;">
+                                <th style="padding: 12px; text-align: left;">Produto</th>
+                                <th style="padding: 12px; text-align: center;">Qtd</th>
+                                <th style="padding: 12px; text-align: center;">Unitário</th>
+                                <th style="padding: 12px; text-align: center;">Subtotal</th>
+                                <th style="padding: 12px; text-align: center;">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="corpoCarrinho"></tbody>
+                    </table>
+                </div>
+            </div>
 
+            <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid #334155;">
+                <div class="venda-layout-grid">
+                    <div class="fatia-3">
+                        <label>Forma de Pagamento</label>
+                        <select id="tipoPagamento" onchange="calcularVendaFinal()">
+                            <option value="parcelado">Parcelado (Carnê/Cartão)</option>
+                            <option value="vista">À Vista (10% Desc.)</option>
+                        </select>
+                        <div id="labelDesconto" style="display: none; background: #fbbf24; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-top: 8px; width: fit-content;"></div>
+                    </div>
 
-    <div style="flex: 1; max-width: 150px;">
-        <label style="color: #38bdf8; font-size: 0.75rem; display: block; margin-bottom: 8px; font-weight: bold;">Desconto Vendedor</label>
-        <input type="number" id="descontoVendedor" value="0" step="0.01" oninput="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
+                    <div class="fatia-2">
+                        <label>Desc. Vendedor</label>
+                        <input type="number" id="descontoVendedor" value="0" step="0.01" oninput="calcularVendaFinal()">
+                    </div>
+
+                    <div class="fatia-2">
+                        <label>Parc.</label>
+                        <select id="numeroParcelas" onchange="calcularVendaFinal()">
+                            <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
+                            <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
+                            <option value="7">7x</option><option value="8">8x</option><option value="9">9x</option>
+                            <option value="10">10x</option><option value="11">11x</option><option value="12">12x</option>
+                        </select>
+                    </div>
+
+                    <div class="fatia-2">
+                        <label>Entrada</label>
+                        <input type="number" id="valorEntrada" value="0" oninput="calcularVendaFinal()">
+                    </div>
+
+                    <div class="fatia-3">
+                        <label>1º Vencimento</label>
+                        <input type="date" id="dataVencimento" onchange="calcularVendaFinal()" style="color-scheme: dark;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px; border-top: 1px dashed #334155; padding-top: 20px; text-align: right;">
+                    <h2 style="color: white; margin: 0; font-size: 1.8rem; font-weight: bold;">
+                        Total Líquido: <span id="valorTotal" style="color: #10b981;">R$ 0,00</span>
+                    </h2>
+                    <div id="resumoParcelas" style="color: #94a3b8; margin-top: 5px; font-size: 1rem;">1x de R$ 0,00</div>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-top: 30px; width: 100%;">
+                    <button type="button" id="btnFinalizar" onclick="finalizarVenda()" style="width: 140px; background: #10b981; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fas fa-check-circle"></i> SALVAR
+                    </button>
+                    <button type="button" id="btnComprovante" onclick="imprimirComprovante()" disabled style="width: 140px; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; opacity: 0.5; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fas fa-file-invoice"></i> RECIBO
+                    </button>
+                    <button type="button" onclick="prepararNovaVenda()" style="width: 140px; background: #475569; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fas fa-plus"></i> NOVA
+                    </button>
+                    <button type="button" onclick="fecharModal('modalVenda')" style="width: 100px; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s;">
+                        SAIR
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
-
-    <div style="flex: 1; max-width: 90px;">
-        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Parc.</label>
-        <select id="numeroParcelas" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
-            <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
-            <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
-            <option value="7">7x</option><option value="8">8x</option><option value="9">9x</option>
-            <option value="10">10x</option><option value="11">11x</option><option value="12">12x</option>
-        </select>
-    </div>
-
-    <div style="flex: 1; max-width: 120px;">
-        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">Entrada</label>
-        <input type="number" id="valorEntrada" value="0" oninput="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem;">
-    </div>
-
-    <div style="flex: 1; max-width: 170px;">
-        <label style="color: #94a3b8; font-size: 0.75rem; display: block; margin-bottom: 8px;">1º Vencimento</label>
-        <input type="date" id="dataVencimento" onchange="calcularVendaFinal()" style="width: 100%; background: #0f172a; color: white; border: 1px solid #475569; padding: 10px; border-radius: 6px; font-size: 0.85rem; color-scheme: dark;">
-    </div>
-</div>
-
-<div style="margin-top: 25px; border-top: 1px dashed #334155; padding-top: 20px; text-align: right; padding-right: 35px;">
-    <h2 style="color: white; margin: 0; font-size: 1.8rem; font-weight: bold;">
-        Total Líquido: <span id="valorTotal" style="color: #10b981;">R$ 0,00</span>
-    </h2>
-    <div id="resumoParcelas" style="color: #94a3b8; margin-top: 5px; font-size: 1rem;">1x de R$ 0,00</div>
-</div>
-          <div style="display: flex; gap: 8px; padding: 15px 0; align-items: center; justify-content: center; flex-wrap: wrap;">
-    
-
-   
-<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-top: 20px; width: 100%;">
-
-    <button type="button" id="btnFinalizar" onclick="finalizarVenda()" style="width: 120px; background: #10b981; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <i class="fas fa-check-circle"></i> SALVAR
-    </button>
-
-    <button type="button" id="btnComprovante" onclick="imprimirComprovante()" disabled style="width: 120px; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; opacity: 0.5; display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <i class="fas fa-file-invoice"></i> RECIBO
-    </button>
-
-    <button type="button" onclick="prepararNovaVenda()" style="width: 120px; background: #475569; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <i class="fas fa-plus"></i> NOVA
-    </button>
-
-    <button type="button" onclick="fecharModal('modalVenda')" style="width: 90px; background: #1e293b; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.3s;">
-        SAIR
-    </button>
-
 </div>
 
 <div id="modalSucesso" class="aviso-sucesso" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.9);">
-  <div style="text-align: center; background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); max-width: 380px; width: 90%; border-top: 8px solid #10b981;">
-    
-    <div style="background: #ecfdf5; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-      <i class="fa-solid fa-check" style="font-size: 40px; color: #10b981;"></i>
+    <div style="text-align: center; background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); max-width: 380px; width: 90%; border-top: 8px solid #10b981;">
+        <div style="background: #ecfdf5; width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <i class="fa-solid fa-check" style="font-size: 40px; color: #10b981;"></i>
+        </div>
+        <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 10px;">Tudo pronto!</h3>
+        <p style="color: #64748b; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">O registro foi concluído com sucesso.</p>
+        <button onclick="document.getElementById('modalSucesso').style.display='none'" style="background: #10b981; color: white; border: none; padding: 14px 30px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">OK, ENTENDIDO</button>
     </div>
-
-    <h3 style="color: #1e293b; font-size: 24px; font-weight: 700; margin-bottom: 10px;">Tudo pronto!</h3>
-    <p style="color: #64748b; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
-      O produto foi registado e o formulário limpo.
-    </p>
-
-    <button onclick="document.getElementById('modalSucesso').style.display='none'" 
-            style="background: #10b981; color: white; border: none; padding: 14px 30px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
-      OK, ENTENDIDO
-    </button>
-  </div>
 </div>
+
+
+<div id="modalZoomFoto" class="modal" onclick="this.style.display='none'" style="display:none; cursor:pointer; background: rgba(0,0,0,0.9); z-index: 9999;">
+    <span style="position:absolute; top:20px; right:30px; color:white; font-size:40px; font-weight:bold;">&times;</span>
+    <img id="fotoAmpliada" style="max-width:90%; max-height:90%; border-radius:8px; border: 3px solid white; margin: auto; display: block;">
+</div>
+
+
   
   <script>
 
@@ -1292,7 +1414,11 @@ async function mostrarLista(aba) {
   filtros = {}; 
   paginaAtual = 1;
 
-  const tabela = (aba === 'cadastro-produtos') ? 'produtos' : 'vendas';
+  let tabela;
+
+if (aba === 'cadastro-produtos') tabela = 'produtos';
+else if (aba === 'cadastro-clientes') tabela = 'clientes';
+else tabela = 'vendas';
 
   try {
     // 2. Busca os dados no Supabase
@@ -1364,9 +1490,26 @@ async function desenharTabela() {
 
   // 1. DEFINIÇÃO DINÂMICA DE COLUNAS
   let colunas = [];
+
   if (abaAtual === 'cadastro-produtos') {
     colunas = ['categoria', 'nome', 'preco', 'imagem_url']; 
-  } else {
+  } 
+  else if (abaAtual === 'cadastro-clientes') {
+    // ADICIONADO: 'foto_url' como a primeira coluna de dados dos clientes
+    colunas = [
+      'foto_url',
+      'cliente_nome',
+      'cpf_cnpj',
+      'telefone',
+      'email',
+      'cep',
+      'logradouro',
+      'numero',
+      'bairro',
+      'cidade'
+    ];
+  } 
+  else {
     colunas = [
       'id_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 
       'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
@@ -1381,13 +1524,16 @@ async function desenharTabela() {
 
   // 2. Criar Cabeçalho e Filtros
   colunas.forEach((title) => {
-    cab.innerHTML += `<th>${title.replace('_', ' ').toUpperCase()}</th>`;
+    // Se for a coluna de foto, o cabeçalho fica mais curto
+    const labelHeader = title === 'foto_url' ? 'FOTO' : title.replace('_', ' ').toUpperCase();
+    cab.innerHTML += `<th>${labelHeader}</th>`;
     
     let thF = document.createElement('th');
-    // ADICIONADO 'cpf' na lista abaixo para virar SELECT
     const colunasSelect = ['id_venda', 'cliente', 'cpf', 'parcela', 'status', 'forma_pagamento', 'trabalho', 'produto', 'categoria'];
 
-    if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
+    if (title === 'foto_url') {
+        thF.innerHTML = ''; // Sem filtro para a foto
+    } else if (colunasSelect.includes(title) && dadosPlanilha.length > 0) {
         let opcoes = [...new Set(dadosPlanilha.map(item => item[title]))].filter(v => v).sort();
         let htmlSel = `<select onchange="aplicarFiltroDinamico('${title}', this.value, event)" style="width:100%; border:1px solid #ddd; border-radius:4px; font-size:0.75rem;">
                         <option value="">Filtrar...</option>`;
@@ -1397,7 +1543,6 @@ async function desenharTabela() {
         htmlSel += `</select>`;
         thF.innerHTML = htmlSel;
     } else {
-        // Chamada otimizada para inputs de texto
         thF.innerHTML = `<input oninput="aplicarFiltroDinamico('${title}', this.value, event)" value="${filtros[title] || ''}" placeholder="Filtrar..." style="width:100%;">`;
     }
     fil.appendChild(thF);
@@ -1421,7 +1566,7 @@ async function desenharTabela() {
   let thAcoes = document.createElement('th');
   fil.appendChild(thAcoes);
 
-  // 3. Filtros
+  // 3. Filtros (Mantidos exatamente como os originais)
   let filtrados = dadosPlanilha.filter(item => {
     let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial" || k === "condicao") return true;
@@ -1468,18 +1613,64 @@ async function desenharTabela() {
   // 5. Renderização das Linhas
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="col-resumo">
-        <button onclick="${abaAtual === 'cadastro-produtos' ? `abrirEdicaoProduto('${item.id}')` : `abrirResumo('${item.id_venda}')`}" style="background:none; border:none; cursor:pointer;">
-          <i class="fa-solid ${abaAtual === 'cadastro-produtos' ? 'fa-pencil-alt' : 'fa-magnifying-glass'}" style="color:${abaAtual === 'cadastro-produtos' ? '#f59e0b' : '#0056b3'}"></i>
-        </button>
-      </td>`;
+    
+    // --- COLUNA DE RESUMO / EDIÇÃO (A PRIMEIRA) ---
+    const tdAcaoInicial = document.createElement('td');
+    tdAcaoInicial.className = "col-resumo";
+    
+    const btnAcao = document.createElement('button');
+    btnAcao.type = "button"; 
+    btnAcao.style.cssText = "background:none; border:none; cursor:pointer; padding:8px; display:inline-block;";
 
+    let iconeClasse = 'fa-magnifying-glass';
+    let corIcone = '#0056b3';
+
+    if (abaAtual === 'cadastro-produtos') {
+      iconeClasse = 'fa-pencil-alt';
+      corIcone = '#f59e0b';
+    } else if (abaAtual === 'cadastro-clientes') {
+      iconeClasse = 'fa-pencil-alt';
+      corIcone = '#8b5cf6';
+    }
+
+    btnAcao.innerHTML = `<i class="fa-solid ${iconeClasse}" style="color:${corIcone}; pointer-events:none;"></i>`;
+
+    btnAcao.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const idAtual = item.id || item.id_venda;
+      if (abaAtual === 'cadastro-produtos') {
+        abrirEdicaoProduto(idAtual);
+      } else if (abaAtual === 'cadastro-clientes') {
+        if (typeof abrirEdicaoCliente === 'function') {
+           abrirEdicaoCliente(idAtual);
+        }
+      } else {
+        abrirResumo(idAtual);
+      }
+    };
+
+    tdAcaoInicial.appendChild(btnAcao);
+    tr.appendChild(tdAcaoInicial);
+
+    // --- COLUNAS DE DADOS (Inclusão da Lógica de Foto) ---
     colunas.forEach(col => {
       let valor = item[col] || "";
       let cl = "";
 
-      if (col === 'imagem_url') {
-        valor = (valor && valor.startsWith('http')) ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
+      // NOVA FUNÇÃO PARA RENDERIZAR FOTO DO CLIENTE
+     if (col === 'foto_url') {
+        valor = valor 
+          ? `<img src="${valor}" 
+                  onclick="ampliarFoto('${valor}')" 
+                  title="Clique para ampliar"
+                  style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #38bdf8; display: block; margin: auto; cursor: zoom-in; transition: transform 0.2s;">` 
+          : `<i class="fa-solid fa-circle-user" style="font-size: 32px; color: #475569; display: block; margin: auto;"></i>`;
+      }
+      else if (col === 'imagem_url') {
+        valor = (valor && String(valor).startsWith('http')) 
+          ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` 
+          : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
       }
       else if (col === 'endereco') {
         valor = `${valor}${item.numero ? `, ${item.numero}` : ""}${item.bairro ? ` - ${item.bairro}` : ""}`;
@@ -1499,7 +1690,7 @@ async function desenharTabela() {
       tr.appendChild(td);
     });
 
-    // 6. Condição
+    // 6. Condição (Cadastro de Vendas)
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toUpperCase();
@@ -1516,18 +1707,38 @@ async function desenharTabela() {
       tr.appendChild(tdCond);
     }
 
-    // 7. Ações
+    // --- 7. AÇÕES (Lado Direito da Tabela) ---
     const tdA = document.createElement('td');
-    if (abaAtual === 'cadastro-vendas') {
-      const s = String(item.status || "").toLowerCase();
-      const isConcluido = s.includes('pago') || s.includes('conclu') || s.includes('parcial');
-      tdA.innerHTML = `
-        ${isConcluido ? `<button class="btn-nav btn-disabled" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`}
-        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
-      `;
-    } else {
-      tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
+    tdA.style.textAlign = "center";
+
+    switch (abaAtual) {
+        case 'cadastro-vendas':
+            const statusVenda = String(item.status || "").toLowerCase();
+            const concluida = statusVenda.includes('pago') || statusVenda.includes('conclu');
+            tdA.innerHTML = `
+                ${concluida 
+                    ? `<button class="btn-nav" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` 
+                    : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`
+                }
+                <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
+            `;
+            break;
+        case 'cadastro-clientes':
+            tdA.innerHTML = `
+                <button onclick="confirmarExclusaoCliente('${item.id}', '${item.cliente_nome}')" class="btn-nav" style="background:#ef4444;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            break;
+        case 'cadastro-produtos':
+            tdA.innerHTML = `
+                <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>
+            `;
+            break;
+        default:
+            tdA.innerHTML = `<button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444;">✘</button>`;
     }
+
     tr.appendChild(tdA);
     corpo.appendChild(tr);
   });
@@ -1613,7 +1824,7 @@ async function salvarProduto(event) {
 }
 
     function abrirNovoProduto() { document.getElementById('modalNovoProduto').style.display='flex'; }
-    function fecharModal(id) { document.getElementById(id).style.display='none'; }
+  
     function limparFiltros() { 
   filtros = {}; 
   paginaAtual = 1; 
@@ -2546,9 +2757,44 @@ function abrirModalVenda() {
 function fecharModal(id) {
   const target = id || 'modalVenda';
   const el = document.getElementById(target);
-  if (el) el.style.display = 'none';
+  
+  if (el) {
+    el.style.display = 'none';
+
+    // Se o modal fechado for o de edição, limpamos o estado dele
+    if (target === 'modalEdicaoCliente') {
+      resetarEstadoModalCliente();
+    }
+  }
 }
 
+// Função auxiliar para deixar o modal "travado" e limpo de novo
+function resetarEstadoModalCliente() {
+  const campos = [
+    'editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail',
+    'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 
+    'editClienteBairro', 'editClienteCidade'
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.readOnly = true; // Trava novamente
+      el.classList.add('input-travado');
+      el.classList.remove('input-editavel');
+    }
+  });
+
+  // Volta o botão original de "Editar"
+  const container = document.getElementById('containerBotoesCliente');
+  if (container) {
+    container.innerHTML = `
+      <button onclick="habilitarCamposCliente()" class="btn-nav" style="background: #3b82f6; width: 100%;">
+        Editar Campos
+      </button>
+    `;
+  }
+}
 
 // --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
 async function carregarProdutos() {
@@ -3158,12 +3404,277 @@ function abrirModalNovoUsuario() {
     document.getElementById('modalNovoUsuario').style.display = 'flex'; // Abre o de novo cadastro
 }
 
-async function buscarClientePorCPF(cpf) {
-  const cpfLimpo = cpf.replace(/\D/g, '');
-  if (cpfLimpo.length < 11) return; // Só busca se tiver o CPF completo
+/**
+ * 1. ABRE O MODAL E PREENCHE OS DADOS (MODO LEITURA)
+ */
+async function abrirEdicaoCliente(id) {
+  console.log("Procurando cliente com ID:", id);
+  const cliente = dadosPlanilha.find(c => String(c.id) === String(id));
+  
+  if (!cliente) {
+    console.error("Cliente não encontrado no array dadosPlanilha");
+    return;
+  }
 
   try {
-    // Busca na tabela de clientes do Supabase
+    // 1. Preenche os campos de texto
+    document.getElementById('editClienteId').value = cliente.id || "";
+    document.getElementById('editClienteNome').value = cliente.cliente_nome || ""; 
+    document.getElementById('editClienteCpf').value = cliente.cpf_cnpj || "";
+    document.getElementById('editClienteTelefone').value = cliente.telefone || "";
+    document.getElementById('editClienteEmail').value = cliente.email || "";
+    document.getElementById('editClienteCep').value = cliente.cep || "";
+    document.getElementById('editClienteLogradouro').value = cliente.logradouro || "";
+    document.getElementById('editClienteNumero').value = cliente.numero || "";
+    document.getElementById('editClienteBairro').value = cliente.bairro || "";
+    document.getElementById('editClienteCidade').value = cliente.cidade || "";
+
+    // 2. Carrega a Foto (Preview)
+    const imgPreview = document.getElementById('editPreviewFoto');
+    const iconePadrao = document.getElementById('editIconePadrao');
+
+    if (cliente.foto_url) {
+      imgPreview.src = cliente.foto_url;
+      imgPreview.style.display = 'block';
+      iconePadrao.style.display = 'none';
+    } else {
+      imgPreview.src = "";
+      imgPreview.style.display = 'none';
+      iconePadrao.style.display = 'block';
+    }
+
+    // 3. Exibe o modal e reseta para modo leitura
+    const modal = document.getElementById('modalEdicaoCliente');
+    modal.style.display = 'flex';
+    
+    resetarEstadoModalCliente(); 
+    console.log("✅ Modal aberto com foto para:", cliente.cliente_nome);
+
+  } catch (e) {
+    console.error("Erro ao abrir modal de edição:", e);
+  }
+}
+
+function resetarEstadoModalCliente() {
+  const container = document.getElementById('containerBotoesCliente');
+  if (container) {
+    container.innerHTML = `
+      <button type="button" onclick="habilitarCamposCliente()" 
+        style="background:#f59e0b; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
+        <i class="fas fa-edit"></i> EDITAR DADOS
+      </button>
+    `;
+  }
+
+  const campos = [
+    'editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail',
+    'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 
+    'editClienteBairro', 'editClienteCidade'
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.readOnly = true;
+      el.classList.add('input-travado');
+      el.classList.remove('input-editavel');
+    }
+  });
+
+  // TRAVA A FOTO: impede clique e deixa fosco
+  const areaFoto = document.getElementById('areaFotoCliente');
+  if (areaFoto) {
+    areaFoto.style.pointerEvents = 'none';
+    areaFoto.style.opacity = '0.7';
+  }
+}
+
+function habilitarCamposCliente() {
+  const campos = [
+    'editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail',
+    'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 
+    'editClienteBairro', 'editClienteCidade'
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.readOnly = false;
+      el.classList.remove('input-travado');
+      el.classList.add('input-editavel');
+    }
+  });
+
+  // DESTRAVA A FOTO: permite clique para trocar
+  const areaFoto = document.getElementById('areaFotoCliente');
+  if (areaFoto) {
+    areaFoto.style.pointerEvents = 'auto';
+    areaFoto.style.opacity = '1';
+  }
+
+  const container = document.getElementById('containerBotoesCliente');
+  if (container) {
+    container.innerHTML = `
+      <button type="button" id="btnSalvarCliente" onclick="salvarEdicaoCliente()" 
+        style="background:#10b981; border:none; color:white; padding:12px; border-radius:8px; cursor:pointer; width:100%; font-weight:600; margin-bottom:8px;">
+        <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
+      </button>
+      <button type="button" onclick="resetarEstadoModalCliente()" 
+        style="width:100%; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
+        CANCELAR EDIÇÃO
+      </button>
+    `;
+  }
+}
+
+/**
+ * 4. ENVIA AS ALTERAÇÕES PARA O SUPABASE
+ */
+async function salvarEdicaoCliente(event) {
+  if (event) event.preventDefault();
+
+  const btn = document.getElementById('btnSalvarCliente');
+  const idCliente = document.getElementById('editClienteId').value;
+  const inputArquivo = document.getElementById('editInputFile');
+
+  if (!idCliente) {
+    alert("Erro: ID do cliente não localizado.");
+    return;
+  }
+
+  let textoOriginal = "SALVAR ALTERAÇÕES";
+  if (btn) {
+    textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+  }
+
+  try {
+    let fotoUrlFinal = null;
+
+    // --- CORREÇÃO DE URL: LIMPEZA PARA O STORAGE ---
+    // Remove o sufixo de banco de dados para não dar erro 404 no upload
+    const baseURL = SB_URL.replace('/rest/v1', '');
+
+    // --- PASSO: UPLOAD DA FOTO ---
+    if (inputArquivo && inputArquivo.files.length > 0) {
+      const arquivo = inputArquivo.files[0];
+      const extensao = arquivo.name.split('.').pop();
+      const nomeArquivo = `${idCliente}_${Date.now()}.${extensao}`;
+      
+      console.log("Tentando upload para:", `${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`);
+
+      const uploadResponse = await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': arquivo.type
+        },
+        body: arquivo
+      });
+
+      if (uploadResponse.ok) {
+        // Montamos a URL pública usando a baseURL limpa
+        fotoUrlFinal = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
+        console.log("✅ Upload concluído! URL:", fotoUrlFinal);
+      } else {
+        const erroDetalhado = await uploadResponse.json();
+        console.error("❌ Erro no Storage:", erroDetalhado);
+      }
+    }
+
+    // 3. Monta o payload para a tabela de clientes
+    const dadosCliente = {
+      cliente_nome: document.getElementById('editClienteNome').value,
+      cpf_cnpj:     document.getElementById('editClienteCpf').value,
+      telefone:     document.getElementById('editClienteTelefone').value,
+      email:        document.getElementById('editClienteEmail').value,
+      cep:          document.getElementById('editClienteCep').value,
+      logradouro:   document.getElementById('editClienteLogradouro').value,
+      numero:       document.getElementById('editClienteNumero').value,
+      bairro:       document.getElementById('editClienteBairro').value,
+      cidade:       document.getElementById('editClienteCidade').value
+    };
+
+    // Se a foto subiu com sucesso, adicionamos a URL na coluna foto_url
+    if (fotoUrlFinal) {
+      dadosCliente.foto_url = fotoUrlFinal;
+    }
+
+    // 4. Chamada PATCH para o Banco de Dados (aqui usamos a SB_URL normal com /rest/v1)
+    const response = await fetch(`${SB_URL}/clientes?id=eq.${idCliente}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(dadosCliente) 
+    });
+
+    if (response.ok) {
+      alert("✅ Cliente atualizado com sucesso!");
+      fecharModal('modalEdicaoCliente');
+
+      if (typeof mostrarLista === 'function') {
+          await mostrarLista('cadastro-clientes');
+      } else if (typeof navegarLimpo === 'function') {
+          navegarLimpo('cadastro-clientes');
+      }
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Falha ao atualizar cliente.");
+    }
+
+  } catch (err) {
+    console.error("Erro ao salvar cliente:", err);
+    alert("Erro ao salvar: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+    }
+  }
+}
+
+function cancelarEdicaoCliente() {
+  document.getElementById('modalEdicaoCliente').style.display = 'none';
+}
+
+function irParaClientes() {
+  abaAtual = 'cadastro-clientes';
+  paginaAtual = 1;
+  mostrarLista('cadastro-clientes');
+}
+
+function habilitarEdicao() {
+  // Lista de todos os seus IDs de input no modal
+  const campos = [
+    'editClienteNome', 'editClienteCpf', 'editClienteTelefone', 'editClienteEmail',
+    'editClienteCep', 'editClienteLogradouro', 'editClienteNumero', 
+    'editClienteBairro', 'editClienteCidade'
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.readOnly = false;
+      el.classList.remove('input-travado');
+      el.classList.add('input-editavel'); // Para ficar com a borda verde, se tiver o CSS
+    }
+  });
+
+  // Mostra o botão de salvar
+  document.getElementById('btnSalvarCliente').style.display = 'block';
+}
+
+async function buscarClientePorCPF(cpf) {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  if (cpfLimpo.length < 11) return; 
+
+  try {
     const response = await fetch(`${SB_URL}/clientes?cpf_cnpj=eq.${cpfLimpo}`, {
       method: 'GET',
       headers: {
@@ -3175,28 +3686,64 @@ async function buscarClientePorCPF(cpf) {
 
     const dados = await response.json();
 
-    // Se encontrar o cliente, preenche TODOS os campos
     if (dados && dados.length > 0) {
       const cliente = dados[0];
       
-      // Preenchimento automático dos campos
-      document.getElementById('nomeCliente').value = cliente.cliente_nome || "";
-      if(document.getElementById('telCliente')) document.getElementById('telCliente').value = cliente.telefone || "";
-      if(document.getElementById('clienteEmail')) document.getElementById('clienteEmail').value = cliente.email || "";
+      // Preenchimento usando os campos que vêm do seu Banco (Supa)
+      // E enviando para os IDs do seu novo Modal
+      if(document.getElementById('nomeCliente'))      document.getElementById('nomeCliente').value = cliente.cliente_nome || "";
+      if(document.getElementById('telCliente'))       document.getElementById('telCliente').value = cliente.telefone || "";
+      if(document.getElementById('clienteEmail'))     document.getElementById('clienteEmail').value = cliente.email || "";
+      if(document.getElementById('trabalhoCliente'))  document.getElementById('trabalhoCliente').value = cliente.trabalho || "";
       
-      // Preenchimento do Endereço Detalhado
-      if(document.getElementById('cepCliente')) document.getElementById('cepCliente').value = cliente.cep || "";
-      if(document.getElementById('ruaCliente')) document.getElementById('ruaCliente').value = cliente.logradouro || "";
-      if(document.getElementById('numCliente')) document.getElementById('numCliente').value = cliente.numero || "";
-      if(document.getElementById('bairroCliente')) document.getElementById('bairroCliente').value = cliente.bairro || "";
-      if(document.getElementById('cidadeCliente')) document.getElementById('cidadeCliente').value = cliente.cidade || "";
+      // Endereço
+      if(document.getElementById('cepCliente'))       document.getElementById('cepCliente').value = cliente.cep || "";
+      if(document.getElementById('ruaCliente'))       document.getElementById('ruaCliente').value = cliente.logradouro || "";
+      if(document.getElementById('bairroCliente'))    document.getElementById('bairroCliente').value = cliente.bairro || "";
+      if(document.getElementById('cidadeCliente'))    document.getElementById('cidadeCliente').value = cliente.cidade || "";
+      if(document.getElementById('numComplemento'))   document.getElementById('numComplemento').value = cliente.numero || "";
 
-      console.log("✅ Cadastro do cliente carregado via CPF.");
+      console.log("✅ Cliente " + cliente.cliente_nome + " carregado do Supabase.");
+    } else {
+      console.log("ℹ️ CPF não encontrado no banco. Pronto para novo cadastro.");
     }
   } catch (error) {
-    console.error("Erro ao buscar cliente:", error);
+    console.error("❌ Erro na conexão com Supabase:", error);
   }
 }
+
+
+function gerarPreviewEdicao(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const img = document.getElementById('editPreviewFoto');
+      const icone = document.getElementById('editIconePadrao');
+      
+      img.src = e.target.result;
+      img.style.display = 'block';
+      icone.style.display = 'none';
+      
+      console.log("✅ Preview da foto gerado com sucesso.");
+    }
+    
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function ampliarFoto(url) {
+    const modal = document.getElementById('modalZoomFoto');
+    const img = document.getElementById('fotoAmpliada');
+    
+    if (url && url !== "") {
+        img.src = url;
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+    }
+}
+
 
 
 // 3. CENTRAL DE ATALHOS (ENTER E ESC)
@@ -3257,6 +3804,8 @@ window.onload = async () => {
 };
 
  </script>
+ 
 </body>
 </html>
+
 

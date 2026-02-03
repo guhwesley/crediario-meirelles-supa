@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <base target="_top">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1766,16 +1766,24 @@ async function desenharTabela() {
 
     switch (abaAtual) {
         case 'cadastro-vendas':
-            const statusVenda = String(item.status || "").toLowerCase();
-            const concluida = statusVenda.includes('pago') || statusVenda.includes('conclu');
-            tdA.innerHTML = `
-                ${concluida 
-                    ? `<button class="btn-nav" style="opacity:0.3; cursor:not-allowed; background:#ccc;">✔</button>` 
-                    : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;">✔</button>`
-                }
-                <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;">✘</button>
-            `;
-            break;
+    // Buscamos a mesma lógica usada na coluna CONDIÇÃO logo acima
+    const statusLimpo = String(item.status || "").toUpperCase();
+    const condicaoPaga = statusLimpo === "PAGO" || statusLimpo === "PARCIAL" || statusLimpo.includes("CONCLU");
+
+    tdA.innerHTML = `
+        ${condicaoPaga 
+            ? `<button disabled class="btn-nav" style="background:#475569; color:#94a3b8; cursor:not-allowed; opacity:0.6;" title="Esta venda já consta como Paga">
+                <i class="fa-solid fa-check-double"></i>
+               </button>` 
+            : `<button onclick="abrirPagar('${item.id}')" class="btn-nav" style="background:#10b981;" title="Marcar como Pago">
+                <i class="fa-solid fa-check"></i>
+               </button>`
+        }
+        <button onclick="abrirExcluir('${item.id}')" class="btn-nav" style="background:#ef4444; margin-left:5px;" title="Excluir Venda">
+            <i class="fa-solid fa-trash-can"></i>
+        </button>
+    `;
+    break;
         case 'cadastro-clientes':
             tdA.innerHTML = `
                 <button onclick="confirmarExclusaoCliente('${item.id}', '${item.cliente_nome}')" class="btn-nav" style="background:#ef4444;">

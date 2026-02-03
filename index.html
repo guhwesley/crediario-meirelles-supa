@@ -1337,6 +1337,7 @@ let arquivoTemporarioEdicao = null;
 let idParaExcluir = null;
 let urlImagemParaExcluir = null;
 let urlOriginalAntesDeEditar = "";
+let urlFotoClienteOriginal = "";
 
 
 // Função padrão para buscar dados no Supabase
@@ -3664,6 +3665,11 @@ async function abrirEdicaoCliente(id) {
     return;
   }
 
+  // --- O PULO DO GATO ---
+  // Guarda a URL atual na variável global antes de qualquer edição
+  urlFotoClienteOriginal = cliente.foto_url || "";
+  console.log("📸 URL da foto do cliente guardada para limpeza futura:", urlFotoClienteOriginal);
+
   try {
     // 1. Preenche os campos de texto
     document.getElementById('editClienteId').value = cliente.id || "";
@@ -3693,7 +3699,7 @@ async function abrirEdicaoCliente(id) {
 
     // 3. Exibe o modal e reseta para modo leitura
     const modal = document.getElementById('modalEdicaoCliente');
-    modal.style.display = 'flex';
+    if (modal) modal.style.display = 'flex';
     
     resetarEstadoModalCliente(); 
     console.log("✅ Modal aberto com foto para:", cliente.cliente_nome);
@@ -3799,19 +3805,37 @@ async function salvarEdicaoCliente(event) {
 
   try {
     let fotoUrlFinal = null;
-
-    // --- CORREÇÃO DE URL: LIMPEZA PARA O STORAGE ---
-    // Remove o sufixo de banco de dados para não dar erro 404 no upload
     const baseURL = SB_URL.replace('/rest/v1', '');
 
-    // --- PASSO: UPLOAD DA FOTO ---
+    // --- PASSO 1: SE TIVER NOVO ARQUIVO, LIMPA O ANTIGO E FAZ UPLOAD ---
     if (inputArquivo && inputArquivo.files.length > 0) {
+      
+      // A: LIMPEZA DA FOTO ANTIGA (Usando a variável guardada no abrirEdicao)
+      if (urlFotoClienteOriginal && urlFotoClienteOriginal.includes('fotos-clientes/')) {
+        try {
+          const nomeArquivoAntigo = urlFotoClienteOriginal.split('/').pop().split('?')[0];
+          // IMPORTANTE: URL de exclusão não tem o "/public/"
+          const urlDeExclusao = `${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivoAntigo}`;
+          
+          console.log("🧹 Limpando foto antiga do cliente:", nomeArquivoAntigo);
+
+          await fetch(urlDeExclusao, {
+            method: 'DELETE',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`
+            }
+          });
+        } catch (e) {
+          console.warn("Aviso: Falha ao deletar foto antiga, mas seguindo com o upload.");
+        }
+      }
+
+      // B: UPLOAD DA FOTO NOVA
       const arquivo = inputArquivo.files[0];
       const extensao = arquivo.name.split('.').pop();
       const nomeArquivo = `${idCliente}_${Date.now()}.${extensao}`;
       
-      console.log("Tentando upload para:", `${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`);
-
       const uploadResponse = await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
         method: 'POST',
         headers: {
@@ -3823,16 +3847,16 @@ async function salvarEdicaoCliente(event) {
       });
 
       if (uploadResponse.ok) {
-        // Montamos a URL pública usando a baseURL limpa
         fotoUrlFinal = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
         console.log("✅ Upload concluído! URL:", fotoUrlFinal);
       } else {
         const erroDetalhado = await uploadResponse.json();
         console.error("❌ Erro no Storage:", erroDetalhado);
+        throw new Error("Erro ao subir imagem para o servidor.");
       }
     }
 
-    // 3. Monta o payload para a tabela de clientes
+    // --- PASSO 2: MONTA O PAYLOAD ---
     const dadosCliente = {
       cliente_nome: document.getElementById('editClienteNome').value,
       cpf_cnpj:     document.getElementById('editClienteCpf').value,
@@ -3845,12 +3869,11 @@ async function salvarEdicaoCliente(event) {
       cidade:       document.getElementById('editClienteCidade').value
     };
 
-    // Se a foto subiu com sucesso, adicionamos a URL na coluna foto_url
     if (fotoUrlFinal) {
       dadosCliente.foto_url = fotoUrlFinal;
     }
 
-    // 4. Chamada PATCH para o Banco de Dados (aqui usamos a SB_URL normal com /rest/v1)
+    // --- PASSO 3: PATCH NO BANCO ---
     const response = await fetch(`${SB_URL}/clientes?id=eq.${idCliente}`, {
       method: 'PATCH',
       headers: {
@@ -3863,14 +3886,19 @@ async function salvarEdicaoCliente(event) {
     });
 
     if (response.ok) {
-      alert("✅ Cliente atualizado com sucesso!");
-      fecharModal('modalEdicaoCliente');
-
+      // --- PASSO 4: ATUALIZAÇÃO DA LISTA ---
       if (typeof mostrarLista === 'function') {
           await mostrarLista('cadastro-clientes');
       } else if (typeof navegarLimpo === 'function') {
           navegarLimpo('cadastro-clientes');
       }
+
+      alert("✅ Cliente atualizado com sucesso!");
+      fecharModal('modalEdicaoCliente');
+      
+      // Reseta a variável para a próxima edição
+      urlFotoClienteOriginal = ""; 
+
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message || "Falha ao atualizar cliente.");
@@ -3999,15 +4027,21 @@ async function atualizarFotoDireto(id, input) {
   const baseURL = SB_URL.replace('/rest/v1', '');
   const nomeArquivo = `${id}_direto_${Date.now()}.${arquivo.name.split('.').pop()}`;
 
-  // 1. Feedback visual (troca a imagem por um spinner ou deixa opaco)
+  // 1. Localiza a imagem na tabela e guarda a URL ANTIGA para deletar
   const imgElement = document.getElementById(`img-tabela-${id}`);
-  imgElement.style.opacity = "0.3";
+  const urlAntigaParaDeletar = imgElement ? imgElement.src : null;
+
+  if (imgElement) imgElement.style.opacity = "0.3";
 
   try {
-    // 2. Upload para o Storage
+    // 2. Upload da NOVA foto para o Storage
     const uploadRes = await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
       method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': arquivo.type },
+      headers: { 
+        'apikey': SB_KEY, 
+        'Authorization': `Bearer ${SB_KEY}`, 
+        'Content-Type': arquivo.type 
+      },
       body: arquivo
     });
 
@@ -4015,7 +4049,7 @@ async function atualizarFotoDireto(id, input) {
 
     const novaUrl = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
 
-    // 3. Update na Tabela Clientes
+    // 3. Update na Tabela Clientes (Banco de Dados)
     const patchRes = await fetch(`${SB_URL}/clientes?id=eq.${id}`, {
       method: 'PATCH',
       headers: {
@@ -4028,15 +4062,39 @@ async function atualizarFotoDireto(id, input) {
     });
 
     if (patchRes.ok) {
-      imgElement.src = novaUrl; // Atualiza a foto na tela na hora!
-      imgElement.style.opacity = "1";
-      console.log("✅ Foto atualizada diretamente!");
+      // --- PASSO 4: LIMPEZA DA FOTO ANTIGA NO BUCKET ---
+      // Só tenta deletar se existir uma URL antiga e for do nosso Supabase
+      if (urlAntigaParaDeletar && urlAntigaParaDeletar.includes('fotos-clientes/')) {
+        try {
+          const nomeAntigo = urlAntigaParaDeletar.split('/').pop().split('?')[0];
+          const urlDeExclusao = `${baseURL}/storage/v1/object/fotos-clientes/${nomeAntigo}`;
+          
+          console.log("🧹 Limpando foto antiga (troca rápida):", nomeAntigo);
+
+          await fetch(urlDeExclusao, {
+            method: 'DELETE',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`
+            }
+          });
+        } catch (e) {
+          console.warn("Aviso: Foto nova salva, mas a antiga não pôde ser removida.");
+        }
+      }
+
+      // 5. Atualiza a foto na tela na hora!
+      if (imgElement) {
+        imgElement.src = novaUrl;
+        imgElement.style.opacity = "1";
+      }
+      console.log("✅ Foto atualizada e bucket limpo!");
     }
 
   } catch (err) {
     console.error(err);
     alert("Erro ao trocar foto rápida.");
-    imgElement.style.opacity = "1";
+    if (imgElement) imgElement.style.opacity = "1";
   }
 }
 

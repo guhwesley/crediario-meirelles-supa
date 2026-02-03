@@ -901,17 +901,33 @@
 
   <div id="modalNovoProduto" class="modal">
     <div class="form-box">
-      <h3>Cadastrar Novo Produto</h3>
-      <input type="text" id="p_cat" placeholder="Categoria">
-      <input type="text" id="p_nome" placeholder="Nome do Produto">
-      <input type="text" id="p_val" placeholder="Valor (ex: 50.00)">
-      <input type="text" id="p_url" placeholder="URL da Imagem">
-      <input type="text" id="p_cor" placeholder="Cor">
-      <input type="number" id="p_qtd" placeholder="Quantidade">
-      <button class="btn-gravar" onclick="salvarProduto(event)">Gravar Produto</button>
-      <button class="btn-cancelar" onclick="fecharModal('modalNovoProduto')">Cancelar</button>
+        <input type="hidden" id="p_id">
+
+        <h3>Cadastrar Novo Produto</h3>
+        
+        <input type="text" id="p_cat" placeholder="Categoria">
+        <input type="text" id="p_nome" placeholder="Nome do Produto">
+        <input type="text" id="p_val" placeholder="Valor (ex: 50.00)">
+        
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="p_url" placeholder="URL da Imagem ou Upload" style="margin-bottom: 0; flex: 1;">
+            
+            <input type="file" id="p_file" accept="image/*" style="display: none;" onchange="executarUploadProduto(this)">
+            
+            <button type="button" onclick="document.getElementById('p_file').click()" 
+                    style="background: #38bdf8; border: none; border-radius: 8px; padding: 0 15px; cursor: pointer; color: #0f172a;"
+                    title="Upload para Supabase">
+                <i class="fas fa-upload"></i>
+            </button>
+        </div>
+
+        <input type="text" id="p_cor" placeholder="Cor">
+        <input type="number" id="p_qtd" placeholder="Quantidade">
+        
+        <button id="btnGravarProduto" class="btn-gravar" onclick="salvarProduto(event)">Gravar Produto</button>
+        <button class="btn-cancelar" onclick="fecharModal('modalNovoProduto')">Cancelar</button>
     </div>
-  </div>
+</div>
 
  <div id="modalPagar" class="modal">
     <div class="confirm-box">
@@ -980,7 +996,7 @@
       <h3 style="margin: 0; color: #38bdf8;">Detalhes / Edição</h3>
     </div>
     
-    <input type="hidden" id="editProdIndex"> 
+    <input type="hidden" id="editProdId"> 
 
     <label style="color: #94a3b8; font-size: 12px;">CATEGORIA</label>
     <input type="text" id="editProdCategoria" class="input-travado" readonly>
@@ -988,23 +1004,50 @@
     <label style="color: #94a3b8; font-size: 12px;">NOME DO PRODUTO</label>
     <input type="text" id="editProdNome" class="input-travado" readonly>
     
-    <label style="color: #94a3b8; font-size: 12px;">PREÇO (R$)</label>
-    <input type="number" id="editProdPreco" class="input-travado" readonly step="0.01">
-    
-    <label style="color: #94a3b8; font-size: 12px;">ESTOQUE ATUAL</label>
-    <input type="number" id="editProdEstoque" class="input-travado" readonly>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div>
+            <label style="color: #94a3b8; font-size: 12px;">PREÇO (R$)</label>
+            <input type="number" id="editProdPreco" class="input-travado" readonly step="0.01">
+        </div>
+        <div>
+            <label style="color: #94a3b8; font-size: 12px;">ESTOQUE ATUAL</label>
+            <input type="number" id="editProdEstoque" class="input-travado" readonly>
+        </div>
+    </div>
+
+    <label style="color: #94a3b8; font-size: 12px;">COR</label>
+    <input type="text" id="editProdCor" class="input-travado" readonly>
 
     <label style="color: #94a3b8; font-size: 12px;">URL DA IMAGEM</label>
-    <input type="text" id="editProdUrl" class="input-travado" readonly placeholder="http://link-da-imagem.jpg">
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" id="editProdUrl" class="input-travado" readonly placeholder="URL da Imagem" style="margin-bottom: 0; flex: 1;">
+        
+        <input type="file" id="editProdFile" accept="image/*" style="display: none;" onchange="executarUploadProdutoEdicao(this)">
+        
+        <button type="button" id="btnUploadEdicao" disabled onclick="document.getElementById('editProdFile').click()" 
+                style="background: #38bdf8; border: none; border-radius: 8px; padding: 0 15px; cursor: pointer; color: #0f172a; opacity: 0.5;">
+            <i class="fas fa-upload"></i>
+        </button>
+    </div>
 
     <div id="containerBotoesProd" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-      <button onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width: 100%;">
+      <button id="btnHabilitarEdicao" onclick="habilitarCamposProduto()" class="btn-login-glow" style="background: #f59e0b; width: 100%;">
         <i class="fas fa-pencil-alt"></i> EDITAR CAMPOS
       </button>
+      
+      <button 
+  id="btnSalvarEdicao" 
+  onclick="confirmarSalvarProduto()" 
+  class="btn-gravar" 
+  style="background: #10b981; width: 100%;">
+    <i class="fas fa-save"></i> SALVAR ALTERAÇÕES
+</button>
+
       <button class="btn-cancelar" onclick="fecharModal('modalEdicaoProduto')" style="width: 100%; margin: 0;">VOLTAR</button>
     </div>
   </div>
 </div>
+
 
 <div id="modalEdicaoCliente" class="modal" style="display:none;">
   <div class="modal-box">
@@ -1290,6 +1333,11 @@
   // --- CONFIGURAÇÃO SUPABASE ---
 const SB_URL = "https://ixtjoplzakqwfzxpmzwc.supabase.co/rest/v1";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4dGpvcGx6YWtxd2Z6eHBtendjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MjEzOTEsImV4cCI6MjA4NTM5NzM5MX0.TIlZg-JSqaMuIirnuN58h3mQTNmHrO-4kShYo94bTqc";
+let arquivoTemporarioEdicao = null; 
+let idParaExcluir = null;
+let urlImagemParaExcluir = null;
+let urlOriginalAntesDeEditar = "";
+
 
 // Função padrão para buscar dados no Supabase
 async function buscarNoSupabase(endpoint) {
@@ -1808,83 +1856,114 @@ async function desenharTabela() {
 async function salvarProduto(event) {
   if (event) event.preventDefault();
   
-  // Busca o botão de forma mais segura
-  const btn = event?.submitter || document.querySelector('#modalNovoProduto button[onclick*="salvarProduto"]') || document.querySelector('#modalNovoProduto .btn-save');
-  const ids = ['p_cat', 'p_nome', 'p_val', 'p_url', 'p_cor', 'p_qtd'];
-  
-  const nomeCampo = document.getElementById('p_nome');
-  if (!nomeCampo || !nomeCampo.value.trim()) {
-    alert("O nome do produto é obrigatório!");
-    return;
-  }
+  const btn = document.getElementById('btnGravarProduto');
+  const inputUrl = document.getElementById('p_url'); 
+  let urlFinalParaBanco = inputUrl.value; 
 
-  // 1. Ativa a proteção e o spinner (com verificação para não dar erro de null)
-  let textoOriginal = "GRAVAR";
   if (btn) {
-    textoOriginal = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SALVANDO...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GRAVANDO...';
   }
-
-  // 2. Monta o objeto (Verifique se os nomes das colunas no banco são esses mesmos!)
-  const dadosProduto = {
-    categoria: document.getElementById('p_cat').value,
-    nome: document.getElementById('p_nome').value,
-    preco: parseFloat(document.getElementById('p_val').value.replace(',', '.')) || 0,
-    imagem_url: document.getElementById('p_url').value,
-    cor: document.getElementById('p_cor').value,
-    estoque: parseInt(document.getElementById('p_qtd').value) || 0
-  };
 
   try {
-    // 3. Chamada para o Supabase - IMPORTANTE: JSON.stringify([dadosProduto])
+    // 1. FAZ O UPLOAD DA IMAGEM SE HOUVER
+    if (arquivoTemporarioEdicao) {
+      const baseURL = SB_URL.replace('/rest/v1', '');
+      const extensao = arquivoTemporarioEdicao.name.split('.').pop();
+      const nomeArquivo = `prod_novo_${Date.now()}.${extensao}`;
+
+      const uploadResponse = await fetch(`${baseURL}/storage/v1/object/produtos/${nomeArquivo}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': arquivoTemporarioEdicao.type
+        },
+        body: arquivoTemporarioEdicao
+      });
+
+      if (uploadResponse.ok) {
+        urlFinalParaBanco = `${baseURL}/storage/v1/object/public/produtos/${nomeArquivo}`;
+        
+        // Feedback visual: mostra a URL gerada no campo antes de salvar o banco
+        inputUrl.value = urlFinalParaBanco;
+        inputUrl.style.backgroundColor = "#dcfce7";
+      } else {
+        throw new Error("Erro ao subir imagem para o servidor.");
+      }
+    }
+
+    // 2. MONTA OS DADOS (Nota: Supabase aceita objeto direto ou array)
+    const novoProduto = {
+      categoria:  document.getElementById('p_cat').value,
+      nome:       document.getElementById('p_nome').value,
+      preco:      parseFloat(document.getElementById('p_val').value.replace(',', '.')) || 0,
+      imagem_url: urlFinalParaBanco,
+      cor:        document.getElementById('p_cor').value,
+      estoque:    parseInt(document.getElementById('p_qtd').value) || 0
+    };
+
+    // 3. ENVIA PARA O SUPABASE
     const response = await fetch(`${SB_URL}/produtos`, {
       method: 'POST',
       headers: {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify([dadosProduto]) // <--- O ARRAY [] É O QUE ESTAVA FALTANDO!
+      body: JSON.stringify(novoProduto) // Enviando objeto direto
     });
 
     if (response.ok) {
-      // 4. Limpa os campos
-      ids.forEach(id => {
-        const campo = document.getElementById(id);
-        if (campo) campo.value = ""; 
-      });
+      // --- AQUI ACONTECE A ATUALIZAÇÃO AUTOMÁTICA ---
+      // 4. ATUALIZA A TABELA NO FUNDO ANTES DE FECHAR
+      if (typeof mostrarLista === 'function') {
+        console.log("Atualizando lista de produtos...");
+        await mostrarLista('cadastro-produtos'); 
+      }
 
-      // 5. Sucesso: Fecha modal e atualiza a lista
+      alert("✅ Produto cadastrado com sucesso!");
+      
+      // 5. LIMPEZA E FECHAMENTO
       fecharModal('modalNovoProduto');
       
-      // Tenta atualizar a lista (verifique se sua função é mostrarLista ou navegarLimpo)
-      if (typeof mostrarLista === 'function') {
-          await mostrarLista('cadastro-produtos');
-      } else if (typeof navegarLimpo === 'function') {
-          navegarLimpo('cadastro-produtos');
-      }
+      arquivoTemporarioEdicao = null;
+      inputUrl.style.backgroundColor = "";
       
-      alert("Produto salvo com sucesso!");
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Falha ao salvar no banco de dados.");
+      // Reseta os campos do formulário
+      const form = document.querySelector('#modalNovoProduto .form-box');
+      if (form) form.querySelectorAll('input, select').forEach(i => i.value = "");
     }
 
   } catch (err) {
-    console.error("Erro detalhado:", err);
-    alert("Erro ao salvar: " + err.message);
+    alert("Erro: " + err.message);
   } finally {
-    // 6. Restaura o botão
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = textoOriginal;
+      btn.innerHTML = "Gravar Produto";
     }
   }
 }
 
-    function abrirNovoProduto() { document.getElementById('modalNovoProduto').style.display='flex'; }
+    function abrirNovoProduto() {
+    const ids = ['p_id', 'p_cat', 'p_nome', 'p_val', 'p_url', 'p_cor', 'p_qtd'];
+    ids.forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo) campo.value = "";
+    });
+
+    const preview = document.getElementById('imgPreview');
+    if (preview) preview.style.display = 'none';
+
+    // RESET DO BOTÃO (Caso tenha ficado travado com spinner)
+    const btn = document.getElementById('btnGravarProduto');
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = 'Gravar Produto';
+    }
+
+    document.getElementById('modalNovoProduto').style.display = 'flex';
+}
   
     function limparFiltros() { 
   filtros = {}; 
@@ -2438,6 +2517,22 @@ async function abrirExcluir(idBanco) {
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
       
       try {
+        // 1. APAGAR IMAGEM DO BUCKET (STORAGE) SE EXISTIR
+        if (dado.imagem_url && dado.imagem_url.includes('/storage/v1/object/public/produtos/')) {
+          const nomeArquivo = dado.imagem_url.split('/').pop();
+          const baseURL = SB_URL.replace('/rest/v1', '');
+
+          await fetch(`${baseURL}/storage/v1/object/produtos/${nomeArquivo}`, {
+            method: 'DELETE',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`
+            }
+          });
+          console.log("Imagem removida do storage.");
+        }
+
+        // 2. APAGAR PRODUTO DA TABELA
         const response = await fetch(`${SB_URL}/produtos?id=eq.${idBanco}`, {
           method: 'DELETE',
           headers: {
@@ -2453,7 +2548,7 @@ async function abrirExcluir(idBanco) {
           throw new Error();
         }
       } catch (err) {
-        alert("Erro ao excluir produto.");
+        alert("Erro ao excluir produto e imagem.");
         btn.disabled = false;
         btn.innerHTML = "Sim, Excluir";
       }
@@ -2461,16 +2556,13 @@ async function abrirExcluir(idBanco) {
   } 
   // --- SE ESTIVER NA ABA DE VENDAS ---
   else {
-    // Para vendas, usamos o id_venda para o caso de excluir todas as parcelas
     const idVendaAgrupador = dado.id_venda;
     document.getElementById('modalExcluir').style.display = 'flex';
 
-    // Configuramos os botões do modal para passar o ID real do banco
     document.getElementById('btnExcluirUnica').onclick = () => processarExclusao(idBanco, idVendaAgrupador, 'unica');
     document.getElementById('btnExcluirTudo').onclick = () => processarExclusao(idBanco, idVendaAgrupador, 'total');
   }
 }
-    
 
 async function processarExclusao(idBanco, idVendaRef, modo) {
   const btnUnica = document.getElementById('btnExcluirUnica');
@@ -2478,22 +2570,16 @@ async function processarExclusao(idBanco, idVendaRef, modo) {
 
   if (!btnUnica || !btnTudo) return;
 
-  // Trava os botões
   btnUnica.disabled = true;
   btnTudo.disabled = true;
   
   const btnAlvo = (modo === 'unica' ? btnUnica : btnTudo);
-  const textoOriginal = btnAlvo.innerHTML;
   btnAlvo.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...`;
 
   try {
-    // Determina a tabela
     const tabela = (abaAtual === 'cadastro-produtos' ? 'produtos' : 'vendas');
     let url = `${SB_URL}/${tabela}`;
     
-    // Define o filtro: 
-    // Se única: usa o ID (UUID) da linha
-    // Se total: usa o id_venda (agrupador)
     if (modo === 'unica') {
       url += `?id=eq.${idBanco}`;
     } else {
@@ -2510,12 +2596,8 @@ async function processarExclusao(idBanco, idVendaRef, modo) {
     });
 
     if (response.ok) {
-      // Fecha o modal (vendas ou produtos)
       fecharModal(abaAtual === 'cadastro-produtos' ? 'modalExcluirProduto' : 'modalExcluir');
-      
-      // Atualiza a lista na tela
       await mostrarLista(abaAtual);
-      console.log("Exclusão realizada com sucesso!");
     } else {
       const errorData = await response.json();
       throw new Error(errorData.message || "Erro ao deletar no Supabase");
@@ -2525,7 +2607,6 @@ async function processarExclusao(idBanco, idVendaRef, modo) {
     console.error(err);
     alert("Erro ao excluir: " + err.message);
   } finally {
-    // Destrava e restaura os botões
     btnUnica.disabled = false;
     btnTudo.disabled = false;
     btnUnica.innerHTML = "Excluir APENAS esta parcela";
@@ -3289,8 +3370,7 @@ function executarLimpezaTotal() {
 // --- FUNÇÕES DE EDIÇÃO DE PRODUTO (ATUALIZADAS COM URL) ---
 
 async function abrirEdicaoProduto(id) {
-  // 1. Procuramos o produto pelo ID (UUID do Supabase) dentro dos dados carregados
-  // Note que agora usamos .find() porque o ID não é mais apenas o índice da linha
+  // 1. Procura o produto na sua lista global
   const produto = dadosPlanilha.find(p => p.id === id); 
   
   if (!produto) {
@@ -3298,51 +3378,84 @@ async function abrirEdicaoProduto(id) {
     return;
   }
 
-  // 2. Preenchemos os campos usando os nomes das colunas do Supabase
-  // O campo oculto guarda o ID real para usarmos no momento de salvar (Update)
-  document.getElementById('editProdIndex').value = produto.id; 
-  
-  // Preenchimento dos campos seguindo os nomes das colunas do seu banco
-  document.getElementById('editProdCategoria').value = produto.categoria || ""; 
-  document.getElementById('editProdNome').value      = produto.nome || ""; 
-  document.getElementById('editProdPreco').value     = produto.preco || 0;  
-  document.getElementById('editProdUrl').value       = produto.url_imagem || produto.url || ""; 
-  document.getElementById('editProdEstoque').value   = produto.estoque || 0; 
-  
-  if(document.getElementById('editProdCor')) {
-     document.getElementById('editProdCor').value = produto.cor || "";
-  }
+  // --- O PULO DO GATO ---
+  // Salva a URL atual na variável global para usarmos na hora de deletar do Bucket
+  urlOriginalAntesDeEditar = produto.imagem_url || "";
+  console.log("📸 URL original guardada para limpeza futura:", urlOriginalAntesDeEditar);
 
-  // 3. Fecha estados anteriores e abre o modal (Mantendo sua lógica)
-  if (typeof cancelarEdicaoProduto === 'function') cancelarEdicaoProduto(); 
-  document.getElementById('modalEdicaoProduto').style.display = 'flex';
-}
+  const preencherSeExiste = (idElemento, valor) => {
+    const el = document.getElementById(idElemento);
+    if (el) el.value = valor || "";
+  };
 
-function habilitarCamposProduto() {
+  // 2. Preenchimento Seguro
+  preencherSeExiste('editProdId',        produto.id);
+  preencherSeExiste('editProdCategoria', produto.categoria);
+  preencherSeExiste('editProdNome',      produto.nome);
+  preencherSeExiste('editProdPreco',     produto.preco);
+  preencherSeExiste('editProdEstoque',   produto.estoque);
+  preencherSeExiste('editProdUrl',       produto.imagem_url);
+  preencherSeExiste('editProdCor',       produto.cor);
+
+  // 3. Reset visual (Volta a travar os campos)
   const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdUrl', 'editProdCor'];
-  
-  campos.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) {
-      el.readOnly = false;
-      el.classList.remove('input-travado');
-      el.classList.add('input-editavel');
+  campos.forEach(idCampo => {
+    const el = document.getElementById(idCampo);
+    if (el) {
+      el.readOnly = true;
+      el.style.backgroundColor = ""; 
+      el.style.border = "";
     }
   });
 
-  // Reconstroi os botões para o modo de edição
-  const container = document.getElementById('containerBotoesProd');
-  if (container) {
-    container.innerHTML = `
-      <button onclick="salvarAlteracaoProdutoSupabase()" class="btn-gravar" style="background: #10b981; border:none; color:white; padding:10px; border-radius:8px; cursor:pointer; width:100%; font-weight:600;">
-        <i class="fas fa-check-circle"></i> GRAVAR ALTERAÇÕES
-      </button>
-      <button class="btn-cancelar" onclick="cancelarEdicaoProduto()" style="width:100%; margin-top:8px; background:#64748b; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;">
-        CANCELAR
-      </button>
-    `;
+  // 4. RESET DOS BOTÕES
+  const btnEditar = document.getElementById('btnHabilitarEdicao');
+  const btnSalvar = document.getElementById('btnSalvarEdicao');
+  const btnUpload = document.getElementById('btnUploadEdicao');
+
+  if (btnEditar) btnEditar.style.display = 'block';
+  if (btnSalvar) btnSalvar.style.display = 'none';
+  
+  if (btnUpload) {
+    btnUpload.disabled = true;
+    btnUpload.style.opacity = "0.5";
   }
+
+  // 5. ABRE O MODAL
+  const modal = document.getElementById('modalEdicaoProduto');
+  if (modal) modal.style.display = 'flex';
 }
+
+
+function habilitarCamposProduto() {
+    // 1. IDs dos campos que vamos destravar (IDs que estão no seu HTML)
+    const campos = ['editProdCategoria', 'editProdNome', 'editProdPreco', 'editProdEstoque', 'editProdCor', 'editProdUrl'];
+    
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.readOnly = false;
+            // Estilo visual para mostrar que está editável
+            el.style.backgroundColor = "rgba(255, 255, 255, 0.05)"; 
+            el.style.border = "1px solid #38bdf8";
+        }
+    });
+
+    // 2. Libera o botão da nuvem (Upload)
+    const btnUpload = document.getElementById('btnUploadEdicao');
+    if (btnUpload) {
+        btnUpload.disabled = false;
+        btnUpload.style.opacity = "1";
+    }
+
+    // 3. A MÁGICA: Esconde um botão e mostra o outro
+    const btnEditar = document.getElementById('btnHabilitarEdicao');
+    const btnSalvar = document.getElementById('btnSalvarEdicao');
+
+    if (btnEditar) btnEditar.style.display = 'none';
+    if (btnSalvar) btnSalvar.style.display = 'block'; // Aqui ele aparece!
+}
+
 
 function cancelarEdicaoProduto() {
   // Adicionei 'editProdCor' à lista para garantir que ele também seja travado
@@ -3369,74 +3482,121 @@ function cancelarEdicaoProduto() {
 }
 
 async function confirmarSalvarProduto() {
-  const idProduto = document.getElementById('editProdIndex').value; 
-  const categoria = document.getElementById('editProdCategoria').value;
-  const nome = document.getElementById('editProdNome').value;
+  const idProduto = document.getElementById('editProdId').value;
+  const btn = document.getElementById('btnSalvarEdicao');
+  const inputUrl = document.getElementById('editProdUrl'); 
   
-  // Tratamento de preço: mais robusto contra erros
-  let precoBruto = document.getElementById('editProdPreco').value || "0";
-  const preco = parseFloat(precoBruto.toString().replace(',', '.')) || 0;
-  
-  const url = document.getElementById('editProdUrl').value;
-  const estoque = parseInt(document.getElementById('editProdEstoque').value) || 0;
-  const cor = document.getElementById('editProdCor')?.value || "";
-
-  const containerBotoes = document.getElementById('containerBotoesProd');
-  const htmlOriginal = containerBotoes.innerHTML;
-  
-  // Feedback visual para o usuário não clicar duas vezes
-  containerBotoes.innerHTML = '<div style="color:#38bdf8; text-align:center; font-weight:bold;"><i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO BANCO...</div>';
-
-  const dadosAtualizados = {
-    categoria: categoria,
-    nome: nome,
-    preco: preco,
-    url: url, // <-- Verifique se no banco é 'url' ou 'imagem_url'
-    estoque: estoque,
-    cor: cor 
-  };
+  // IMPORTANTE: urlOriginalAntesDeEditar foi definida lá no abrirEdicaoProduto
+  let urlFinalParaBanco = urlOriginalAntesDeEditar; 
 
   try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESSANDO...';
+    }
+
+    // 1. SE HOUVER UMA NOVA IMAGEM SELECIONADA
+    if (arquivoTemporarioEdicao) {
+      const baseURL = SB_URL.replace('/rest/v1', '');
+
+      // --- A: LIMPEZA DA IMAGEM ANTIGA REAL ---
+      // Usamos a variável global que "congelou" a URL antes da edição começar
+      if (urlOriginalAntesDeEditar && urlOriginalAntesDeEditar.includes('produtos/')) {
+        try {
+          const nomeArquivoAntigo = urlOriginalAntesDeEditar.split('/').pop().split('?')[0];
+          
+          // A URL de exclusão NUNCA deve ter "/public/"
+          const urlDeExclusao = `${baseURL}/storage/v1/object/produtos/${nomeArquivoAntigo}`;
+          
+          console.log("Limpando arquivo antigo do bucket:", nomeArquivoAntigo);
+
+          await fetch(urlDeExclusao, {
+            method: 'DELETE',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': `Bearer ${SB_KEY}`
+            }
+          });
+        } catch (errLimpeza) {
+          console.warn("A limpeza falhou, mas prosseguindo com o upload:", errLimpeza);
+        }
+      }
+
+      // --- B: UPLOAD DA NOVA FOTO ---
+      const extensao = arquivoTemporarioEdicao.name.split('.').pop();
+      const nomeArquivoNovo = `prod_edit_${Date.now()}.${extensao}`;
+
+      const uploadResponse = await fetch(`${baseURL}/storage/v1/object/produtos/${nomeArquivoNovo}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${SB_KEY}`,
+          'Content-Type': arquivoTemporarioEdicao.type
+        },
+        body: arquivoTemporarioEdicao
+      });
+
+      if (uploadResponse.ok) {
+        urlFinalParaBanco = `${baseURL}/storage/v1/object/public/produtos/${nomeArquivoNovo}`;
+        
+        // Mágica visual: atualiza o campo com a nova URL
+        inputUrl.value = urlFinalParaBanco;
+        inputUrl.style.backgroundColor = "#dcfce7";
+        btn.innerHTML = '<i class="fas fa-check"></i> URL ATUALIZADA!';
+        
+        // Pequena pausa para o usuário ver a nova URL no campo
+        await new Promise(res => setTimeout(res, 1200));
+      } else {
+        throw new Error("Falha no upload da nova imagem.");
+      }
+    }
+
+    // --- 2. SALVAR NO BANCO (PATCH) ---
+    const dados = {
+      categoria:  document.getElementById('editProdCategoria').value,
+      nome:       document.getElementById('editProdNome').value,
+      preco:      parseFloat(document.getElementById('editProdPreco').value.toString().replace(',', '.')) || 0,
+      imagem_url: urlFinalParaBanco,
+      estoque:    parseInt(document.getElementById('editProdEstoque').value) || 0,
+      cor:        document.getElementById('editProdCor')?.value || ""
+    };
+
     const response = await fetch(`${SB_URL}/produtos?id=eq.${idProduto}`, {
       method: 'PATCH',
       headers: {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(dadosAtualizados)
+      body: JSON.stringify(dados)
     });
 
     if (response.ok) {
-      // Se você tiver a função mostrarAviso, ela será chamada
-      if (typeof mostrarAviso === 'function') {
-          mostrarAviso('sucesso', 'Sucesso!', 'Produto atualizado com sucesso.');
-      } else {
-          alert('Produto atualizado com sucesso!');
+      // 3. ATUALIZA A TABELA AUTOMATICAMENTE
+      if (typeof mostrarLista === 'function') {
+        await mostrarLista('cadastro-produtos');
       }
       
+      alert("✅ Produto atualizado e imagem antiga removida!");
       fecharModal('modalEdicaoProduto');
       
-      // Força a atualização da lista para o novo dado aparecer na tabela
-      if (typeof navegar === 'function') {
-          await navegar('cadastro-produtos'); 
-      } else if (typeof buscarDados === 'function') {
-          await buscarDados();
-      }
+      // Limpeza de variáveis para a próxima
+      arquivoTemporarioEdicao = null;
+      urlOriginalAntesDeEditar = "";
+      inputUrl.style.backgroundColor = "";
     } else {
-      const errorMsg = await response.text();
-      throw new Error("Resposta do banco: " + errorMsg);
+      throw new Error("Erro ao atualizar os dados no servidor.");
     }
 
-  } catch (erro) {
-    console.error("Erro na atualização:", erro);
-    alert("ERRO AO SALVAR: " + erro.message);
-    containerBotoes.innerHTML = htmlOriginal; // Devolve os botões caso dê erro
+  } catch (err) {
+    alert("Erro: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-save"></i> SALVAR ALTERAÇÕES';
+    }
   }
 }
-
-
 
 async function cadastrarNovoUsuario() {
     const loginNovo = document.getElementById('novoLoginUsuario').value.trim();
@@ -3881,22 +4041,35 @@ async function atualizarFotoDireto(id, input) {
 }
 
 async function confirmarExclusaoCliente(id, nomeCliente) {
-    // 1. Confirmação personalizada com o nome do cliente
     const mensagem = `⚠️ Tem certeza que deseja excluir o cliente "${nomeCliente}"?\nEsta ação também apagará a foto dele e não pode ser desfeita.`;
     
-    if (!confirm(mensagem)) {
-        return;
-    }
+    if (!confirm(mensagem)) return;
 
     try {
-        console.log("Iniciando exclusão do ID:", id);
-
-        // 2. Localiza o cliente na lista local para pegar a URL da foto
         const listaClientes = window.dadosPlanilha || []; 
         const cliente = listaClientes.find(c => String(c.id) === String(id));
         const urlFoto = cliente ? cliente.foto_url : null;
 
-        // 3. Deletar do Banco de Dados (Supabase)
+        // --- 1. PRIMEIRO REMOVEMOS DO STORAGE (BUCKET) ---
+        if (urlFoto && urlFoto.includes('fotos-clientes')) {
+            try {
+                const nomeArquivo = urlFoto.split('/').pop();
+                const baseURL = SB_URL.replace('/rest/v1', '');
+                
+                await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SB_KEY,
+                        'Authorization': `Bearer ${SB_KEY}`
+                    }
+                });
+                console.log("Foto removida do storage com sucesso.");
+            } catch (errFoto) {
+                console.warn("Não foi possível apagar a foto física, mas prosseguindo com a exclusão do registro:", errFoto);
+            }
+        }
+
+        // --- 2. DEPOIS REMOVEMOS DO BANCO DE DADOS ---
         const response = await fetch(`${SB_URL}/clientes?id=eq.${id}`, {
             method: 'DELETE',
             headers: {
@@ -3911,28 +4084,8 @@ async function confirmarExclusaoCliente(id, nomeCliente) {
             throw new Error("Erro no banco: " + erroTxt);
         }
 
-        // 4. Se o cliente tinha foto, removemos do Storage
-        if (urlFoto && urlFoto.includes('fotos-clientes')) {
-            try {
-                const nomeArquivo = urlFoto.split('/').pop();
-                const baseURL = SB_URL.replace('/rest/v1', '');
-                
-                await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': SB_KEY,
-                        'Authorization': `Bearer ${SB_KEY}`
-                    }
-                });
-                console.log("Foto removida do storage.");
-            } catch (errFoto) {
-                console.warn("Cliente deletado, mas a foto ficou: ", errFoto);
-            }
-        }
-
         alert(`✅ Cliente "${nomeCliente}" removido com sucesso!`);
 
-        // 5. Atualiza a interface
         if (typeof mostrarLista === 'function') {
             await mostrarLista('cadastro-clientes');
         } else {
@@ -3945,6 +4098,52 @@ async function confirmarExclusaoCliente(id, nomeCliente) {
     }
 }
 
+
+function previewImagemProduto(input, idPreview) {
+    const preview = document.getElementById(idPreview);
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            preview.style.width = '60px'; // Garante o tamanho da miniatura
+            preview.style.height = '60px';
+            preview.style.objectFit = 'cover';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 1. VERSÃO PARA NOVO PRODUTO
+function executarUploadProduto(input) {
+  if (!input.files || input.files.length === 0) return;
+  
+  // Guardamos o arquivo na variável global (mesma usada na edição)
+  arquivoTemporarioEdicao = input.files[0];
+  
+  const inputUrl = document.getElementById('p_url');
+  if (inputUrl) {
+    // Apenas visual: avisa que o arquivo foi pego, mas não enviado ainda
+    inputUrl.value = "Pendente: " + arquivoTemporarioEdicao.name;
+    inputUrl.style.border = "2px solid #38bdf8";
+  }
+}
+
+// 2. VERSÃO PARA EDIÇÃO
+
+function executarUploadProdutoEdicao(input) {
+  if (!input.files || input.files.length === 0) return;
+  
+  // Guarda o arquivo bruto para ser enviado depois
+  arquivoTemporarioEdicao = input.files[0];
+  
+  const inputUrl = document.getElementById('editProdUrl');
+  if (inputUrl) {
+    // Apenas um aviso visual, esse texto NÃO vai para o banco
+    inputUrl.value = "Pendente: " + arquivoTemporarioEdicao.name;
+    inputUrl.style.color = "#f59e0b"; 
+  }
+}
 
 
 

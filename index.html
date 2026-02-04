@@ -852,8 +852,6 @@
     </button>
     
     
-    
-    
     <button onclick="abrirModalVenda()" class="btn-nav" style="background:#15803d; display: flex; align-items: center; justify-content: center; gap: 8px;">
     <i class="fa-solid fa-cart-plus"></i> Nova Venda
 </button>
@@ -3842,21 +3840,17 @@ async function salvarEdicaoCliente(event) {
     let fotoUrlFinal = null;
     const baseURL = SB_URL.replace('/rest/v1', '');
 
-    // --- PASSO 1: UPLOAD E LIMPEZA ---
+    // --- PASSO 1: FOTO (LIMPEZA E UPLOAD) ---
     if (inputArquivo && inputArquivo.files.length > 0) {
       if (urlFotoClienteOriginal && urlFotoClienteOriginal.includes('fotos-clientes/')) {
         try {
           const nomeArquivoAntigo = urlFotoClienteOriginal.split('/').pop().split('?')[0];
           const urlDeExclusao = `${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivoAntigo}`;
-          
           await fetch(urlDeExclusao, {
             method: 'DELETE',
             headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
           });
-          console.log("🧹 Foto antiga removida.");
-        } catch (e) {
-          console.warn("Falha ao deletar antiga, seguindo...");
-        }
+        } catch (e) { console.warn("Erro ao deletar foto antiga."); }
       }
 
       const arquivo = inputArquivo.files[0];
@@ -3865,59 +3859,77 @@ async function salvarEdicaoCliente(event) {
       
       const uploadResponse = await fetch(`${baseURL}/storage/v1/object/fotos-clientes/${nomeArquivo}`, {
         method: 'POST',
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${SB_KEY}`,
-          'Content-Type': arquivo.type
-        },
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': arquivo.type },
         body: arquivo
       });
 
       if (uploadResponse.ok) {
         fotoUrlFinal = `${baseURL}/storage/v1/object/public/fotos-clientes/${nomeArquivo}`;
-      } else {
-        throw new Error("Erro ao subir nova imagem.");
       }
     }
 
-    // --- PASSO 2: PAYLOAD ---
+    // --- PASSO 2: COLETA DE DADOS ---
+    const nomeNovo = document.getElementById('editClienteNome').value;
+    const telNovo = document.getElementById('editClienteTelefone').value;
+    const cpfNovo = document.getElementById('editClienteCpf').value;
+    const logradouro = document.getElementById('editClienteLogradouro').value;
+    const numero = document.getElementById('editClienteNumero').value;
+    const bairro = document.getElementById('editClienteBairro').value;
+
     const dadosCliente = {
-      cliente_nome: document.getElementById('editClienteNome').value,
-      cpf_cnpj:     document.getElementById('editClienteCpf').value,
-      telefone:     document.getElementById('editClienteTelefone').value,
+      cliente_nome: nomeNovo,
+      cpf_cnpj:     cpfNovo,
+      telefone:     telNovo,
       email:        document.getElementById('editClienteEmail').value,
       cep:          document.getElementById('editClienteCep').value,
-      logradouro:   document.getElementById('editClienteLogradouro').value,
-      numero:       document.getElementById('editClienteNumero').value,
-      bairro:       document.getElementById('editClienteBairro').value,
+      logradouro:   logradouro,
+      numero:       numero,
+      bairro:       bairro,
       cidade:       document.getElementById('editClienteCidade').value
     };
 
     if (fotoUrlFinal) dadosCliente.foto_url = fotoUrlFinal;
 
-    // --- PASSO 3: PATCH ---
+    // --- PASSO 3: ATUALIZAR TABELA CLIENTES ---
     const response = await fetch(`${SB_URL}/clientes?id=eq.${idCliente}`, {
       method: 'PATCH',
       headers: {
         'apikey': SB_KEY,
         'Authorization': 'Bearer ' + SB_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(dadosCliente) 
     });
 
     if (response.ok) {
-      // --- PASSO 4: ATUALIZAÇÃO DA LISTA (ANTES DO ALERT) ---
-      console.log("🔄 Sincronizando tabela...");
+      // --- PASSO 4: SINCRONIZAR TABELA VENDAS (AQUI ESTÁ O AJUSTE) ---
+      console.log("🔄 Sincronizando dados nas vendas (Coluna: endereco)...");
+      
+      const dadosParaVendas = {
+        cliente: nomeNovo,
+        telefone: telNovo,
+        cpf: cpfNovo,
+        endereco: `${logradouro}, ${numero} - ${bairro}` // Agora sem cedilha
+      };
+
+      // Atualiza todas as vendas que tenham esse mesmo CPF
+      await fetch(`${SB_URL}/vendas?cpf=eq.${cpfNovo}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': 'Bearer ' + SB_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dadosParaVendas)
+      });
+
+      // --- PASSO 5: ATUALIZA INTERFACE ---
       if (typeof mostrarLista === 'function') {
           await mostrarLista('cadastro-clientes');
       }
 
-      alert("✅ Cliente atualizado com sucesso!");
+      alert("✅ Cadastro e Histórico de Vendas atualizados!");
       fecharModal('modalEdicaoCliente');
-      
-      // Limpa a memória da foto
       urlFotoClienteOriginal = ""; 
 
     } else {
@@ -4289,6 +4301,5 @@ window.onload = async () => {
  
 </body>
 </html>
-
 
 

@@ -1325,6 +1325,60 @@
   </div>
 </div>
 
+<div id="modalSenha" class="modal">
+  <div class="form-box">
+    <h3><i class="fa-solid fa-user-gear"></i> Gerenciar Acessos</h3>
+    
+    <div id="secaoTrocaSenha">
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Alterar minha senha atual</p>
+      
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="senhaAtual" placeholder="Senha Atual" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('senhaAtual', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="novaSenha" placeholder="Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('novaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
+      <div style="position: relative; width: 100%;">
+        <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+        <i class="fa-solid fa-eye" onclick="togglePassword('confirmarNovaSenha', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+      </div>
+
+      <button class="btn-gravar" id="btnSalvarSenha" onclick="executarTrocaSenha()" style="width: 100%; margin-bottom: 10px;">Salvar Nova Senha</button>
+    </div>
+
+    <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #ccc;">
+
+    <div id="secaoNovoUser">
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Cadastrar novo vendedor/usuário</p>
+      <button class="btn-novo-user" onclick="abrirModalNovoUsuario()" style="width: 100%; background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        <i class="fa-solid fa-user-plus"></i> CRIAR NOVO ACESSO
+      </button>
+    </div>
+    
+    <button class="btn-cancelar" onclick="fecharModal('modalSenha')" style="width: 100%; margin-top: 15px; background: #999;">Fechar</button>
+  </div>
+</div>
+
+<div id="modalNovoUsuario" class="modal" style="display:none;">
+    <div class="form-box">
+        <h3><i class="fa-solid fa-user-plus"></i> Novo Cadastro</h3>
+        <input type="text" id="novoLoginUsuario" placeholder="Nome de Usuário (Login)" style="margin-bottom: 10px;">
+        
+        <div style="position: relative; width: 100%;">
+            <input type="password" id="novaSenhaUsuario" placeholder="Senha de Acesso" style="width: 100%; padding-right: 35px; margin-bottom: 10px;">
+            <i class="fa-solid fa-eye" onclick="togglePassword('novaSenhaUsuario', this)" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: #666;"></i>
+        </div>
+
+        <input type="text" id="novoTelUsuario" placeholder="WhatsApp (DDD + Número)" style="margin-bottom: 10px;">
+        
+        <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" class="btn-gravar" style="width: 100%; background: #10b981;">Finalizar Cadastro</button>
+        <button onclick="fecharModal('modalNovoUsuario')" class="btn-cancelar" style="width: 100%; margin-top: 10px;">Voltar</button>
+    </div>
+</div>
 
 
   
@@ -4235,5 +4289,6 @@ window.onload = async () => {
  
 </body>
 </html>
+
 
 

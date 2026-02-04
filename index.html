@@ -846,37 +846,50 @@
   cursor: pointer;
 }
 
+
 /* ============================================================
-   CENTRALIZAÇÃO DE MODAIS DE AÇÃO (PAGAR, EXCLUIR, CONFIRMAR)
+   CENTRALIZAÇÃO EXCLUSIVA: PAGAR E EXCLUIR
    ============================================================ */
 
-/* Alvos: Qualquer modal que NÃO seja o de Nova Venda */
-.modal:not(#modalNovaVenda) {
-    display: none; /* Mantém o padrão de esconder */
-    align-items: center !important; /* Centraliza verticalmente no meio da tela */
-    justify-content: center !important; /* Centraliza horizontalmente */
-    padding: 20px !important;
+/* Aplicar centralização APENAS nos IDs específicos */
+#modalPagar, #modalExcluir {
+    display: none; /* O JS controla a exibição */
+    align-items: center !important; 
+    justify-content: center !important; 
     position: fixed !important;
     inset: 0 !important;
+    padding: 20px !important;
+    z-index: 9999 !important;
+    background: rgba(0, 0, 0, 0.7) !important; /* Fundo escurecido */
 }
 
-/* Garante que a caixa interna desses modais fique no centro */
-.modal:not(#modalNovaVenda) .modal-box, 
-.modal:not(#modalNovaVenda) .confirm-box {
-    margin: 0 !important; /* Remove margens que podem empurrar para cima */
-    max-height: 90vh !important; /* Segurança para telas pequenas */
-    display: flex;
-    flex-direction: column;
+/* Quando o JS abrir o modal, ele deve usar flex para centralizar */
+#modalPagar.active, #modalExcluir.active {
+    display: flex !important;
 }
 
-/* Estilo para os botões dentro desses modais de confirmação */
-.confirm-box .botoes-confirmacao {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    width: 100%;
+/* Ajuste das caixas internas apenas desses dois modais */
+#modalPagar .confirm-box, 
+#modalExcluir .confirm-box {
+    margin: 0 !important; 
+    max-height: 90vh !important; 
+    display: flex !important;
+    flex-direction: column !important;
+    /* Remove qualquer flutuação que o CSS geral possa causar */
+    position: relative !important; 
 }
 
+/* Estilo para os botões internos específicos desses modais */
+#modalPagar .btn-modal, 
+#modalExcluir .btn-modal {
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+#modalPagar .btn-modal:hover, 
+#modalExcluir .btn-modal:hover {
+    filter: brightness(1.1);
+}
 
 
 
@@ -1426,96 +1439,96 @@
   </div>
 </div>
 
-<div id="modalSenha" class="modal">
-  <div class="form-box" style="background: #1e293b; border: 1px solid #334155; padding: 25px; border-radius: 20px; max-width: 400px; width: 90%; color: #f1f5f9; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+<div id="modalSenha" class="modal" style="display: none; align-items: center !important; justify-content: center !important;">
+  <div class="form-box" style="background: #1e293b !important; border: 1px solid #334155 !important; padding: 25px !important; border-radius: 20px !important; max-width: 400px !important; width: 90% !important; color: #f1f5f9 !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6) !important; position: relative !important;">
     
-    <h3 style="color: #38bdf8; text-align: center; margin-bottom: 20px; text-transform: uppercase; font-size: 1.2rem;">
+    <h3 style="color: #38bdf8 !important; text-align: center !important; margin-bottom: 20px !important; text-transform: uppercase !important; font-size: 1.2rem !important; font-weight: 800 !important; background: transparent !important; border: none !important;">
       <i class="fa-solid fa-user-gear"></i> Gerenciar Acessos
     </h3>
     
     <div id="secaoTrocaSenha">
-      <p style="font-size: 0.85em; color: #94a3b8; margin-bottom: 12px; text-align: center;">Alterar minha senha atual</p>
+      <p style="font-size: 0.85em !important; color: #94a3b8 !important; margin-bottom: 12px !important; text-align: center !important; font-weight: bold !important; text-transform: uppercase !important;">Alterar minha senha atual</p>
       
-      <div style="position: relative; width: 100%; margin-bottom: 10px;">
+      <div style="position: relative !important; width: 100% !important; margin-bottom: 10px !important;">
         <input type="password" id="senhaAtual" placeholder="Senha Atual" 
-               style="width: 100%; padding: 12px 40px 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; box-sizing: border-box;">
+               style="width: 100% !important; padding: 12px 40px 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important; font-size: 16px !important;">
         <i class="fa-solid fa-eye" onclick="togglePassword('senhaAtual', this)" 
-           style="position: absolute; right: 12px; top: 14px; cursor: pointer; color: #94a3b8;"></i>
+           style="position: absolute !important; right: 12px !important; top: 14px !important; cursor: pointer !important; color: #94a3b8 !important; z-index: 10 !important;"></i>
       </div>
 
-      <div style="position: relative; width: 100%; margin-bottom: 10px;">
+      <div style="position: relative !important; width: 100% !important; margin-bottom: 10px !important;">
         <input type="password" id="novaSenha" placeholder="Nova Senha" 
-               style="width: 100%; padding: 12px 40px 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; box-sizing: border-box;">
+               style="width: 100% !important; padding: 12px 40px 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important; font-size: 16px !important;">
         <i class="fa-solid fa-eye" onclick="togglePassword('novaSenha', this)" 
-           style="position: absolute; right: 12px; top: 14px; cursor: pointer; color: #94a3b8;"></i>
+           style="position: absolute !important; right: 12px !important; top: 14px !important; cursor: pointer !important; color: #94a3b8 !important; z-index: 10 !important;"></i>
       </div>
 
-      <div style="position: relative; width: 100%; margin-bottom: 15px;">
+      <div style="position: relative !important; width: 100% !important; margin-bottom: 15px !important;">
         <input type="password" id="confirmarNovaSenha" placeholder="Confirme a Nova Senha" 
-               style="width: 100%; padding: 12px 40px 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: white; box-sizing: border-box;">
+               style="width: 100% !important; padding: 12px 40px 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important; font-size: 16px !important;">
         <i class="fa-solid fa-eye" onclick="togglePassword('confirmarNovaSenha', this)" 
-           style="position: absolute; right: 12px; top: 14px; cursor: pointer; color: #94a3b8;"></i>
+           style="position: absolute !important; right: 12px !important; top: 14px !important; cursor: pointer !important; color: #94a3b8 !important; z-index: 10 !important;"></i>
       </div>
 
       <button id="btnSalvarSenha" onclick="executarTrocaSenha()" 
-              style="width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase;">
+              style="width: 100% !important; padding: 14px !important; background: #10b981 !important; color: white !important; border: none !important; border-radius: 12px !important; font-weight: 800 !important; cursor: pointer !important; text-transform: uppercase !important; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2) !important;">
         Salvar Nova Senha
       </button>
     </div>
 
-    <hr style="margin: 20px 0; border: 0; border-top: 1px dashed #334155;">
+    <hr style="margin: 20px 0 !important; border: 0 !important; border-top: 1px dashed #334155 !important;">
 
     <div id="secaoNovoUser">
-      <p style="font-size: 0.85em; color: #94a3b8; margin-bottom: 12px; text-align: center;">Cadastrar novo vendedor/usuário</p>
+      <p style="font-size: 0.85em !important; color: #94a3b8 !important; margin-bottom: 12px !important; text-align: center !important; font-weight: bold !important; text-transform: uppercase !important;">Ações Administrativas</p>
       <button onclick="abrirModalNovoUsuario()" 
-              style="width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 800; text-transform: uppercase;">
+              style="width: 100% !important; background: #38bdf8 !important; color: #0f172a !important; border: none !important; padding: 14px !important; border-radius: 12px !important; cursor: pointer !important; font-weight: 800 !important; text-transform: uppercase !important; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2) !important;">
         <i class="fa-solid fa-user-plus"></i> CRIAR NOVO ACESSO
       </button>
     </div>
     
     <button onclick="fecharModal('modalSenha')" 
-            style="width: 100%; margin-top: 15px; background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-      FECHAR
+            style="width: 100% !important; margin-top: 15px !important; background: transparent !important; color: #94a3b8 !important; border: 1px solid #334155 !important; padding: 10px !important; border-radius: 10px !important; cursor: pointer !important; font-size: 0.85rem !important; font-weight: bold !important;">
+      FECHAR JANELA
     </button>
   </div>
 </div>
 
-<div id="modalNovoUsuario" class="modal" style="display:none;">
-    <div class="form-box" style="background: #1e293b; border: 1px solid #334155; padding: 25px; border-radius: 20px; max-width: 380px; width: 90%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); color: #f1f5f9;">
+<div id="modalNovoUsuario" class="modal" style="display:none; align-items: center !important; justify-content: center !important;">
+    <div class="form-box" style="background: #1e293b !important; border: 1px solid #334155 !important; padding: 25px !important; border-radius: 20px !important; max-width: 380px !important; width: 90% !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7) !important; color: #f1f5f9 !important;">
         
-        <h3 style="color: #38bdf8; text-align: center; margin-bottom: 22px; text-transform: uppercase; font-size: 1.1rem; letter-spacing: 1px; font-weight: 800;">
+        <h3 style="color: #38bdf8 !important; text-align: center !important; margin-bottom: 22px !important; text-transform: uppercase !important; font-size: 1.1rem !important; letter-spacing: 1px !important; font-weight: 800 !important; background: transparent !important;">
             <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i> Novo Cadastro
         </h3>
         
-        <div style="margin-bottom: 12px;">
-            <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-left: 5px;">Nome de Usuário</label>
+        <div style="margin-bottom: 12px !important;">
+            <label style="font-size: 11px !important; color: #94a3b8 !important; text-transform: uppercase !important; font-weight: bold !important; display: block !important; margin-bottom: 5px !important;">Nome de Usuário</label>
             <input type="text" id="novoLoginUsuario" placeholder="Ex: joao_vendas" 
-                   style="width: 100%; padding: 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; box-sizing: border-box; margin-top: 5px;">
+                   style="width: 100% !important; padding: 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important;">
         </div>
 
-        <div style="margin-bottom: 12px;">
-            <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-left: 5px;">Senha de Acesso</label>
-            <div style="position: relative; width: 100%; margin-top: 5px;">
+        <div style="margin-bottom: 12px !important;">
+            <label style="font-size: 11px !important; color: #94a3b8 !important; text-transform: uppercase !important; font-weight: bold !important; display: block !important; margin-bottom: 5px !important;">Senha de Acesso</label>
+            <div style="position: relative !important; width: 100% !important;">
                 <input type="password" id="novaSenhaUsuario" placeholder="Crie uma senha" 
-                       style="width: 100%; padding: 12px 40px 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; box-sizing: border-box;">
+                       style="width: 100% !important; padding: 12px 40px 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important;">
                 <i class="fa-solid fa-eye" onclick="togglePassword('novaSenhaUsuario', this)" 
-                   style="position: absolute; right: 12px; top: 14px; cursor: pointer; color: #94a3b8;"></i>
+                   style="position: absolute !important; right: 12px !important; top: 14px !important; cursor: pointer !important; color: #94a3b8 !important;"></i>
             </div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <label style="font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: bold; margin-left: 5px;">WhatsApp</label>
+        <div style="margin-bottom: 20px !important;">
+            <label style="font-size: 11px !important; color: #94a3b8 !important; text-transform: uppercase !important; font-weight: bold !important; display: block !important; margin-bottom: 5px !important;">WhatsApp</label>
             <input type="text" id="novoTelUsuario" placeholder="(00) 00000-0000" 
-                   style="width: 100%; padding: 12px 15px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: white; box-sizing: border-box; margin-top: 5px;">
+                   style="width: 100% !important; padding: 12px 15px !important; background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 10px !important; color: white !important; box-sizing: border-box !important;">
         </div>
         
         <button id="btnConfirmarNovoUsuario" onclick="cadastrarNovoUsuario()" 
-                style="width: 100%; padding: 15px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.9rem; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);">
+                style="width: 100% !important; padding: 15px !important; background: #10b981 !important; color: white !important; border: none !important; border-radius: 12px !important; font-weight: 800 !important; cursor: pointer !important; text-transform: uppercase !important;">
             Finalizar Cadastro
         </button>
 
         <button onclick="fecharModal('modalNovoUsuario')" 
-                style="width: 100%; margin-top: 12px; background: transparent; color: #94a3b8; border: 1px solid #334155; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+                style="width: 100% !important; margin-top: 12px !important; background: transparent !important; color: #94a3b8 !important; border: 1px solid #334155 !important; padding: 10px !important; border-radius: 10px !important; cursor: pointer !important;">
             VOLTAR
         </button>
     </div>

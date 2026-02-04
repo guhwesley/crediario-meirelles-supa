@@ -411,158 +411,7 @@
 
 .dark-theme #loaderFiltro { color: #38bdf8 !important; }
 
-/* Layout Full Screen */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 999;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #0f172a; /* Azul escuro de fundo */
-  overflow-y: auto; /* Permite rolagem */
-}
 
-.form-box-fullscreen {
-  background: #1e293b; 
-  margin: 0;           /* Remove a margem para encostar nos cantos */
-  padding: 30px;
-  width: 100%;         /* Ocupa toda a largura */
-  min-height: 100vh;   /* Ocupa toda a altura da tela */
-  max-width: none;     /* Remove o limite de 1100px para cobrir tudo */
-  box-sizing: border-box; /* Impede que o padding "estoure" a largura */
-  box-shadow: none;    /* Remove a sombra para parecer uma página única */
-}
-
-.box-venda {
-  background: #ffffff;
-  color: #333;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-/* Tabela estilizada */
-.tabela-vendas {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  color: #333;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.tabela-vendas th {
-  background: #1e90ff; /* Azul da logo [cite: 7] */
-  color: white;
-  padding: 12px;
-}
-
-.tabela-vendas td {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
-  text-align: center;
-}
-
-
-
-/* Ajuste para não quebrar no telemóvel */
-@media (max-width: 768px) {
-    .venda-layout-grid {
-        display: flex;
-        flex-direction: column;
-    }
-}
-
-/* Fixa o container da tabela como escuro */
-#corpoCarrinhoContainer {
-    background: #0f172a !important; /* Fundo azul marinho profundo */
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #334155;
-}
-
-/* Fixa as cores das linhas da tabela */
-.tabela-vendas-fixa {
-    width: 100%;
-    border-collapse: collapse;
-    color: #ffffff !important; /* Texto sempre branco */
-    background: #0f172a !important;
-}
-
-.tabela-vendas-fixa thead tr {
-    background: #38bdf8 !important; /* Cabeçalho azul claro */
-    color: #0f172a !important;      /* Texto do cabeçalho escuro para contraste */
-}
-
-.tabela-vendas-fixa td {
-    padding: 12px;
-    border-bottom: 1px solid #1e293b;
-    color: #ffffff !important; /* Garante visibilidade das letras */
-}
-
-.subtotal-destaque {
-    color: #38bdf8 !important; /* Azul brilhante para o subtotal */
-    font-weight: bold;
-}
-
-
-
-
-/* Ajuste Total para Celular */
-@media (max-width: 768px) {
-  .col-pgto, .col-entrada, .col-desconto, .col-parcelas {
-    flex: 1 1 100% !important; /* Cada um ocupa uma linha inteira no celular */
-  }
-
-  /* Isso impede que os campos estourem a tela no mobile */
-  input, select, textarea {
-    box-sizing: border-box !important; 
-    width: 100% !important;
-    font-size: 16px !important; /* Evita zoom indesejado no iPhone */
-  }
-
-  .form-box-fullscreen {
-    padding: 15px; /* Reduz o recuo no celular para ganhar espaço */
-    margin: 0;
-    width: 100%;
-    border-radius: 0;
-  }
-} 
-
-.input-travado {
-    background: rgba(15, 23, 42, 0.5) !important;
-    border: 1px solid #334155 !important;
-    color: #94a3b8 !important;
-    cursor: default;
-  }
-  .input-editavel {
-    background: #0f172a !important;
-    border: 2px solid #10b981 !important;
-    color: white !important;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
-  }
-
-  /* Spinner e Proteção do Botão */
-.spinner {
-  width: 18px;
-  height: 18px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.btn-loading {
-  pointer-events: none; /* Impede novos cliques */
-  opacity: 0.8;
-  cursor: not-allowed;
-}
 
 /* Container que envolve o input e o ícone */
 .input-group-senha {
@@ -591,121 +440,141 @@
   padding-right: 40px !important; 
 }
 
-/* 1. O MODAL (REVISADO E BLINDADO) */
-.modal {
-  display: none; /* O JS muda para flex */
-  position: fixed !important;
-  inset: 0 !important;
-  background: rgba(0, 0, 0, 0.75) !important; /* Fundo mais escuro para foco total */
-  z-index: 99999 !important; /* Valor máximo para cobrir o CRM */
-  
-  /* Centralização perfeita */
-  align-items: center !important;
-  justify-content: center !important;
-}
 
-/* 2. A CAIXA BRANCA (Adicione isso para garantir que ela apareça) */
-.modal-box {
-  background: white !important;
-  padding: 20px !important;
-  border-radius: 12px !important;
-  width: 90% !important;
-  max-width: 500px !important;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-  color: #333 !important;
-  position: relative !important;
-}
-
-/* 3. OS BOTÕES DA TABELA (Pode manter, eles garantem o clique) */
-.col-resumo, .col-resumo button {
-  position: relative;
-  z-index: 10;
-  pointer-events: auto !important;
-}
 
 /* ============================================================
-   MODAIS - VERSÃO DARK UNIFICADA (CORREÇÃO DEFINITIVA)
+   MODAIS - MANUTENÇÃO DO DESIGN DE EDIÇÃO + PÁGINA NOVA VENDA
    ============================================================ */
 
-/* 1. O CONTAINER PRINCIPAL DO MODAL */
+/* 1. CONTAINER PRINCIPAL (IGUAL PARA TODOS) */
 .modal, #modalEdicaoCliente {
-  display: none; /* Controlado pelo JS */
+  display: none;
   position: fixed !important;
   inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
-  background: rgba(7, 10, 19, 0.95) !important; /* Fundo Black-Navy ultra escuro */
-  z-index: 2147483647 !important; /* Prioridade máxima no navegador */
-  align-items: center !important;
+  background: rgba(7, 10, 19, 0.85) !important;
+  z-index: 2147483647 !important; 
+  align-items: flex-start !important;
   justify-content: center !important;
   backdrop-filter: blur(4px) !important;
+  padding: 40px 15px !important;
+  overflow-y: auto !important;
 }
 
-/* 2. A CAIXA DE CONTEÚDO (DESIGN DARK MODERNO) */
+.modal[style*="display: block"], 
+.modal[style*="display: flex"] {
+    display: flex !important;
+}
+
+/* 2. CAIXA DE CONTEÚDO (MANTENDO O QUE VOCÊ GOSTOU) */
 .modal-box, .confirm-box, .form-box {
-  background: #1e293b !important; /* Azul Marinho Profundo */
+  background: #1e293b !important;
   padding: 30px !important;
   border-radius: 20px !important;
-  width: 90% !important;
+  width: 95% !important;
   max-width: 500px !important;
   border: 1px solid #334155 !important;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
   color: #f1f5f9 !important;
   position: relative !important;
+  max-height: 85vh !important;
+  overflow-y: auto !important;
+  margin-bottom: 40px !important;
 }
 
-/* Títulos dentro dos modais */
-.modal-box h3, .form-box h3 {
-  color: #38bdf8 !important; /* Azul Ciano */
-  font-size: 1.5rem !important;
-  font-weight: 800 !important;
-  margin-bottom: 20px !important;
-  text-align: center !important;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+/* 3. CONFIGURAÇÃO PARA NOVA VENDA (ESTILO TELA CHEIA / PÁGINA ÚNICA) */
+#modalNovaVenda.modal {
+  background: #0f172a !important; /* Fundo sólido para não ver o que está embaixo */
+  align-items: flex-start !important;
+  padding: 0 !important; /* Sem recuo lateral para preencher a tela */
 }
 
-/* Estilização dos Inputs dentro do Modal */
-#modalEdicaoCliente input, .form-box input {
-  background: #0f172a !important; /* Fundo mais escuro */
+#modalNovaVenda .modal-box {
+  width: 100% !important;
+  max-width: 100% !important; 
+  min-height: 100vh !important; /* Garante que cubra a tela toda */
+  background: #0f172a !important;
+  border: none !important;
+  border-radius: 0 !important; /* Estilo de página, não de modal */
+  padding: 50px 20px !important;
+  box-shadow: none !important;
+  overflow-y: visible !important; /* A rolagem acontece no modal pai */
+}
+
+/* Grid Robusto para Nova Venda no PC */
+#modalNovaVenda form {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 20px !important;
+  max-width: 900px !important; /* Centraliza o conteúdo no meio da página */
+  margin: 0 auto !important;
+}
+
+#modalNovaVenda h3 {
+  grid-column: span 3 !important;
+  font-size: 2rem !important;
+  color: #38bdf8 !important;
+  border-bottom: 2px solid #38bdf8;
+  padding-bottom: 20px;
+  margin-bottom: 40px !important;
+}
+
+/* Ajustes de Coluna no Nova Venda para Celular */
+@media (max-width: 850px) {
+  #modalNovaVenda form { grid-template-columns: 1fr 1fr !important; }
+  #modalNovaVenda h3 { grid-column: span 2 !important; }
+}
+@media (max-width: 550px) {
+  #modalNovaVenda form { grid-template-columns: 1fr !important; }
+  #modalNovaVenda h3 { grid-column: span 1 !important; }
+}
+
+/* 4. ELEMENTOS COMUNS (INPUTS E LABELS) */
+.modal-box input, .form-box input, .modal-box select {
+  background: #1e293b !important;
   color: #ffffff !important;
   border: 1px solid #334155 !important;
-  padding: 12px 15px !important;
-  border-radius: 8px !important;
-  margin-bottom: 12px !important;
-  width: 100% !important;
-  font-size: 14px !important;
-}
-
-/* Labels */
-#modalEdicaoCliente label {
-  color: #94a3b8 !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  margin-top: 8px !important;
-  margin-bottom: 4px !important;
-  display: block;
-  text-transform: uppercase;
-}
-
-/* Botões de Ação dentro do Modal */
-.btn-gravar-cliente {
-  background: #10b981 !important;
-  color: white !important;
-  border: none !important;
   padding: 15px !important;
   border-radius: 10px !important;
-  font-weight: bold !important;
-  cursor: pointer !important;
   width: 100% !important;
-  margin-top: 15px !important;
-  transition: 0.3s !important;
+  box-sizing: border-box;
+  font-size: 16px !important;
 }
 
-.btn-gravar-cliente:hover {
-  background: #059669 !important;
-  transform: scale(1.02);
+#modalEdicaoCliente input { background: #0f172a !important; } /* Mantém seu estilo original */
+
+.modal-box label {
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
 }
+
+/* 5. BOTÕES */
+.btn-gravar, .btn-gravar-cliente {
+  background: #10b981 !important;
+  color: white !important;
+  padding: 18px !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+  width: 100% !important;
+  font-size: 17px !important;
+  cursor: pointer !important;
+  border: none !important;
+  margin-top: 20px;
+}
+
+#modalNovaVenda .btn-gravar { grid-column: span 3; } /* Ocupa a largura do form no PC */
+
+@media (max-width: 850px) { #modalNovaVenda .btn-gravar { grid-column: span 2; } }
+@media (max-width: 550px) { #modalNovaVenda .btn-gravar { grid-column: span 1; } }
+
+/* Scrollbar */
+.modal::-webkit-scrollbar { width: 8px; }
+.modal::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
 
 /* --- ESTILO PARA O MODAL DE NOVA VENDA (Diferenciado) --- */
 #modalVenda {
@@ -777,6 +646,204 @@
 
 .foto-container-tabela:hover .btn-troca-foto {
     display: flex !important;
+}
+
+/* ============================================================
+   MODAL NOVO PRODUTO - ESTILO DARK PREMIUM
+   ============================================================ */
+
+/* Identificador específico para o modal de produto */
+#modalNovoProduto.modal {
+  background: rgba(7, 10, 19, 0.9) !important; /* Fundo escuro com leve transparência */
+  align-items: center !important; 
+  justify-content: center !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+#modalNovoProduto .modal-box {
+  background: #1e293b !important; /* Cor de fundo do card */
+  padding: 35px !important;
+  border-radius: 20px !important;
+  width: 95% !important;
+  max-width: 450px !important; /* Mais compacto por ser produto */
+  border: 1px solid #334155 !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+  position: relative !important;
+}
+
+/* Frase de cima (Título) em Azul para Tema Dark */
+#modalNovoProduto h3 {
+  color: #38bdf8 !important; /* Azul ciano vibrante para o tema dark */
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 25px !important;
+  text-align: center !important;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 15px;
+}
+
+/* Inputs específicos do produto */
+#modalNovoProduto input, 
+#modalNovoProduto select, 
+#modalNovoProduto textarea {
+  background: #0f172a !important; /* Fundo bem escuro para o campo */
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+  padding: 14px !important;
+  border-radius: 10px !important;
+  width: 100% !important;
+  margin-bottom: 15px !important;
+  font-size: 15px !important;
+  transition: border-color 0.3s ease;
+}
+
+#modalNovoProduto input:focus {
+  border-color: #38bdf8 !important;
+  outline: none;
+}
+
+/* Labels do produto */
+#modalNovoProduto label {
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Botão de Gravar Produto */
+#modalNovoProduto .btn-gravar-produto {
+  background: #10b981 !important; /* Verde para sucesso */
+  color: white !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  font-weight: bold !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  border: none !important;
+  font-size: 16px !important;
+  text-transform: uppercase;
+  margin-top: 10px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+#modalNovoProduto .btn-gravar-produto:hover {
+  background: #059669 !important;
+  transform: translateY(-2px);
+}
+
+/* Botão de fechar (se houver um X no modal) */
+#modalNovoProduto .close-modal {
+  color: #94a3b8 !important;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+}
+
+/* ============================================================
+   MODAL EDIÇÃO DE PRODUTO - ESTILO DARK PREMIUM
+   ============================================================ */
+
+/* Fundo e Centralização */
+#modalEdicaoProduto.modal {
+  background: rgba(7, 10, 19, 0.9) !important;
+  align-items: center !important; 
+  justify-content: center !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+/* Caixa de Conteúdo (Mesma largura do Novo Produto para consistência) */
+#modalEdicaoProduto .modal-box {
+  background: #1e293b !important;
+  padding: 35px !important;
+  border-radius: 20px !important;
+  width: 95% !important;
+  max-width: 450px !important;
+  border: 1px solid #334155 !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
+  position: relative !important;
+}
+
+/* Título em Azul (Mesmo tom do Novo Produto) */
+#modalEdicaoProduto h3 {
+  color: #38bdf8 !important;
+  font-size: 1.6rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 25px !important;
+  text-align: center !important;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 15px;
+}
+
+/* Campos de Edição */
+#modalEdicaoProduto input, 
+#modalEdicaoProduto select, 
+#modalEdicaoProduto textarea {
+  background: #0f172a !important; /* Fundo mais escuro para destacar o texto */
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+  padding: 14px !important;
+  border-radius: 10px !important;
+  width: 100% !important;
+  margin-bottom: 15px !important;
+  font-size: 15px !important;
+}
+
+#modalEdicaoProduto input:focus {
+  border-color: #38bdf8 !important;
+  outline: none;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+/* Labels */
+#modalEdicaoProduto label {
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  font-weight: bold;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Botão de Salvar Alterações (Laranja ou Verde conforme sua preferência) */
+/* Sugestão: Usei o verde para manter o padrão de "sucesso/gravar" */
+.btn-atualizar-produto {
+  background: #10b981 !important;
+  color: white !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  font-weight: bold !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  border: none !important;
+  font-size: 16px !important;
+  text-transform: uppercase;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+}
+
+.btn-atualizar-produto:hover {
+  background: #059669 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+}
+
+/* Botão de Cancelar/Fechar dentro do modal */
+.btn-fechar-edicao {
+  background: #475569 !important;
+  color: white !important;
+  padding: 12px !important;
+  border-radius: 10px !important;
+  width: 100% !important;
+  border: none !important;
+  margin-top: 10px;
+  cursor: pointer;
 }
 
 
@@ -4301,6 +4368,5 @@ window.onload = async () => {
  
 </body>
 </html>
-
 
 

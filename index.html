@@ -441,14 +441,6 @@
 }
 
 
-
-/*/* ============================================================
-   MODAIS - ESTRUTURA VERTICAL PREMIUM
-   ============================================================ */
-
-/* ================= MODAL VENDA ================= */
-
-/* Overlay */
 /* ============================================================
    MODAL VENDA - VISUALIZAÇÃO DESKTOP NO MOBILE
    ============================================================ */
@@ -792,102 +784,112 @@
    MODAL EDIÇÃO DE PRODUTO - ESTILO DARK PREMIUM
    ============================================================ */
 
-/* Fundo e Centralização */
-#modalEdicaoProduto.modal {
-  background: rgba(7, 10, 19, 0.9) !important;
-  align-items: center !important; 
-  justify-content: center !important;
-  backdrop-filter: blur(6px) !important;
+
+/* 1. Garante que o Overlay cubra tudo e centralize */
+#modalEdicaoProduto {
+    display: none; /* O JS controla como .active ou via style.display */
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 10, 19, 0.96) !important; /* Mesma opacidade do Venda */
+    backdrop-filter: blur(10px) !important;
+    z-index: 999999; /* Fica acima de tudo */
+    padding: 20px;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Caixa de Conteúdo (Mesma largura do Novo Produto para consistência) */
-#modalEdicaoProduto .modal-box {
-  background: #1e293b !important;
-  padding: 35px !important;
-  border-radius: 20px !important;
-  width: 95% !important;
-  max-width: 450px !important;
-  border: 1px solid #334155 !important;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-  position: relative !important;
+/* 2. Ativa o Flex quando o modal estiver aberto */
+#modalEdicaoProduto.active, 
+#modalEdicaoProduto[style*="display: flex"] {
+    display: flex !important;
 }
 
-/* Título em Azul (Mesmo tom do Novo Produto) */
+/* 3. Ajuste da Caixa (Consistência com Edição Cliente) */
+#modalEdicaoProduto .modal-box,
+#modalEdicaoProduto .form-box { /* Aceita ambas as classes para evitar erro */
+    background: linear-gradient(180deg, #1e293b, #020617) !important;
+    padding: 30px !important;
+    border-radius: 22px !important;
+    width: 100% !important;
+    max-width: 420px !important; /* Padrão Slim igual ao de Cliente */
+    border: 1px solid #334155 !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8) !important;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* 4. Título e Ícones */
 #modalEdicaoProduto h3 {
-  color: #38bdf8 !important;
-  font-size: 1.6rem !important;
-  font-weight: 800 !important;
-  margin-bottom: 25px !important;
-  text-align: center !important;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
-  padding-bottom: 15px;
+    color: #38bdf8 !important;
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 !important;
+    text-align: center;
 }
 
-/* Campos de Edição */
-#modalEdicaoProduto input, 
-#modalEdicaoProduto select, 
-#modalEdicaoProduto textarea {
-  background: #0f172a !important; /* Fundo mais escuro para destacar o texto */
-  color: #ffffff !important;
-  border: 1px solid #334155 !important;
-  padding: 14px !important;
-  border-radius: 10px !important;
-  width: 100% !important;
-  margin-bottom: 15px !important;
-  font-size: 15px !important;
-}
+Pode trocar as partes 5 e 6 por estas aqui. Eu já ajustei para que as letras fiquem em branco puro (#fff) e com peso de fonte negrito (font-weight: 800), garantindo que o texto "pule" da tela e seja fácil de ler.
 
-#modalEdicaoProduto input:focus {
-  border-color: #38bdf8 !important;
-  outline: none;
-  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
-}
+Substitua as partes 5 e 6 do seu código por esse bloco:
 
-/* Labels */
+CSS
+/* 5. Inputs e Labels - BRANCO E NEGRITO REFORÇADOS */
 #modalEdicaoProduto label {
-  color: #94a3b8 !important;
-  font-size: 11px !important;
-  text-transform: uppercase;
-  font-weight: bold;
-  margin-bottom: 6px;
-  display: block;
+    color: #f1f5f9 !important; /* Branco azulado para as labels */
+    font-size: 11px !important;
+    font-weight: 800 !important; /* Negrito extra nas labels */
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    display: block;
 }
 
-/* Botão de Salvar Alterações (Laranja ou Verde conforme sua preferência) */
-/* Sugestão: Usei o verde para manter o padrão de "sucesso/gravar" */
+#modalEdicaoProduto input {
+    background: #020617 !important;
+    color: #ffffff !important; /* Texto em Branco Puro nos inputs */
+    font-weight: 700 !important; /* Texto em Negrito nos inputs */
+    border: 1px solid #334155 !important;
+    padding: 12px !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    margin-bottom: 12px !important;
+    font-size: 14px !important;
+    box-sizing: border-box;
+    opacity: 1 !important; /* Garante brilho máximo das letras */
+}
+
+/* 6. Inputs Travados (Força Branco Negrito mesmo bloqueado) */
+#modalEdicaoProduto .input-travado {
+    background: #0f172a !important; 
+    color: #ffffff !important; /* Letras brancas mesmo travado */
+    font-weight: 800 !important; /* Negrito extra para destacar o valor */
+    cursor: not-allowed;
+    border: 1px dashed #475569 !important; /* Borda tracejada para indicar bloqueio */
+    opacity: 1 !important;
+}
+
+/* 7. Botões Premium */
+#modalEdicaoProduto button {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
 .btn-atualizar-produto {
-  background: #10b981 !important;
-  color: white !important;
-  padding: 16px !important;
-  border-radius: 12px !important;
-  font-weight: bold !important;
-  width: 100% !important;
-  cursor: pointer !important;
-  border: none !important;
-  font-size: 16px !important;
-  text-transform: uppercase;
-  margin-top: 10px;
-  transition: all 0.3s ease;
+    background: #10b981 !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
 }
 
 .btn-atualizar-produto:hover {
-  background: #059669 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+    background: #059669 !important;
+    transform: translateY(-2px);
 }
 
-/* Botão de Cancelar/Fechar dentro do modal */
-.btn-fechar-edicao {
-  background: #475569 !important;
-  color: white !important;
-  padding: 12px !important;
-  border-radius: 10px !important;
-  width: 100% !important;
-  border: none !important;
-  margin-top: 10px;
-  cursor: pointer;
+/* Grid de duas colunas (Preço e Estoque) */
+.grid-edicao {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
 }
 
 
@@ -1003,15 +1005,19 @@
 </div>
 
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
-      <div class="card" style="background:#0056b3" onclick="navegarLimpo('cadastro-vendas')">Total Vendas: <span id="cardVendas">0</span></div>
-      <div class="card" style="background:#f59e0b" onclick="filtrarRapido('status','Pendente')">Pendentes: <span id="cardPendentes">0</span></div>
-      <div class="card" style="background:#10b981" onclick="filtrarRapido('condicao','paga')">Concluídas: <span id="cardConcluidas">0</span></div>
-      <div class="card" style="background:#ffbf00; color: #000;" onclick="filtrarRapido('condicao','atenção')">Atenção: <span id="cardAtencao">0</span></div>
-      <div class="card" style="background:#ef4444" onclick="filtrarRapido('condicao','vencida')">Vencidas: <span id="cardVencidas">0</span></div>
-      <div class="card" style="background:#7c3aed" onclick="navegarLimpo('cadastro-produtos')">Total Produtos: <span id="cardProdutos">0</span></div>
-    </div>
-
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+  <div class="card" style="background:#0056b3" onclick="navegarLimpo('cadastro-vendas')">Total Vendas: <span id="cardVendas">0</span></div>
+  
+  <div class="card" style="background:#f59e0b" onclick="filtrarRapido('condicao','PENDENTE')">Pendentes: <span id="cardPendentes">0</span></div>
+  
+  <div class="card" style="background:#10b981" onclick="filtrarRapido('condicao','PAGO')">Concluídas: <span id="cardConcluidas">0</span></div>
+  
+  <div class="card" style="background:#ffbf00; color: #000;" onclick="filtrarRapido('condicao','ATENÇÃO')">Atenção: <span id="cardAtencao">0</span></div>
+  
+  <div class="card" style="background:#ef4444" onclick="filtrarRapido('condicao','VENCIDO')">Vencidas: <span id="cardVencidas">0</span></div>
+  
+  <div class="card" style="background:#7c3aed" onclick="navegarLimpo('cadastro-produtos')">Total Produtos: <span id="cardProdutos">0</span></div>
+</div>
 
     <div id="loaderFiltro" style="display: none; text-align: center; margin-bottom: 15px; color: #0056b3; font-weight: bold; font-family: sans-serif;">
   <div class="spinner" style="border-top-color: #0056b3; display: inline-block; width: 15px; height: 15px;"></div> 
@@ -1893,25 +1899,10 @@ async function desenharTabela() {
     colunas = ['categoria', 'nome', 'preco', 'estoque', 'imagem_url']; 
   } 
   else if (abaAtual === 'cadastro-clientes') {
-    colunas = [
-      'foto_url',
-      'cliente_nome',
-      'cpf_cnpj',
-      'telefone',
-      'email',
-      'cep',
-      'logradouro',
-      'numero',
-      'bairro',
-      'cidade'
-    ];
+    colunas = ['foto_url', 'cliente_nome', 'cpf_cnpj', 'telefone', 'email', 'cep', 'logradouro', 'numero', 'bairro', 'cidade'];
   } 
   else {
-    colunas = [
-      'id_venda', 'data_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 
-      'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 
-      'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'
-    ];
+    colunas = ['id_venda', 'data_venda', 'cliente', 'cpf', 'telefone', 'endereco', 'trabalho', 'produto', 'forma_pagamento', 'valor_total', 'entrada', 'desconto_vendedor', 'parcela', 'data_vencimento', 'valor_parcela', 'valor_pago', 'status'];
   }
 
   // Limpeza inicial
@@ -1962,30 +1953,50 @@ async function desenharTabela() {
   let thAcoes = document.createElement('th');
   fil.appendChild(thAcoes);
 
-  // 3. Filtros
+ // 3. Filtros
   let filtrados = dadosPlanilha.filter(item => {
+    // Filtro de texto das colunas (input/select da tabela)
     let passaNormal = Object.keys(filtros).every(k => {
       if (!filtros[k] || k === "especial" || k === "condicao") return true;
       return String(item[k] || "").toLowerCase().includes(String(filtros[k]).toLowerCase());
     });
+
+    // Definições de Status
     const statusLimpo = String(item.status || "").toUpperCase();
     const resolvido = statusLimpo === "PAGO" || statusLimpo === "PARCIAL" || statusLimpo.includes("CONCLU");
+    
+    // Definições de Datas
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
+    if(v) v.setHours(0,0,0,0);
+
     let passaCondicao = true;
+
+    // Lógica dos Cards (Se houver filtro de 'condicao')
     if (filtros["condicao"] && abaAtual === 'cadastro-vendas') {
       const f = filtros["condicao"];
-      if (f === "PAGO") passaCondicao = resolvido;
-      else if (f === "PENDENTE") passaCondicao = !resolvido;
-      else if (f === "VENCIDO") passaCondicao = !resolvido && v && v < hoje;
+
+      if (f === "PAGO") {
+        // AQUI ESTÁ O SEGREDO: Para o card concluído, queremos apenas o que é resolvido
+        passaCondicao = resolvido;
+      } 
+      else if (f === "PENDENTE") {
+        passaCondicao = !resolvido;
+      }
+      else if (f === "VENCIDO") {
+        passaCondicao = !resolvido && v && v < hoje;
+      }
       else if (f === "ATENÇÃO") {
-        let lim = new Date(); lim.setDate(hoje.getDate() + 5);
+        let lim = new Date(hoje);
+        lim.setDate(hoje.getDate() + 5);
+        lim.setHours(23, 59, 59, 999);
         passaCondicao = !resolvido && v && v >= hoje && v <= lim;
       }
     }
+
     return passaNormal && passaCondicao;
   });
-
+  
   // 4. Paginação
   const totalPaginas = Math.ceil(filtrados.length / itensPorPagina);
   const itensPagina = filtrados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina);
@@ -1994,7 +2005,6 @@ async function desenharTabela() {
   itensPagina.forEach((item) => {
     const tr = document.createElement('tr');
     
-    // Botão de Resumo/Edição
     const tdAcaoInicial = document.createElement('td');
     tdAcaoInicial.className = "col-resumo";
     const btnAcao = document.createElement('button');
@@ -2011,13 +2021,10 @@ async function desenharTabela() {
     tdAcaoInicial.appendChild(btnAcao);
     tr.appendChild(tdAcaoInicial);
 
-    // --- COLUNAS DE DADOS ---
     colunas.forEach(col => {
-      // Captura o valor (se for data_venda, usa o created_at do Supabase)
       let valor = (col === 'data_venda') ? (item.created_at || "") : (item[col] || "");
       let cl = "";
 
-      // FOTO DO CLIENTE
       if (col === 'foto_url') {
         const idAt = item.id;
         valor = `<div style="position: relative; width: 40px; height: 40px; margin: auto;">
@@ -2026,29 +2033,24 @@ async function desenharTabela() {
                   <input type="file" id="input-foto-${idAt}" style="display:none" accept="image/*" onchange="atualizarFotoDireto('${idAt}', this)">
                 </div>`;
       }
-      // IMAGEM DO PRODUTO (O estilo que você achou legal)
       else if (col === 'imagem_url') {
         valor = (valor && String(valor).startsWith('http')) 
           ? `<a href="${valor}" target="_blank" style="color:#3b82f6; text-decoration:none;"><i class="fa-solid fa-image"></i> Ver Foto</a>` 
           : `<span style="color:#94a3b8; font-size:0.7rem;">Sem foto</span>`;
       }
-      // ENDEREÇO
       else if (col === 'endereco') {
         valor = `${valor}${item.numero ? `, ${item.numero}` : ""}${item.bairro ? ` - ${item.bairro}` : ""}`;
       }
-      // VALORES MONETÁRIOS
       else if (col.includes('valor') || col.includes('total') || col === 'preco' || col === 'entrada') {
         let num = parseFloat(valor) || 0;
         valor = (col === 'valor_pago' && num === 0) ? "" : num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         cl = (col === 'valor_pago') ? 'texto-verde-negrito' : 'col-valor';
       }
-      // ESTOQUE (Com sua lógica de destaque)
       else if (col === 'estoque') {
         let qtd = parseInt(valor) || 0;
         valor = `<strong>${qtd}</strong>`;
         if (qtd <= 0) cl = 'texto-vermelho-negrito';
       }
-      // TRATAMENTO DE DATAS (Unindo data_venda e vencimento)
       else if (col.includes('data') && valor) {
         try {
           if (col === 'data_venda') {
@@ -2065,22 +2067,35 @@ async function desenharTabela() {
       tr.appendChild(td);
     });
 
-    // Coluna Condição (Apenas Vendas)
+    // --- CORREÇÃO DA LÓGICA DE CONDIÇÃO ---
     if (abaAtual === 'cadastro-vendas') {
       const tdCond = document.createElement('td');
       const status = String(item.status || "").toUpperCase();
       const resolvido = status === "PAGO" || status === "PARCIAL" || status.includes("CONCLU");
       let label = "PENDENTE", bg = "#64748b";
-      if (resolvido) { label = "PAGO"; bg = "#10b981"; } 
+      
+      if (resolvido) { 
+        label = "PAGO"; bg = "#10b981"; 
+      } 
       else {
+        // Garantindo que a data de vencimento seja interpretada sem erro de fuso
         const v = item.data_vencimento ? new Date(item.data_vencimento + 'T00:00:00') : null;
-        if (v && v < new Date().setHours(0,0,0,0)) { label = "VENCIDO"; bg = "#ef4444"; }
+        const hojeCompare = new Date(); hojeCompare.setHours(0,0,0,0);
+        
+        // Cópia para não alterar o hojeCompare original no loop
+        let dataLimite = new Date(hojeCompare.getTime()); 
+        dataLimite.setDate(dataLimite.getDate() + 5);
+
+        if (v && v < hojeCompare) { 
+          label = "VENCIDO"; bg = "#ef4444"; 
+        } else if (v && v <= dataLimite) {
+          label = "ATENÇÃO"; bg = "#f59e0b";
+        }
       }
       tdCond.innerHTML = `<span style="background:${bg}; color:white; padding:3px 8px; border-radius:12px; font-size:10px; font-weight:bold;">${label}</span>`;
       tr.appendChild(tdCond);
     }
 
-    // Coluna Ações (Direita)
     const tdA = document.createElement('td');
     tdA.style.textAlign = "center";
     if (abaAtual === 'cadastro-vendas') {
@@ -2248,42 +2263,46 @@ async function salvarProduto(event) {
 }
     
 async function filtrarRapido(c, v) { 
-    document.getElementById('loaderFiltro').style.display = 'block';
+    const loader = document.getElementById('loaderFiltro');
+    if (loader) loader.style.display = 'block';
 
-    // 1. Garante que estamos na aba de vendas
+    // 1. Padronização para bater com a desenharTabela
+    let valorFiltro = v.toUpperCase();
+    if (valorFiltro.includes("VENCID")) valorFiltro = "VENCIDO";
+    if (valorFiltro.includes("ATENC")) valorFiltro = "ATENÇÃO";
+    if (valorFiltro.includes("PAGO") || valorFiltro.includes("CONCLU")) valorFiltro = "PAGO";
+
+    // 2. Garante que estamos na aba de vendas
     if (abaAtual !== 'cadastro-vendas') {
-        await mostrarLista('cadastro-vendas'); 
-    }
-
-    // 2. Aplicamos o filtro na variável global 'filtros'
-    // Limpamos outros filtros para o card ser prioridade
-    filtros = {}; 
-
-    if (c === 'condicao') {
-        // Guardamos o valor (vencida, atenção, paga) para a desenharTabela usar
-        filtros["especial"] = v.toLowerCase(); 
+        filtros = {};
+        filtros[c] = valorFiltro;
+        await mostrarLista('cadastro-vendas', filtros); 
     } else {
-        filtros[c] = v;
+        // 3. Se já estiver na aba, limpa outros filtros e aplica o novo
+        filtros = {}; 
+        filtros[c] = valorFiltro;
+        paginaAtual = 1; 
+        desenharTabela();
     }
-
-    paginaAtual = 1; 
     
-    // 3. O SEGREDO: A desenharTabela precisa ler o filtros["especial"]
-    desenharTabela();
-    
-    document.getElementById('loaderFiltro').style.display = 'none';
+    if (loader) loader.style.display = 'none';
 }
 
 async function atualizarCards() {
   if (!dadosPlanilha || dadosPlanilha.length === 0) {
     const ids = ['cardVendas', 'cardPendentes', 'cardConcluidas', 'cardVencidas', 'cardAtencao'];
-    ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = "0"; });
+    ids.forEach(id => { 
+      if(document.getElementById(id)) document.getElementById(id).textContent = "0"; 
+    });
     return;
   }
 
   if (abaAtual === 'cadastro-vendas') {
+    // Conta vendas totais (IDs únicos)
     const idsUnicos = [...new Set(dadosPlanilha.map(x => x.id_venda))].filter(id => id);
-    if(document.getElementById('cardVendas')) document.getElementById('cardVendas').textContent = idsUnicos.length;
+    if(document.getElementById('cardVendas')) {
+      document.getElementById('cardVendas').textContent = idsUnicos.length;
+    }
 
     let contadores = { pendentes: 0, pagas: 0, vencidas: 0, atencao: 0 };
     
@@ -2297,37 +2316,38 @@ async function atualizarCards() {
       if (jaResolvido) {
         contadores.pagas++;
       } else {
-        // --- SE NÃO ESTÁ PAGA, ELA É CONSIDERADA PENDENTE (TOTAL GERAL) ---
+        // Se não está paga, é considerada PENDENTE (Total Geral)
         contadores.pendentes++; 
 
-        // Agora classificamos para os cards específicos de alerta
+        // Classificação para os alertas (Vencido ou Atenção)
         if (item.data_vencimento) {
           const v = new Date(item.data_vencimento + 'T00:00:00');
           v.setHours(0,0,0,0);
 
           if (v < hoje) {
-            contadores.vencidas++; // Também conta como Vencida
+            contadores.vencidas++; // Vencida: data menor que hoje
           } else {
+            // Define limite de Atenção: hoje até daqui a 5 dias
             let lim = new Date(); 
             lim.setDate(hoje.getDate() + 5);
             lim.setHours(23, 59, 59, 999);
 
             if (v <= lim) {
-              contadores.atencao++; // Também conta como Atenção
+              contadores.atencao++; // Atenção: vence em breve (incluindo hoje)
             }
           }
         }
       }
     });
 
-    // Atualiza os elementos na tela
+    // Atualiza os contadores no HTML
     if(document.getElementById('cardPendentes'))  document.getElementById('cardPendentes').textContent = contadores.pendentes;
     if(document.getElementById('cardConcluidas')) document.getElementById('cardConcluidas').textContent = contadores.pagas;
     if(document.getElementById('cardVencidas'))   document.getElementById('cardVencidas').textContent = contadores.vencidas;
     if(document.getElementById('cardAtencao'))    document.getElementById('cardAtencao').textContent = contadores.atencao;
   }
   
-  // Card de Produtos
+  // Card de Produtos (Busca direta no Supabase para contagem global)
   try {
     const res = await fetch(`${SB_URL}/produtos?select=id`, {
       method: 'GET',
@@ -2337,7 +2357,9 @@ async function atualizarCards() {
     if (produtos && document.getElementById('cardProdutos')) {
       document.getElementById('cardProdutos').textContent = produtos.length;
     }
-  } catch (err) { console.error("Erro produtos:", err); }
+  } catch (err) { 
+    console.error("Erro ao atualizar card de produtos:", err); 
+  }
 }
 
 
@@ -2573,12 +2595,9 @@ function abrirResumo(idVendaUnico) {
 
 async function finalizarVenda() {
 
-
-  vendaJaSalva = true;
-
   const btn = document.getElementById('btnFinalizar');
   const btnComp = document.getElementById('btnComprovante'); 
-
+  
   if (btn) {
     btn.disabled = true;
     btn.style.setProperty('background', '#64748b', 'important');
@@ -2588,7 +2607,7 @@ async function finalizarVenda() {
   }
 
   try {
-    // ===== CAPTURA DOS DADOS =====
+    // 1. CAPTURA DOS DADOS DO NOVO MODAL
     const nome = document.getElementById('nomeCliente').value.trim();
     const cpf = document.getElementById('cpfCliente').value.replace(/\D/g, '');
     const tel = document.getElementById('telCliente')?.value || "";
@@ -2596,7 +2615,7 @@ async function finalizarVenda() {
     const cep = document.getElementById('cepCliente')?.value || "";    
     const rua = document.getElementById('ruaCliente')?.value || "";
     const bairro = document.getElementById('bairroCliente')?.value || "";
-    const cidade = document.getElementById('cidadeCliente')?.value || "";
+    const cidade = document.getElementById('cidadeCliente')?.value || "Não informada";
     const num = document.getElementById('numComplemento')?.value || ""; 
     
     const enderecoCompleto = `${rua}, ${num} - ${bairro}, ${cidade}`;
@@ -2606,12 +2625,13 @@ async function finalizarVenda() {
       throw new Error("Carrinho vazio");
     }
 
-    if (!nome || !cpf || !document.getElementById('dataVencimento').value) {
+    const dataVencBase = document.getElementById('dataVencimento').value;
+    if (!nome || !cpf || !dataVencBase) {
       alert("Por favor, preencha Nome, CPF e Data de Vencimento.");
       throw new Error("Campos obrigatórios");
     }
 
-    // ===== PRODUTOS =====
+    // 2. CÁLCULOS DE VALORES
     const listaProdutosTxt = itensNoCarrinho.map(item => 
       `R$ ${item.preco.toFixed(2)} ${item.nome} -x ${item.qtd} = R$ ${item.subtotal.toFixed(2)}`
     ).join(' + ');
@@ -2620,26 +2640,23 @@ async function finalizarVenda() {
     const entrada = parseFloat(document.getElementById('valorEntrada')?.value) || 0;
     const descVendedor = parseFloat(document.getElementById('descontoVendedor')?.value) || 0; 
     const formaPagamento = document.getElementById('tipoPagamento')?.value || "";
-    const trabalho = document.getElementById('trabalhoVenda')?.value || "Não informado"; 
+    const trabalho = document.getElementById('trabalhoCliente')?.value || "Não informado"; 
 
     const descontoSistema = (formaPagamento === 'vista') ? (bruto * 0.10) : 0;
     const descontoTotal = descontoSistema + descVendedor;
     const valorLiquidoVenda = bruto - descontoTotal;
     const saldoDevedor = valorLiquidoVenda - entrada;
 
-    const dataVencBase = document.getElementById('dataVencimento').value;
     const numParcelas = parseInt(document.getElementById('numeroParcelas').value) || 1;
     const valorParcela = Math.round((saldoDevedor / numParcelas) * 100) / 100;
-
     const idVendaUnico = 'V' + Date.now();
 
-    // ===== PARCELAS =====
+    // 3. MONTAGEM DAS PARCELAS PARA SUPABASE
     const parcelasParaBanco = [];
-
     for (let i = 0; i < numParcelas; i++) {
       let d = new Date(dataVencBase + 'T00:00:00');
       d.setMonth(d.getMonth() + i);
-
+      
       parcelasParaBanco.push({
         id_venda: idVendaUnico, 
         cliente: nome, 
@@ -2660,33 +2677,25 @@ async function finalizarVenda() {
       });
     }
 
-    // ===== SUPABASE =====
+    // 4. ENVIO PARA SUPABASE (VENDA)
     const resVenda = await fetch(`${SB_URL}/vendas`, {
       method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': `Bearer ${SB_KEY}`, 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(parcelasParaBanco)
     });
 
     if (!resVenda.ok) throw new Error("Erro ao salvar venda no banco.");
 
+    // ENVIO PARA SUPABASE (CLIENTE)
     await fetch(`${SB_URL}/clientes`, {
       method: 'POST',
-      headers: { 
-        'apikey': SB_KEY, 
-        'Authorization': `Bearer ${SB_KEY}`, 
-        'Content-Type': 'application/json', 
-        'Prefer': 'resolution=merge-duplicates' 
-      },
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify({ 
         cliente_nome: nome, 
         cpf_cnpj: cpf, 
         telefone: tel, 
-        email: emailValor,
-        cep: cep, 
+        email: emailValor, 
+        cep: cep,
         logradouro: rua, 
         numero: num, 
         bairro: bairro, 
@@ -2694,14 +2703,76 @@ async function finalizarVenda() {
       })
     });
 
-    // ===== SUCESSO =====
-    alert("✅ Venda e Cliente salvos com sucesso!");
+    // --- NOVO: ATUALIZAÇÃO DE ESTOQUE ---
+    for (const item of itensNoCarrinho) {
+      // DEBUG: Veja se esses valores aparecem no seu F12
+      console.log(`Baixando estoque de ${item.nome}. ID: ${item.id}, Tinha: ${item.estoque}, Vendeu: ${item.qtd}`);
+
+      if (item.id && item.estoque !== undefined) {
+        const novoEstoque = parseInt(item.estoque) - parseInt(item.qtd);
+
+        const resEstoque = await fetch(`${SB_URL}/produtos?id=eq.${item.id}`, {
+          method: 'PATCH',
+          headers: { 
+            'apikey': SB_KEY, 
+            'Authorization': `Bearer ${SB_KEY}`, 
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ estoque: novoEstoque })
+        });
+        
+        if(resEstoque.ok) console.log(`✅ Estoque de ${item.nome} atualizado para ${novoEstoque}`);
+        else console.error(`❌ Falha ao atualizar estoque de ${item.nome}`);
+      } else {
+        console.error("❌ Erro: O item no carrinho não possui as propriedades 'id' ou 'estoque'. Verifique a função que adiciona ao carrinho.");
+      }
+    }
+
+    // 5. ENVIO PARA O N8N
+    if (!enviandoVendaAgora) {
+      enviandoVendaAgora = true;
+      const arrayPlanoPagamento = parcelasParaBanco.map(p => {
+        const [ano, mes, dia] = p.data_vencimento.split('-');
+        return {
+          parcela: p.parcela,
+          valor: p.valor_parcela.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+          vencimento: `${dia}/${mes}/${ano}`
+        };
+      });
+
+      const dadosN8N = {
+        nome: nome,
+        telefone: tel,
+        cpf: cpf,
+        trabalho: trabalho,
+        enderecoCompleto: enderecoCompleto,
+        produto: listaProdutosTxt,
+        valorTotal: valorLiquidoVenda,
+        entrada: entrada,
+        parcelas: numParcelas,
+        vencimento: dataVencBase,
+        pagamento: (entrada >= valorLiquidoVenda - 0.01) ? "vista" : "parcelado",
+        descontoExtra: descVendedor || 0,
+        planoPagamento: arrayPlanoPagamento 
+      };
+
+      fetch(URL_N8N_CADASTRO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosN8N)
+      })
+      .then(() => console.log("✅ Webhook enviado!"))
+      .catch(err => console.error("❌ Erro Webhook:", err))
+      .finally(() => { enviandoVendaAgora = false; });
+    }
+
+    // 6. SUCESSO E TRAVA
+    vendaJaSalva = true;
+    alert("✅ Venda, Cliente e Estoque atualizados com sucesso!");
 
     if (btn) {
       btn.disabled = true;
       btn.style.setProperty('background', '#64748b', 'important');
-      btn.style.opacity = "0.6";
-      btn.style.cursor = "not-allowed";
       btn.innerHTML = '<i class="fas fa-lock"></i> VENDA SALVA';
     }
 
@@ -2713,9 +2784,7 @@ async function finalizarVenda() {
 
   } catch (error) {
     console.error("Erro Geral:", error);
-
     vendaJaSalva = false;
-
     if (btn) {
       btn.disabled = false;
       btn.style.setProperty('background', '#10b981', 'important');
@@ -2723,10 +2792,7 @@ async function finalizarVenda() {
       btn.style.cursor = "pointer";
       btn.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
     }
-
-    if (error.message !== "Carrinho vazio" && error.message !== "Campos obrigatórios") {
-      alert("🚨 Falha ao salvar: " + error.message);
-    }
+    alert("🚨 Falha: " + error.message);
   }
 }
 
@@ -3113,9 +3179,9 @@ window.vendaJaSalva = false;
 // ===============================
 // BOTÃO NOVA VENDA (COM CONFIRMAÇÃO)
 // ===============================
+// 1. Abre o aviso de confirmação (sem limpar nada ainda)
 function novaVenda() {
     const modal = document.getElementById('modalConfirmar');
-
     if (modal) {
         modal.style.display = 'flex';
     } else {
@@ -3125,16 +3191,27 @@ function novaVenda() {
     }
 }
 
+// 2. Fecha apenas o modal de confirmação (Botão "Não" ou "Cancelar")
+function fecharAvisoLimpeza() {
+    const modal = document.getElementById('modalConfirmar');
+    if (modal) modal.style.display = 'none';
+}
+
+// 3. Fecha o formulário de venda principal (Botão "Sair" vermelho)
+function fecharModalVendaPrincipal() {
+    const modalVenda = document.getElementById('modalVenda');
+    if (modalVenda) modalVenda.style.display = 'none';
+    console.log("🚪 Dados preservados no formulário.");
+}
 // ===============================
 // LIMPEZA REAL DO FORMULÁRIO
 // ===============================
 function executarLimpezaTotal() {
-    const modal = document.getElementById('modalConfirmar');
-    if (modal) modal.style.display = 'none';
+    const modalConfirmar = document.getElementById('modalConfirmar');
+    if (modalConfirmar) modalConfirmar.style.display = 'none';
 
-    console.log("🧹 Limpando sistema e reativando botão salvar...");
+    console.log("🧹 Limpando sistema...");
 
-    // 🔓 LIBERA NOVA VENDA
     window.vendaJaSalva = false;
 
     // 🔘 REATIVA BOTÃO SALVAR
@@ -3143,11 +3220,10 @@ function executarLimpezaTotal() {
         btnFin.disabled = false;
         btnFin.style.setProperty('background', '#10b981', 'important');
         btnFin.style.opacity = "1";
-        btnFin.style.cursor = "pointer";
         btnFin.innerHTML = '<i class="fas fa-check-circle"></i> SALVAR';
     }
 
-    // 🔘 DESATIVA COMPROVANTE
+    // 🔘 DESATIVA COMPROVANTE (Adicionado aqui)
     const btnComp = document.getElementById('btnComprovante');
     if (btnComp) {
         btnComp.disabled = true;
@@ -3157,54 +3233,39 @@ function executarLimpezaTotal() {
 
     // 🧠 LIMPA CARRINHO
     itensNoCarrinho = [];
-
     const corpo = document.getElementById('corpoCarrinho');
     if (corpo) corpo.innerHTML = "";
 
     // 🧹 LIMPA CAMPOS
-    const campos = [
-        'nomeCliente',
-        'telCliente',
-        'cpfCliente',
-        'clienteEmail',
-        'cepCliente',
-        'ruaCliente',
-        'numComplemento',
-        'bairroCliente',
-        'cidadeCliente',
-        'dataVencimento',
-        'valorEntrada',
-        'descontoVendedor',
-        'numeroParcelas',
-        'trabalhoVenda',
-        'qtdProduto'
-    ];
-    
+    const campos = ['nomeCliente', 'telCliente', 'cpfCliente', 'clienteEmail', 'cepCliente', 'ruaCliente', 'numComplemento', 'bairroCliente', 'cidadeCliente', 'dataVencimento', 'valorEntrada', 'descontoVendedor', 'numeroParcelas', 'trabalhoVenda', 'qtdProduto'];
     campos.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
 
     // 🔄 RESETA SELECTS
-    if (document.getElementById('tipoPagamento'))
-        document.getElementById('tipoPagamento').value = 'parcelado';
-
-    if (document.getElementById('selectProduto'))
-        document.getElementById('selectProduto').selectedIndex = 0;
-
-    if (document.getElementById('numeroParcelas'))
-        document.getElementById('numeroParcelas').value = '1';
+    if (document.getElementById('tipoPagamento')) document.getElementById('tipoPagamento').value = 'parcelado';
+    if (document.getElementById('selectProduto')) document.getElementById('selectProduto').selectedIndex = 0;
+    if (document.getElementById('numeroParcelas')) document.getElementById('numeroParcelas').value = '1';
 
     // 💰 ZERA TOTAIS
-    if (typeof calcularVendaFinal === "function") {
-        calcularVendaFinal();
-    }
+    if (typeof calcularVendaFinal === "function") calcularVendaFinal();
 
-    // 📍 NAVEGA
-    if (typeof navegar === 'function') navegar('cadastro-vendas');
-    
+    // 📍 FOCO NO NOME
     const campoNome = document.getElementById('nomeCliente');
     if (campoNome) campoNome.focus();
+}
+
+function fecharSemLimpar() {
+    // Fecha o modal da venda
+    const modalVenda = document.getElementById('modalVenda');
+    if (modalVenda) modalVenda.style.display = 'none';
+
+    // Fecha o modal de confirmação (caso esteja aberto)
+    const modalConfirmar = document.getElementById('modalConfirmar');
+    if (modalConfirmar) modalConfirmar.style.display = 'none';
+
+    console.log("🚪 Saiu sem apagar os dados.");
 }
 
 // ===============================
@@ -3214,7 +3275,8 @@ function abrirModalVenda() {
   const modal = document.getElementById('modalVenda');
   if (modal) {
     modal.style.display = 'flex';
-    executarLimpezaTotal(); 
+    // Removi a limpeza daqui para preservar os dados ao reabrir
+    console.log("🔓 Modal de venda aberto.");
   }
 }
 
@@ -3276,9 +3338,8 @@ function resetarEstadoModalCliente() {
 }
 
 
-// --- 3. CARREGAR PRODUTOS (AGORA VIA SUPABASE) ---
+// --- 3. CARREGAR PRODUTOS (ATUALIZADO COM ID E ESTOQUE) ---
 async function carregarProdutos() {
-  // Localiza o select pelo ID que você encontrou no seu HTML
   const select = document.getElementById('selectProduto');
   
   if (!select) {
@@ -3312,13 +3373,22 @@ async function carregarProdutos() {
     produtos.forEach(p => {
       let opt = document.createElement('option');
       opt.value = p.nome;
+      
       const preco = parseFloat(p.preco) || 0;
-      opt.textContent = `${p.nome} - R$ ${preco.toFixed(2).replace('.', ',')}`;
+      const estoqueAtual = parseInt(p.estoque) || 0; // Pega o estoque do banco
+
+      // Mostra o nome, preço e a quantidade disponível no select para o vendedor ver
+      opt.textContent = `${p.nome} - R$ ${preco.toFixed(2).replace('.', ',')} (${estoqueAtual} em estoque)`;
+      
+      // GUARDA OS DADOS NO HTML (data-attributes)
       opt.setAttribute('data-preco', preco);
+      opt.setAttribute('data-id', p.id);           // <--- ESSENCIAL PARA O SUPABASE
+      opt.setAttribute('data-estoque', estoqueAtual); // <--- ESSENCIAL PARA A TRAVA DE ESTOQUE
+      
       select.appendChild(opt);
     });
 
-    console.log("✅ Select 'selectProduto' preenchido!");
+    console.log("✅ Select 'selectProduto' preenchido com ID e Estoque!");
 
   } catch (err) {
     console.error("Erro técnico:", err);
@@ -3326,7 +3396,7 @@ async function carregarProdutos() {
   }
 }
 
-// --- 4. ADICIONAR AO CARRINHO ---
+// --- 4. ADICIONAR AO CARRINHO (VERSÃO CORRIGIDA PARA ESTOQUE) ---
 function adicionarAoCarrinho() {
   // Tenta encontrar o select pelos dois IDs possíveis
   const select = document.getElementById('selectProduto') || document.getElementById('produtoVenda');
@@ -3337,20 +3407,39 @@ function adicionarAoCarrinho() {
     return;
   }
 
-  // Pega o nome puro e o preço do atributo data-preco
+  // --- CAPTURA DE DADOS ESSENCIAIS DO OPTION ---
   const nome = option.value; 
   const preco = parseFloat(option.getAttribute('data-preco')) || 0;
+  
+  // Captura o ID e o estoque atual (que devem vir do banco para o option)
+  const idDoProduto = option.getAttribute('data-id'); 
+  const estoqueAtual = parseInt(option.getAttribute('data-estoque')) || 0;
+
   const qtdInput = document.getElementById('qtdProduto');
   const qtd = parseInt(qtdInput ? qtdInput.value : 1) || 1;
 
+  // Verificação de estoque antes de adicionar (opcional mas recomendado)
+  if (qtd > estoqueAtual) {
+    alert(`Estoque insuficiente! Temos apenas ${estoqueAtual} em estoque.`);
+    return;
+  }
+
   // Verifica se o item já está no carrinho para somar
-  const itemExistente = itensNoCarrinho.find(item => item.nome === nome);
+  const itemExistente = itensNoCarrinho.find(item => item.id === idDoProduto);
 
   if (itemExistente) {
+    // Verifica se a nova soma não ultrapassa o estoque
+    if ((itemExistente.qtd + qtd) > estoqueAtual) {
+        alert("Quantidade total no carrinho excede o estoque disponível!");
+        return;
+    }
     itemExistente.qtd += qtd;
     itemExistente.subtotal = itemExistente.preco * itemExistente.qtd;
   } else {
+    // ADICIONAMOS O ID E O ESTOQUE NO OBJETO DO ITEM
     itensNoCarrinho.push({
+      id: idDoProduto,      // <--- IMPORTANTE: Agora o ID vai para o finalizarVenda
+      estoque: estoqueAtual, // <--- IMPORTANTE: Agora o estoque vai para o finalizarVenda
       nome: nome,
       preco: preco,
       qtd: qtd,
@@ -3358,7 +3447,6 @@ function adicionarAoCarrinho() {
     });
   }
 
-  // --- ATENÇÃO AQUI: Chame o nome correto da função de desenhar ---
   renderizarTabela(); 
   
   if (typeof calcularVendaFinal === "function") {
@@ -3372,12 +3460,21 @@ function adicionarAoCarrinho() {
 
 // --- 5. REMOVER ITEM ---
 function removerItem(index) {
+  // O confirm evita que o vendedor remova algo por acidente
   if (confirm("Deseja remover este item do carrinho?")) {
+    
+    // Remove o item do array na memória
     itensNoCarrinho.splice(index, 1);
-    renderizarTabela(); // Mantendo o padrão
+    
+    // Atualiza a tabela visual na tela
+    renderizarTabela(); 
+    
+    // Recalcula os totais (Bruto, Desconto, Líquido)
     if (typeof calcularVendaFinal === "function") {
       calcularVendaFinal();
     }
+    
+    console.log("Item removido. Carrinho atualizado.");
   }
 }
 
